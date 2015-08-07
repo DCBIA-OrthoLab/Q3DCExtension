@@ -51,14 +51,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         
         # -------------- Input Models ----------------
         self.treeViewGroupBox = ctk.ctkCollapsibleButton()
-        self.treeViewGroupBox.setText('Visibility of Models ') 
+        self.treeViewGroupBox.setText('Visibility of Models and Fiducials') 
         self.treeViewGroupBox.collapsed = True
         self.parent.layout().addWidget(self.treeViewGroupBox)
         treeView = slicer.qMRMLTreeView()
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.setSceneModelType('Displayable')
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
-        treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode']
+        treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         header = treeView.header()
         header.setResizeMode(0, qt.QHeaderView.Stretch)
         header.setVisible(False)
