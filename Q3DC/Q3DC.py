@@ -317,14 +317,41 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         newMarkupsNode = slicer.vtkMRMLMarkupsFiducialNode()
         slicer.mrmlScene.AddNode(newMarkupsNode)
 
-        self.logic.calculateMidPoint(newMarkupsNode,
-                                     self.markupsDictionary,
-                                     self.correspondenceLandmarkDict[self.landmarkComboBox1.currentText],
-                                     self.correspondenceLandmarkDict[self.landmarkComboBox2.currentText])
+        id1 = self.landmarkComboBox1.currentText
+        id2 = self.landmarkComboBox2.currentText
+        landmark1ID = self.correspondenceLandmarkDict[id1]
+        landmark2ID = self.correspondenceLandmarkDict[id2]
+
+        markupsNode1 = slicer.mrmlScene.GetNodeByID(self.logic.findMarkupsNodeFromLandmarkID(self.markupsDictionary, landmark1ID))
+        markupsNode2 = slicer.mrmlScene.GetNodeByID(self.logic.findMarkupsNodeFromLandmarkID(self.markupsDictionary, landmark2ID))
+
+        self.logic.calculateMidPointByMarkupsNode(newMarkupsNode, markupsNode1, landmark1ID, markupsNode2, landmark2ID)
 
         newMarkupsNode.SetNthMarkupLocked(0, True)
+        newMarkupsNode.SetNthMarkupSelected(0, False)
+
+
+        # Track the endpoints and mid point so that any changes to either
+        # of the endpoints can trigger an update of the midpoint
+        # TODO: this can be made more robust with a more sophisticated cephalometric landmark model
+        markupsNode1.SetAttribute("Q3DC.MidpointNodeID", newMarkupsNode.GetID())
+        markupsNode1.SetAttribute("Q3DC.MidpointOppositeNodeID", markupsNode2.GetID())
+        markupsNode1.SetAttribute("Q3DC.MidpointLandmarkID", landmark1ID)
+        markupsNode2.SetAttribute("Q3DC.MidpointNodeID", newMarkupsNode.GetID())
+        markupsNode2.SetAttribute("Q3DC.MidpointOppositeNodeID", markupsNode1.GetID())
+        markupsNode2.SetAttribute("Q3DC.MidpointLandmarkID", landmark2ID)
+        newMarkupsNode.SetAttribute("Q3DC.MidpointLandmark1ID", markupsNode1.GetID())
+        newMarkupsNode.SetAttribute("Q3DC.MidpointLandmark2ID", markupsNode2.GetID())
+
         if self.midPointOnSurfaceCheckBox.isChecked():
-            self.logic.projectLandmarkOnSurface(self.markupsDictionary[newMarkupsNode.GetID()].landmarkDictionary.values()[0], newMarkupsNode.GetID())
+            projectionSurfaceID = self.markupsDictionary[newMarkupsNode.GetID()].landmarkDictionary.values()[0]
+            self.logic.projectLandmarkOnSurface(projectionSurfaceID, newMarkupsNode.GetID())
+        # track the model that the midpoint should project on (and if the projection is needed)
+        midpointProjectOnSurface = "False"
+        if self.midPointOnSurfaceCheckBox.isChecked():
+            midpointProjectOnSurface = "True"
+        newMarkupsNode.SetAttribute("Q3DC.ProjectOnSurface", midpointProjectOnSurface)
+        newMarkupsNode.SetAttribute("Q3DC.ProjectionSurface", projectionSurfaceID)
 
 
     def NodeAdded(self, obj, node):
@@ -363,13 +390,51 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.correspondenceLandmarkDict[obj.GetNthFiducialLabel(landmarkIndex)] = landmarkID
 
+    def updateMidpoint(self, landmarkMarkupNode):
+        """Check the attributes of the landmark and if needed update the associated midpoint node.
+           See onDefineMidPointClicked for the code that sets these attributes.
+        """
+        midpointNodeID = landmarkMarkupNode.GetAttribute("Q3DC.MidpointNodeID")
+        oppositeNodeID = landmarkMarkupNode.GetAttribute("Q3DC.MidpointOppositeNodeID")
+        if not midpointNodeID or not oppositeNodeID:
+            # this is not part of a midpoint set, so ignore it
+            return
+        midpointNode = slicer.mrmlScene.GetNodeByID(midpointNodeID)
+        oppositeNode = slicer.mrmlScene.GetNodeByID(oppositeNodeID)
+        if not midpointNode or not oppositeNode:
+            print("Landmark marked as part of midpoint set, but the nodes are not in the scene")
+            return
+        landmarkNodeLandmarkID = landmarkMarkupNode.GetAttribute("Q3DC.MidpointLandmarkID")
+        oppositeNodeLandmarkID = oppositeNode.GetAttribute("Q3DC.MidpointLandmarkID")
+        if not landmarkNodeLandmarkID or not oppositeNodeLandmarkID:
+            print("Landmarks do not have markup ids")
+            return
+
+        print("self.logic.calculateMidPointByMarkupsNode(", midpointNode, landmarkMarkupNode, landmarkNodeLandmarkID, oppositeNode, oppositeNodeLandmarkID, ")")
+        # perform the calculation
+        self.logic.calculateMidPointByMarkupsNode(midpointNode, landmarkMarkupNode, landmarkNodeLandmarkID, oppositeNode, oppositeNodeLandmarkID)
+
+        if midpointNode.GetAttribute("Q3DC.ProjectOnSurface") == "True":
+            projectionSurfaceID = midpointNode.GetAttribute("Q3DC.ProjectionSurface")
+            if not projectionSurfaceID:
+                print("Landmark marked to project on surface, but no ID")
+                return
+            projectionSurface = slicer.mrmlScene.GetNodeByID(projectionSurfaceID)
+            if not projectionSurface:
+                print("Landmark marked to project on surface, but model is missing")
+                return
+            self.logic.projectLandmarkOnSurface(projectionSurfaceID, landmarkMarkupNode.GetID())
+
+
+
     def onPointModifiedEvent(self, obj, event):
         print( " --------- onPointModifiedEvent ")
+        self.updateMidpoint(obj)
         obj.RemoveObserver(self.markupsDictionary[obj.GetID()].PointModifiedEventTag)
         self.logic.projectLandmarkOnSurface(self.markupsDictionary[obj.GetID()].landmarkDictionary.values()[0], obj.GetID())
         self.markupsDictionary[obj.GetID()].PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
         if self.line1LAComboBox.currentText != '' and self.line1LBComboBox.currentText != '' and self.line1LAComboBox.currentText != self.line1LBComboBox.currentText :
-            #Clear Lines:
+            #Clear Lines, then define new ones
             if self.renderer1 :
                 self.renderer1.RemoveActor(self.actor1)
             self.renderer1, self.actor1 = self.logic.drawLineBetween2Landmark(self.correspondenceLandmarkDict[self.line1LAComboBox.currentText], self.correspondenceLandmarkDict[self.line1LBComboBox.currentText], self.markupsDictionary)
@@ -407,6 +472,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def projectLandmarkOnSurface(self, inputModelID, markupsNodeID):
         markupsNode = slicer.mrmlScene.GetNodeByID(markupsNodeID)
+        projectOnSurface = markupsNode.GetAttribute("Q3DC.ProjectOnSurface")
+        if projectOnSurface == "False":
+            # defined for midpoint landmarks that aren't requested to stay on surface
+            return
         polyData = slicer.mrmlScene.GetNodeByID(inputModelID).GetPolyData()
         pointLocator = vtk.vtkPointLocator()
         pointLocator.SetDataSet(polyData)
@@ -427,10 +496,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                                                landmarkCoord[1],
                                                landmarkCoord[2])
 
-
-    def calculateMidPoint(self, newMarkupsNode, markupsDictionary, landmark1ID, landmark2ID):
-        markupsNode1 = slicer.mrmlScene.GetNodeByID(self.findMarkupsNodeFromLandmarkID(markupsDictionary, landmark1ID))
-        markupsNode2 = slicer.mrmlScene.GetNodeByID(self.findMarkupsNodeFromLandmarkID(markupsDictionary, landmark2ID))
+    def calculateMidPointByMarkupsNode(self, newMarkupsNode, markupsNode1, landmark1ID, markupsNode2, landmark2ID):
+        """Set the midpoint when you know the the mrml nodes"""
         landmark1Index = markupsNode1.GetMarkupIndexByID(landmark1ID)
         landmark2Index = markupsNode2.GetMarkupIndexByID(landmark2ID)
 
@@ -444,7 +511,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         midCoord[1] = (coord1[1] + coord2[1])/2
         midCoord[2] = (coord1[2] + coord2[2])/2
 
-        newMarkupsNode.AddFiducial(midCoord[0], midCoord[1], midCoord[2])
+        if newMarkupsNode.GetNumberOfFiducials() < 1:
+            newMarkupsNode.AddFiducial(midCoord[0], midCoord[1], midCoord[2])
+        else:
+            newMarkupsNode.SetNthFiducialPosition(0, midCoord[0], midCoord[1], midCoord[2])
 
 
     def findMarkupsNodeFromLandmarkID(self, markupsDictionary, landmarkIDToFind):
@@ -764,6 +834,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         markupsNode1 = slicer.mrmlScene.GetNodeByID(self.findMarkupsNodeFromLandmarkID(markupsDictionary, landmark1ID))
         markupsNode2 = slicer.mrmlScene.GetNodeByID(self.findMarkupsNodeFromLandmarkID(markupsDictionary, landmark2ID))
 
+        if not markupsNode1 or not markupsNode2:
+            return
         landmark1Index = markupsNode1.GetMarkupIndexByID(landmark1ID)
         landmark2Index = markupsNode2.GetMarkupIndexByID(landmark2ID)
 
@@ -990,10 +1062,12 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
         points = ( (43, 25, -10), (-49, 22, -8), (-6, 64, -53) )
 
+        firstMarkupsNode = None
+        firstMarkupID = None
         index = 0
         for point in points:
             q3dcWidget.onAddLandmarkButtonClicked()
-            markupsNodeID = q3dcWidget.markupsDictionary.keys()[index]
+            markupsNodeID = slicer.modules.markups.logic().GetActiveListID()
             if not markupsNodeID:
                 self.delayDisplay("No markupsNodeID")
                 return False
@@ -1002,6 +1076,10 @@ class Q3DCTest(ScriptedLoadableModuleTest):
                 self.delayDisplay("No markupsNode")
                 return False
             markupsNode.AddFiducial(*point)
+            if not firstMarkupsNode:
+                firstMarkupsNode = markupsNode
+                firstMarkupID = markupsNode.GetNthMarkupID(0)
+            self.delayDisplay("Added point %d" % index)
             index += 1
 
         # reset the interaction node - since we are bypassing the clicks we don't need it
@@ -1012,6 +1090,10 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         q3dcWidget.midPointGroupBox.collapsed = False
         q3dcWidget.landmarkComboBox2.currentIndex = 1
         q3dcWidget.defineMiddlePointButton.clicked()
+        midpointMarkupID = q3dcWidget.markupsDictionary.keys()[3]
+        if not midpointMarkupID:
+            print ("Did not define a midpoint node")
+            return False
 
         self.delayDisplay("Calculate a distance")
         q3dcWidget.distanceGroupBox.collapsed = False
@@ -1030,5 +1112,17 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         q3dcWidget.yawCheckBox.checked = True
 
         q3dcWidget.computeAnglesPushButton.clicked()
+
+
+        self.delayDisplay("Move endpoint, should update midpoint")
+        midpointMarkup = slicer.util.getNode(midpointMarkupID)
+        initialPosition = [0,]*3
+        midpointMarkup.GetNthFiducialPosition(0, initialPosition)
+        firstMarkupsNode.SetNthFiducialPosition(0, 45, 20, -15)
+        movedPosition = [0,]*3
+        midpointMarkup.GetNthFiducialPosition(0, movedPosition)
+        if initialPosition == movedPosition:
+            print('midpoint landmark did not move')
+            return False
 
         return True
