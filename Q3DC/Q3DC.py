@@ -215,6 +215,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
 
+        self.comboBoxes = [
+                self.landmarkComboBox1, self.landmarkComboBox2,
+                self.landmarkComboBoxA, self.landmarkComboBoxB,
+                self.line1LAComboBox, self.line1LBComboBox, self.line2LAComboBox, self.line2LBComboBox,
+                ]
+
 
         # CONNECTIONS:
         self.nodeAddedTag = slicer.app.mrmlScene().AddObserver(slicer.mrmlScene.NodeAddedEvent, self.NodeAdded)
@@ -225,7 +231,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             if self.renderer2 :
                 self.renderer2.RemoveActor(self.actor2)
             self.numOfMarkupsNode = 0
+            for comboBox in self.comboBoxes:
+                comboBox.clear()
             self.UpdateInterface()
+            self.markupsDictionary.clear()
+            self.numOfMarkupsNode = 0
+            self.correspondenceLandmarkDict.clear()
+            self.computedDistanceList = list()
+            self.computedAnglesList = list()
         self.sceneCloseTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, onCloseScene)
 
         self.UpdateInterface()
@@ -350,8 +363,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         midpointProjectOnSurface = "False"
         if self.midPointOnSurfaceCheckBox.isChecked():
             midpointProjectOnSurface = "True"
+            newMarkupsNode.SetAttribute("Q3DC.ProjectionSurface", projectionSurfaceID)
         newMarkupsNode.SetAttribute("Q3DC.ProjectOnSurface", midpointProjectOnSurface)
-        newMarkupsNode.SetAttribute("Q3DC.ProjectionSurface", projectionSurfaceID)
 
 
     def NodeAdded(self, obj, node):
@@ -835,7 +848,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         markupsNode2 = slicer.mrmlScene.GetNodeByID(self.findMarkupsNodeFromLandmarkID(markupsDictionary, landmark2ID))
 
         if not markupsNode1 or not markupsNode2:
-            return
+            return None, None
         landmark1Index = markupsNode1.GetMarkupIndexByID(landmark1ID)
         landmark2Index = markupsNode2.GetMarkupIndexByID(landmark2ID)
 
