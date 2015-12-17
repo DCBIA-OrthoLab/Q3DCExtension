@@ -1727,18 +1727,17 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         self.test_SimulateTutorial()
 
     def test_CalculateDisplacement1(self):
-        logic = Q3DCLogic()
+        logic = Q3DCLogic(slicer.modules.Q3DCWidget)
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
         markupsNode1.AddFiducial(-5.331, 51.955, 4.831)
         markupsNode1.AddFiducial(-8.018, 41.429, -52.621)
         diffXAxis, diffYAxis, diffZAxis, threeDDistance = logic.defineDistances(markupsNode1, 0, markupsNode1, 1)
-        print (diffXAxis, diffYAxis, diffZAxis, threeDDistance)
         if diffXAxis != -2.687 or diffYAxis != -10.526 or diffZAxis != -57.452 or threeDDistance != 58.47:
             return False
         return True
 
     def test_CalculateDisplacement2(self):
-        logic = Q3DCLogic()
+        logic = Q3DCLogic(slicer.modules.Q3DCWidget)
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
 
         markupsNode1.AddFiducial(63.90,-46.98, 6.98)
@@ -1748,7 +1747,6 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
         yaw = logic.computeYaw(markupsNode1, 0, markupsNode1, 1, markupsNode1, 2, markupsNode1, 3)
         roll = logic.computeRoll(markupsNode1, 0, markupsNode1, 1, markupsNode1, 2, markupsNode1, 3)
-        print ("roll, pitch", yaw, roll)
         if yaw != 4.964 or roll != 3.565:
             return False
 
@@ -1807,6 +1805,13 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
         firstMarkupsNode = None
         firstMarkupID = None
+
+        movingMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
+        movingMarkupsFiducial.SetName("F")
+        slicer.mrmlScene.AddNode(movingMarkupsFiducial)
+        q3dcWidget.inputModelSelector.setCurrentNode(modelNodes['AH2m'])
+        q3dcWidget.inputLandmarksSelector.setCurrentNode(movingMarkupsFiducial)
+
         index = 0
         for point in points:
             q3dcWidget.onAddLandmarkButtonClicked()
@@ -1833,18 +1838,25 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         q3dcWidget.midPointGroupBox.collapsed = False
         q3dcWidget.landmarkComboBox2.currentIndex = 1
         q3dcWidget.defineMiddlePointButton.clicked()
-        midpointMarkupID = q3dcWidget.markupsDictionary.keys()[3]
+        midpointMarkupID = q3dcWidget.logic.findIDFromLabel(movingMarkupsFiducial,"F-4")
         if not midpointMarkupID:
             print ("Did not define a midpoint node")
             return False
 
         self.delayDisplay("Calculate a distance")
         q3dcWidget.distanceGroupBox.collapsed = False
+        q3dcWidget.fidListComboBoxA.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.fidListComboBoxB.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.landmarkComboBoxA.currentIndex = 0
         q3dcWidget.landmarkComboBoxB.currentIndex = 1
         q3dcWidget.computeDistancesPushButton.clicked()
 
         self.delayDisplay("Calculate angle")
         q3dcWidget.angleGroupBox.collapsed = False
+        q3dcWidget.fidListComboBoxline1LA.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.fidListComboBoxline1LB.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.fidListComboBoxline2LA.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.fidListComboBoxline2LB.setCurrentNode(movingMarkupsFiducial)
         q3dcWidget.line1LAComboBox.currentIndex = 0
         q3dcWidget.line1LBComboBox.currentIndex = 1
         q3dcWidget.line2LAComboBox.currentIndex = 2
@@ -1856,14 +1868,22 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
         q3dcWidget.computeAnglesPushButton.clicked()
 
+        self.delayDisplay("Calculate a distance between a line and a point")
+        q3dcWidget.angleGroupBox.collapsed = False
+        q3dcWidget.fidListComboBoxlineLA.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.fidListComboBoxlineLB.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.fidListComboBoxlinePoint.setCurrentNode(movingMarkupsFiducial)
+        q3dcWidget.lineLAComboBox.currentIndex = 0
+        q3dcWidget.lineLBComboBox.currentIndex = 1
+        q3dcWidget.linePointComboBox.currentIndex = 2
 
         self.delayDisplay("Move endpoint, should update midpoint")
-        midpointMarkup = slicer.util.getNode(midpointMarkupID)
+        midpointMarkupIndex = movingMarkupsFiducial.GetMarkupIndexByID(midpointMarkupID)
         initialPosition = [0,]*3
-        midpointMarkup.GetNthFiducialPosition(0, initialPosition)
-        firstMarkupsNode.SetNthFiducialPosition(0, 45, 20, -15)
+        movingMarkupsFiducial.GetNthFiducialPosition(midpointMarkupIndex, initialPosition)
+        movingMarkupsFiducial.SetNthFiducialPosition(0, 45, 20, -15)
         movedPosition = [0,]*3
-        midpointMarkup.GetNthFiducialPosition(0, movedPosition)
+        movingMarkupsFiducial.GetNthFiducialPosition(midpointMarkupIndex, movedPosition)
         if initialPosition == movedPosition:
             print('midpoint landmark did not move')
             return False
