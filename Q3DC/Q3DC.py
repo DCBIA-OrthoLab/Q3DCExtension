@@ -296,17 +296,44 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.computedAnglesList = list()
         self.sceneCloseTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, onCloseScene)
 
+        # CONNECTIONS:
+        slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
         self.UpdateInterface()
         self.logic.initComboboxdict()
         self.layout.addStretch(1)
 
-    def cleanup(self):
-        if self.nodeAddedTag:
-            slicer.app.mrmlScene().RemoveObserver(self.nodeAddedTag)
-            self.nodeAddedTag = None
-        if self.sceneCloseTag:
-            slicer.app.mrmlScene().RemoveObserver(self.sceneCloseTag)
-            self.sceneCloseTag = None
+    def onCloseScene(self, obj, event):
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLModelNode")
+        end = list.GetNumberOfItems()
+        for i in range(0,end):
+            model = list.GetItemAsObject(i)
+            hardenModel = slicer.mrmlScene.GetNodesByName(model.GetName()).GetItemAsObject(0)
+            slicer.mrmlScene.RemoveNode(hardenModel)
+        if self.renderer1 :
+            self.renderer1.RemoveActor(self.actor1)
+        if self.renderer2 :
+            self.renderer2.RemoveActor(self.actor2)
+        if self.renderer3 :
+            self.renderer3.RemoveActor(self.actor2)
+        self.landmarkComboBox1.clear()
+        self.landmarkComboBox.clear()
+        self.fidListComboBoxA.setCurrentNode(None)
+        self.fidListComboBoxB.setCurrentNode(None)
+        self.fidListComboBoxline1LA.setCurrentNode(None)
+        self.fidListComboBoxline1LB.setCurrentNode(None)
+        self.fidListComboBoxline2LA.setCurrentNode(None)
+        self.fidListComboBoxline2LB.setCurrentNode(None)
+        self.line1LAComboBox.clear()
+        self.line1LBComboBox.clear()
+        self.line2LAComboBox.clear()
+        self.line2LBComboBox.clear()
+        self.landmarkComboBox2.clear()
+        self.fidListComboBoxline2LB.setCurrentNode(None)
+        self.inputModelSelector.setCurrentNode(None)
+        self.inputLandmarksSelector.setCurrentNode(None)
+        self.computedDistanceList = []
+        self.computedAnglesList = []
+        self.computedLinePointList = []
 
     def UpdateInterface(self):
         self.defineMiddlePointButton.enabled = self.landmarkComboBox1.currentText != '' and \
