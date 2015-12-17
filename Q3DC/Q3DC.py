@@ -44,15 +44,13 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
         self.computedDistanceList = list()
         self.computedAnglesList = list()
-
+        self.computedLinePointList = list()
         self.renderer1 = None
         self.actor1 = None
         self.renderer2 = None
         self.actor2 = None
-
-        self.nodeAddedTag = None
-        self.sceneCloseTag = None
-
+        self.renderer3 = None
+        self.actor3 = None
 
         # -------------- Input Models ----------------
         self.treeViewGroupBox = ctk.ctkCollapsibleButton()
@@ -270,31 +268,59 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
 
-        self.comboBoxes = [
-                self.landmarkComboBox1, self.landmarkComboBox2,
-                self.landmarkComboBoxA, self.landmarkComboBoxB,
-                self.line1LAComboBox, self.line1LBComboBox, self.line2LAComboBox, self.line2LBComboBox,
-                ]
+#       ------------------- 3rd OPTION -------------------
+#       GroupBox
+        self.linePointGroupBox = ctk.ctkCollapsibleButton()
+        self.linePointGroupBox.setText('Calculate distance between a point and a line:')
+        self.linePointGroupBox.collapsed = True
+        self.parent.layout().addWidget(self.linePointGroupBox)
 
+        landmark4Layout = qt.QFormLayout()
 
-        # CONNECTIONS:
-        self.nodeAddedTag = slicer.app.mrmlScene().AddObserver(slicer.mrmlScene.NodeAddedEvent, self.NodeAdded)
+        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
+        self.lineLAComboBox = landmarkComboBox
+        self.fidListComboBoxlineLA = fidListComboBox
+        landmark4Layout.addRow('Line Landmark A: ', layout)
+        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
+        self.lineLBComboBox = landmarkComboBox
+        self.fidListComboBoxlineLB = fidListComboBox
+        landmark4Layout.addRow('Line Landmark B:', layout)
+        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
+        self.linePointComboBox = landmarkComboBox
+        self.fidListComboBoxlinePoint = fidListComboBox
+        landmark4Layout.addRow('       Point:   ', layout)
+        self.fidListComboBoxlineLA.connect('currentNodeChanged(vtkMRMLNode*)',
+                                      lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlineLA, self.lineLAComboBox))
+        self.fidListComboBoxlineLB.connect('currentNodeChanged(vtkMRMLNode*)',
+                                      lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlineLB, self.lineLBComboBox))
+        self.fidListComboBoxlinePoint.connect('currentNodeChanged(vtkMRMLNode*)',
+                                      lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlinePoint, self.linePointComboBox))
 
-        def onCloseScene(obj, event):
-            if self.renderer1 :
-                self.renderer1.RemoveActor(self.actor1)
-            if self.renderer2 :
-                self.renderer2.RemoveActor(self.actor2)
-            self.numOfMarkupsNode = 0
-            for comboBox in self.comboBoxes:
-                comboBox.clear()
-            self.UpdateInterface()
-            self.markupsDictionary.clear()
-            self.numOfMarkupsNode = 0
-            self.correspondenceLandmarkDict.clear()
-            self.computedDistanceList = list()
-            self.computedAnglesList = list()
-        self.sceneCloseTag = slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, onCloseScene)
+        self.LinePointLayout = qt.QVBoxLayout()
+        self.LinePointLayout.addLayout(landmark4Layout)
+        self.LinePointLayout.addLayout(layout)
+
+        self.linePointGroupBox.setLayout(self.LinePointLayout)
+
+        self.computeLinePointPushButton = qt.QPushButton(' Calculate ')
+        self.LinePointLayout.addWidget(self.computeLinePointPushButton)
+
+        self.linePointTable = qt.QTableWidget()
+
+        self.directoryExportLinePoint = ctk.ctkDirectoryButton()
+        self.exportLinePointButton = qt.QPushButton("Export")
+        self.exportLinePointButton.enabled = True
+        self.exportLinePointLayout = qt.QHBoxLayout()
+        self.exportLinePointLayout.addWidget(self.directoryExportLinePoint)
+        self.exportLinePointLayout.addWidget(self.exportLinePointButton)
+
+        self.tableAndExportLinePointLayout = qt.QVBoxLayout()
+        self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
+        self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
+
+        self.computeLinePointPushButton.connect('clicked()', self.onComputeLinePointClicked)
+        self.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
 
         # CONNECTIONS:
         slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
@@ -358,7 +384,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         if self.renderer2 :
             self.renderer2.RemoveActor(self.actor2)
             self.renderer2 = None
-
+        if self.renderer3 :
+            self.renderer3.RemoveActor(self.actor3)
+            self.renderer3 = None
         if self.line1LAComboBox.currentText != '' and\
                         self.line1LBComboBox.currentText != '' and\
                         self.line1LAComboBox.currentText != self.line1LBComboBox.currentText :
@@ -375,7 +403,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                     self.line2LBComboBox.currentText,
                                                     self.fidListComboBoxline2LA.currentNode(),
                                                     self.fidListComboBoxline2LB.currentNode())
-
+        if self.lineLAComboBox.currentText != '' and\
+                        self.lineLBComboBox.currentText != '' and\
+                        self.lineLAComboBox.currentText != self.lineLBComboBox.currentText:
+            self.renderer3, self.actor3 = \
+                self.logic.drawLineBetween2Landmark(self.lineLAComboBox.currentText,
+                                                    self.lineLBComboBox.currentText,
+                                                    self.fidListComboBoxlineLB.currentNode(),
+                                                    self.fidListComboBoxlineLA.currentNode())
         self.logic.UpdateThreeDView(self.landmarkComboBox.currentText)
 
     def onModelChanged(self):
@@ -555,6 +590,19 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             self.Pitch = None
             self.Roll = None
             self.Yaw = None
+
+    class distanceLinePointStorage(object):
+        def __init__(self):
+            self.landmarkALineID = None
+            self.landmarkBLineID = None
+            self.landmarkPointID = None
+            self.landmarkALineName = None
+            self.landmarkBLineName = None
+            self.landmarkPointName = None
+            self.RLComponent = None
+            self.APComponent = None
+            self.SIComponent = None
+            self.ThreeDComponent = None
 
     def UpdateThreeDView(self, landmarkLabel):
         # Update the 3D view on Slicer
@@ -1274,6 +1322,122 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             i += 1
         return table
 
+    def defineDistancesLinePoint(self, markupsNodeLine1, landmarkLine1Index,
+                                 markupsNodeLine2, landmarkLine2Index,
+                                 markupsNodepoint, landmarkpointIndex):
+        line = vtk.vtkLine()
+        coordLine1 = [-1, -1, -1]
+        coordLine2 = [-1, -1, -1]
+        coordPoint = [-1, -1, -1]
+        markupsNodeLine1.GetNthFiducialPosition(landmarkLine1Index, coordLine1)
+        markupsNodeLine2.GetNthFiducialPosition(landmarkLine2Index, coordLine2)
+        markupsNodepoint.GetNthFiducialPosition(landmarkpointIndex, coordPoint)
+        parametric = vtk.mutable(0)
+        projectCoord = [0, 0, 0]
+        distance = line.DistanceToLine(coordPoint, coordLine1, coordLine2, parametric, projectCoord)
+        diffRAxis = coordPoint[0] - projectCoord[0]
+        diffAAxis = coordPoint[1] - projectCoord[1]
+        diffSAxis = coordPoint[2] - projectCoord[2]
+        return round(diffRAxis, self.numberOfDecimals), \
+               round(diffAAxis, self.numberOfDecimals), \
+               round(diffSAxis, self.numberOfDecimals), \
+               round(math.sqrt(distance), self.numberOfDecimals)
+
+    def addOnLinePointList(self, linePointList,
+                           fidLabelLineA, fidLabelLineB,
+                           fidListLineLA, fidListLineLB,
+                           fidLabelPoint, fidListPoint):
+        lineLAID = self.findIDFromLabel(fidListLineLA, fidLabelLineA)
+        lineLAIndex = fidListLineLA.GetMarkupIndexByID(lineLAID)
+        lineLBID = self.findIDFromLabel(fidListLineLB, fidLabelLineB)
+        lineLBIndex = fidListLineLB.GetMarkupIndexByID(lineLBID)
+        PointID = self.findIDFromLabel(fidListPoint, fidLabelPoint)
+        PointIndex = fidListPoint.GetMarkupIndexByID(PointID)
+        elementToAdd = self.distanceLinePointStorage()
+        # if this distance has already been computed before -> replace values
+        for element in linePointList:
+            if element.landmarkALineID == lineLAID and \
+                            element.landmarkBLineID == lineLBID and\
+                            element.landmarkPointID == PointID:
+                element = self.removecomponentFromStorage('distance', element)
+                element.landmarkALineID = lineLAID
+                element.landmarkBLineID = lineLBID
+                element.landmarkPointID = PointID
+                element.landmarkALineName = fidLabelLineA
+                element.landmarkBLineName = fidLabelLineB
+                element.landmarkPointName = fidLabelPoint
+                element.RLComponent, element.APComponent, element.SIComponent, element.ThreeDComponent = \
+                    self.defineDistancesLinePoint(fidListLineLA, lineLAIndex,
+                                                  fidListLineLB, lineLBIndex,
+                                                  fidListPoint, PointIndex)
+                return linePointList
+        elementToAdd.landmarkALineID = lineLAID
+        elementToAdd.landmarkBLineID = lineLBID
+        elementToAdd.landmarkPointID = PointID
+        elementToAdd.landmarkALineName = fidLabelLineA
+        elementToAdd.landmarkBLineName = fidLabelLineB
+        elementToAdd.landmarkPointName = fidLabelPoint
+        elementToAdd.RLComponent, elementToAdd.APComponent, elementToAdd.SIComponent, elementToAdd.ThreeDComponent = \
+            self.defineDistancesLinePoint(fidListLineLA, lineLAIndex,
+                                          fidListLineLB, lineLBIndex,
+                                          fidListPoint, PointIndex)
+        linePointList.append(elementToAdd)
+        return linePointList
+
+    def defineDistanceLinePointTable(self, table, distanceList):
+        table.clear()
+        table.setRowCount(distanceList.__len__())
+        table.setColumnCount(5)
+        table.setMinimumHeight(50*distanceList.__len__())
+        table.setHorizontalHeaderLabels(['  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
+        i = 0
+        for element in distanceList:
+            landmarkALineName = element.landmarkALineName
+            landmarkBLineName = element.landmarkBLineName
+            landmarkPoint = element.landmarkPointName
+
+            label = qt.QLabel(' ' + str(landmarkALineName) + ' - ' + str(landmarkBLineName) + ' / ' + str(landmarkPoint) + ' ')
+            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+            table.setCellWidget(i, 0,label)
+            if element.RLComponent != None:
+                label = qt.QLabel(element.RLComponent)
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 1, label)
+            else:
+                label = qt.QLabel(' - ')
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 1, label)
+
+            if element.APComponent != None:
+                label = qt.QLabel(element.APComponent)
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 2, label)
+            else:
+                label = qt.QLabel(' - ')
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 2, label)
+
+            if element.SIComponent != None:
+                label = qt.QLabel(element.SIComponent)
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 3, label)
+            else:
+                label = qt.QLabel(' - ')
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 3, label)
+
+            if element.ThreeDComponent != None:
+                label = qt.QLabel(element.ThreeDComponent)
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 4, label)
+            else:
+                label = qt.QLabel(' - ')
+                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+                table.setCellWidget(i, 4, label)
+
+            i += 1
+        return table
+
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
             return
@@ -1360,7 +1524,17 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                                  element.SIComponent,
                                  element.ThreeDComponent])
 
-
+    def writeLinePoint(self, fileWriter, listToExport):
+        for element in listToExport:
+            landmarkALineName = element.landmarkALineName
+            landmarkBLineName = element.landmarkBLineName
+            landmarkPoint = element.landmarkPointName
+            label = landmarkALineName + ' - ' + landmarkBLineName + ' / ' + landmarkPoint
+            fileWriter.writerow([label,
+                                 element.RLComponent,
+                                 element.APComponent,
+                                 element.SIComponent,
+                                 element.ThreeDComponent])
 
     def writeAngle(self, fileWriter, listToExport):
         for element in listToExport:
