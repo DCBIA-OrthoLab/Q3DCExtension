@@ -478,7 +478,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         else:
             landmarkDescription[markupID]["projection"]["isProjected"] = False
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
-        self.logic.updateAllLandmarkComboBox(fidList)
         self.logic.interface.UpdateInterface()
 
     def onComputeDistanceClicked(self):
@@ -610,15 +609,23 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             return
         if not self.selectedModel:
             return
+        print "UpdateThreeDView"
         active = self.selectedFidList
-        landmarkDescription = self.decodeJSON(active.GetAttribute("landmarkDescription"))
+        #deactivate all landmarks
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        end = list.GetNumberOfItems()
         selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
-        for key in landmarkDescription.iterkeys():
-            markupsIndex = active.GetMarkupIndexByID(key)
-            if key != selectedFidReflID:
-                active.SetNthMarkupLocked(markupsIndex, True)
-            else:
-                active.SetNthMarkupLocked(markupsIndex, False)
+        for i in range(0,end):
+            fidList = list.GetItemAsObject(i)
+            print fidList.GetID()
+            landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+            for key in landmarkDescription.iterkeys():
+                markupsIndex = fidList.GetMarkupIndexByID(key)
+                if key != selectedFidReflID:
+                    fidList.SetNthMarkupLocked(markupsIndex, True)
+                else:
+                    fidList.SetNthMarkupLocked(markupsIndex, False)
+                    fidList.SetNthMarkupLocked(markupsIndex, False)
         displayNode = self.selectedModel.GetModelDisplayNode()
         displayNode.SetScalarVisibility(False)
         if selectedFidReflID != False:
@@ -797,9 +804,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         except:
             pass
         try:
-            tag = self.decodeJSON(landmarks.GetAttribute("PointModifiedEventTag"))
-            landmarks.RemoveObserver(tag["PointModifiedEventTag"])
-            print "adding observers removed!"
+            tag = self.decodeJSON(landmarks.GetAttribute("UpdatesLinesEventTag"))
+            landmarks.RemoveObserver(tag["UpdatesLinesEventTag"])
+            print "lines observers removed!"
         except:
             pass
         try:
@@ -811,7 +818,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("MarkupRemovedEventTag"))
             landmarks.RemoveObserver(tag["MarkupRemovedEventTag"])
-            print "moving observers removed!"
+            print "removing observers removed!"
         except:
             pass
         if connectedModelID:
@@ -825,7 +832,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         else:
             self.createNewDataStructure(landmarks, model, onSurface)
         #update of the landmark Combo Box
-        self.updateAllLandmarkComboBox(landmarks)
+        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox)
+        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox1)
+        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox2)
         #adding of listeners
         MarkupAddedEventTag = landmarks.AddObserver(landmarks.MarkupAddedEvent, self.onMarkupAddedEvent)
         landmarks.SetAttribute("MarkupAddedEventTag",self.encodeJSON({"MarkupAddedEventTag":MarkupAddedEventTag}))
@@ -843,7 +852,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         numOfMarkups = obj.GetNumberOfMarkups()
         markupID = obj.GetNthMarkupID(numOfMarkups - 1)
         landmarkDescription[markupID] = dict()
-        landmarkLabel = obj.GetName() + '-' + str(numOfMarkups)
+        landmarkLabel = obj.GetNthMarkupLabel(numOfMarkups - 1)
         landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
         landmarkDescription[markupID]["ROIradius"] = 0
         landmarkDescription[markupID]["projection"] = dict()
@@ -855,7 +864,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarkDescription[markupID]["midPoint"]["Point1"] = None
         landmarkDescription[markupID]["midPoint"]["Point2"] = None
         obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
-        self.updateAllLandmarkComboBox(obj)
+        self.updateAllLandmarkComboBox(obj, markupID)
         self.interface.UpdateInterface()
 
     def updateLinesEvent(self, obj, event):
@@ -941,28 +950,48 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             if not isFound:
                 IDs.append(ID)
         for ID in IDs:
+            self.deleteLandmark(obj, landmarkDescription[ID]["landmarkLabel"])
             landmarkDescription.pop(ID,None)
         obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
-        self.updateAllLandmarkComboBox(obj)
 
-    def updateLandmarkComboBox(self, fidList, combobox):
-        combobox.clear()
+    def addLandmarkToCombox(self, fidList, combobox, markupID):
         if not fidList:
             return
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        for key in landmarkDescription:
-            combobox.addItem(landmarkDescription[key]["landmarkLabel"])
-        combobox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+        combobox.addItem(landmarkDescription[markupID]["landmarkLabel"])
 
-    def updateAllLandmarkComboBox(self, fidList):
+    def updateAllLandmarkComboBox(self, fidList, markupID):
         # update of the Combobox that are always updated
         self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox)
-        self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox1)
-        self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox2)
+        self.addLandmarkToCombox(fidList, self.interface.landmarkComboBox1, markupID)
+        self.addLandmarkToCombox(fidList, self.interface.landmarkComboBox2, markupID)
         #update of the Comboboxes that display the fidcial list just modified
         for key,value in self.comboboxdict.iteritems():
             if value is fidList:
-                self.updateLandmarkComboBox(fidList, key)
+                self.addLandmarkToCombox(fidList, key, markupID)
+
+    def updateLandmarkComboBox(self, fidList, combobox):
+        combobox.blockSignals(True)
+        combobox.clear()
+        if not fidList:
+            return
+        numOfFid = fidList.GetNumberOfMarkups()
+        if numOfFid > 0:
+            for i in range(0, numOfFid):
+                landmarkLabel = fidList.GetNthMarkupLabel(i)
+                combobox.addItem(landmarkLabel)
+        combobox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+        combobox.blockSignals(False)
+
+
+    def deleteLandmark(self, fidList, label):
+        # update of the Combobox that are always updated
+        self.interface.landmarkComboBox.removeItem(self.interface.landmarkComboBox.findText(label))
+        self.interface.landmarkComboBox1.removeItem(self.interface.landmarkComboBox1.findText(label))
+        self.interface.landmarkComboBox2.removeItem(self.interface.landmarkComboBox2.findText(label))
+        for key,value in self.comboboxdict.iteritems():
+            if value is fidList:
+                key.removeItem(key.findText(label))
 
     def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
@@ -1698,8 +1727,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             return input
 
     def UpdateLandmarkComboboxA(self, fidListCombobox, landmarkCombobox):
+        print fidListCombobox
+        print landmarkCombobox
         self.comboboxdict[landmarkCombobox] = fidListCombobox.currentNode()
-        self.updateAllLandmarkComboBox(fidListCombobox.currentNode())
+        self.updateLandmarkComboBox(fidListCombobox.currentNode(), landmarkCombobox)
 
 
 class Q3DCTest(ScriptedLoadableModuleTest):
