@@ -1759,12 +1759,12 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         self.assertTrue(self.test_CalculateDisplacement1())
         self.delayDisplay(' Test Angles Components')
         self.assertTrue(self.test_CalculateDisplacement2())
-        self.delayDisplay(' Tests Passed! ')
 
         self.test_CalculateDisplacement1()
         self.test_CalculateDisplacement2()
 
         self.test_SimulateTutorial()
+        self.delayDisplay(' Tests Passed! ')
 
     def test_CalculateDisplacement1(self):
         logic = Q3DCLogic(slicer.modules.Q3DCWidget)
@@ -1917,6 +1917,7 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         q3dcWidget.lineLBComboBox.currentIndex = 1
         q3dcWidget.linePointComboBox.currentIndex = 2
 
+        q3dcWidget.landmarkComboBox.setCurrentIndex(0)
         self.delayDisplay("Move endpoint, should update midpoint")
         midpointMarkupIndex = movingMarkupsFiducial.GetMarkupIndexByID(midpointMarkupID)
         initialPosition = [0,]*3
