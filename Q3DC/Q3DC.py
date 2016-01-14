@@ -461,6 +461,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         landmark2ID = self.logic.findIDFromLabel(fidList,self.landmarkComboBox2.currentText)
         coord = self.logic.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
         fidList.AddFiducial(coord[0],coord[1],coord[2])
+        fidList.SetNthFiducialSelected(fidList.GetNumberOfMarkups() - 1, False)
         # update of the data structure
         landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         numOfMarkups = fidList.GetNumberOfMarkups()
@@ -479,6 +480,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription[markupID]["projection"]["isProjected"] = False
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
         self.logic.interface.UpdateInterface()
+        self.logic.updateLandmarkComboBox(fidList, self.landmarkComboBox, False)
 
     def onComputeDistanceClicked(self):
         if self.computedDistanceList:
@@ -970,17 +972,24 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             if value is fidList:
                 self.addLandmarkToCombox(fidList, key, markupID)
 
-    def updateLandmarkComboBox(self, fidList, combobox):
+    def updateLandmarkComboBox(self, fidList, combobox, displayMidPoint = True):
         combobox.blockSignals(True)
+        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         combobox.clear()
         if not fidList:
             return
         numOfFid = fidList.GetNumberOfMarkups()
         if numOfFid > 0:
             for i in range(0, numOfFid):
-                landmarkLabel = fidList.GetNthMarkupLabel(i)
-                combobox.addItem(landmarkLabel)
-        combobox.setCurrentIndex(self.interface.landmarkComboBox.count - 1)
+                if displayMidPoint is False:
+                    ID = fidList.GetNthMarkupID(i)
+                    if not landmarkDescription[ID]["midPoint"]["isMidPoint"]:
+                        landmarkLabel = fidList.GetNthMarkupLabel(i)
+                        combobox.addItem(landmarkLabel)
+                else:
+                    landmarkLabel = fidList.GetNthMarkupLabel(i)
+                    combobox.addItem(landmarkLabel)
+        combobox.setCurrentIndex(combobox.count - 1)
         combobox.blockSignals(False)
 
 
