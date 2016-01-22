@@ -4,10 +4,13 @@ set(MODULE_NAME Q3DC)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
+  ${MODULE_NAME}Logic.py
+  ${MODULE_NAME}Test.py
   )
 
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
+  Resources/UI/${MODULE_NAME}.ui
   )
 
 #-----------------------------------------------------------------------------

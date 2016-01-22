@@ -52,125 +52,58 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.renderer3 = None
         self.actor3 = None
 
-        # -------------- Input Models ----------------
-        self.treeViewGroupBox = ctk.ctkCollapsibleButton()
-        self.treeViewGroupBox.setText('Visibility of Models and Fiducials')
-        self.treeViewGroupBox.collapsed = True
-        self.parent.layout().addWidget(self.treeViewGroupBox)
-        treeView = slicer.qMRMLTreeView()
+
+        # UI setup
+        loader = qt.QUiLoader()
+        moduleName = 'Q3DC'
+        scriptedModulesPath = eval('slicer.modules.%s.path' % moduleName.lower())
+        scriptedModulesPath = os.path.dirname(scriptedModulesPath)
+        path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' %moduleName)
+
+        qfile = qt.QFile(path)
+        qfile.open(qt.QFile.ReadOnly)
+        widget = loader.load(qfile, self.parent)
+        self.layout = self.parent.layout()
+        self.widget = widget
+        self.layout.addWidget(widget)
+
+        #--------------------------- Scene --------------------------#
+        treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
-        treeView.setSceneModelType('Displayable')
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
-        header = treeView.header()
-        header.setResizeMode(0, qt.QHeaderView.Stretch)
-        header.setVisible(False)
-        self.treeLayout = qt.QVBoxLayout()
-        self.treeLayout.addWidget(treeView)
-        self.treeViewGroupBox.setLayout(self.treeLayout)
-
+        treeView.header().setVisible(False)
         # --------------- landmark modification --------------
-        self.landmarkModif = ctk.ctkCollapsibleButton()
-        self.landmarkModif.setText('Add and Move Landmarks')
-        self.landmarkModif.collapsed = False
-        self.parent.layout().addWidget(self.landmarkModif)
-
-        self.inputModelSelector = slicer.qMRMLNodeComboBox()
-        self.inputModelSelector.nodeTypes = ['vtkMRMLModelNode']
-        self.inputModelSelector.addEnabled = False
-        self.inputModelSelector.removeEnabled = False
-        self.inputModelSelector.noneEnabled = True
-        self.inputModelSelector.showHidden = False
-        self.inputModelSelector.showChildNodeTypes = False
+        self.landmarkModif = self.logic.get("landmarkModif")
+        self.inputModelSelector = self.logic.get("inputModelSelector")
         self.inputModelSelector.setMRMLScene(slicer.mrmlScene)
-        addLandmarkButton = qt.QPushButton(qt.QIcon(":/Icons/plus.png"), " ")
-        addLandmarkButton.connect('clicked()', self.onAddLandmarkButtonClicked)
         self.inputModelSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onModelChanged)
-
-        self.inputLandmarksSelector = slicer.qMRMLNodeComboBox()
-        self.inputLandmarksSelector.objectName = 'inputFiducialsNodeSelector'
-        self.inputLandmarksSelector.nodeTypes = ['vtkMRMLMarkupsFiducialNode']
-        self.inputLandmarksSelector.selectNodeUponCreation = True
-        self.inputLandmarksSelector.addEnabled = True
-        self.inputLandmarksSelector.removeEnabled = False
-        self.inputLandmarksSelector.noneEnabled = True
-        self.inputLandmarksSelector.renameEnabled = True
-        self.inputLandmarksSelector.showHidden = False
-        self.inputLandmarksSelector.showChildNodeTypes = True
+        self.addLandmarkButton = self.logic.get("addLandmarkButton")
+        self.addLandmarkButton.connect('clicked()', self.onAddLandmarkButtonClicked)
+        self.inputLandmarksSelector = self.logic.get("inputLandmarksSelector")
         self.inputLandmarksSelector.setMRMLScene(slicer.mrmlScene)
-        self.inputLandmarksSelector.setEnabled(False)
         self.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
-
-        # Load on the surface
-        self.loadLandmarksOnSurfacCheckBox = qt.QCheckBox("On Surface")
-        self.loadLandmarksOnSurfacCheckBox.setChecked(True)
-
-        int = qt.QFormLayout()
-        int.addRow(self.inputLandmarksSelector,self.loadLandmarksOnSurfacCheckBox)
-
-        self.landmarkComboBox = qt.QComboBox()
+        self.loadLandmarksOnSurfacCheckBox = self.logic.get("loadLandmarksOnSurfacCheckBox")
+        self.landmarkComboBox = self.logic.get("landmarkComboBox")
         self.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
-
-        modelSelection = qt.QFormLayout()
-        modelSelection.addRow("Model of reference:", self.inputModelSelector)
-        modelSelection.addRow("Connected landmarks:", int)
-        modelSelection.addRow(addLandmarkButton)
-        modelSelection.addRow("Select a Landmark:", self.landmarkComboBox)
-
-        # input landmarks Frames
-        inputLandmarksSelectorFrame = qt.QFrame(self.parent)
-        inputLandmarksSelectorFrame.setLayout(modelSelection)
-        landmarkModifLayout = qt.QVBoxLayout()
-        landmarkModifLayout.addWidget(inputLandmarksSelectorFrame)
-        self.landmarkModif.setLayout(landmarkModifLayout)
-
         #        ----------------- Compute Mid Point -------------
-        self.midPointGroupBox = ctk.ctkCollapsibleButton()
-        self.midPointGroupBox.setText('Define middle point between two landmarks')
-        self.midPointGroupBox.collapsed = True
-        self.parent.layout().addWidget(self.midPointGroupBox)
-        self.landmarkComboBox1 = qt.QComboBox()
-        self.landmarkComboBox2 = qt.QComboBox()
-        landmark1Layout = qt.QFormLayout()
-        landmark1Layout.addRow('Landmark A: ', self.landmarkComboBox1)
-        landmark1Layout.addRow('Landmark B: ', self.landmarkComboBox2)
-
-        self.defineMiddlePointButton = qt.QPushButton(' Define middle  point ')
-        self.midPointOnSurfaceCheckBox = qt.QCheckBox('On Surface')
-        self.midPointOnSurfaceCheckBox.setChecked(False)
-        exportLayout_1 = qt.QFormLayout()
-        exportLayout_1.addRow(self.midPointOnSurfaceCheckBox, self.defineMiddlePointButton)
-        self.midPointLayout = qt.QVBoxLayout()
-        self.midPointLayout.addLayout(landmark1Layout)
-        self.midPointLayout.addLayout(exportLayout_1)
-        self.midPointGroupBox.setLayout(self.midPointLayout)
-
-        self.defineMiddlePointButton.connect('clicked()', self.onDefineMidPointClicked)
+        self.midPointGroupBox = self.logic.get("midPointGroupBox")
+        self.landmarkComboBox1 = self.logic.get("landmarkComboBox1")
         self.landmarkComboBox1.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.landmarkComboBox2 = self.logic.get("landmarkComboBox2")
         self.landmarkComboBox2.connect('currentIndexChanged(int)', self.UpdateInterface)
-
+        self.defineMiddlePointButton = self.logic.get("defineMiddlePointButton")
+        self.defineMiddlePointButton.connect('clicked()', self.onDefineMidPointClicked)
+        self.midPointOnSurfaceCheckBox = self.logic.get("midPointOnSurfaceCheckBox")
 #        ------------------- 1st OPTION -------------------
-#        GroupBox
-        self.distanceGroupBox = ctk.ctkCollapsibleButton()
-        self.distanceGroupBox.setText('Calculate distance between two landmarks: ')
-        self.distanceGroupBox.collapsed = True
-        self.parent.layout().addWidget(self.distanceGroupBox)
-
-        landmark2Layout = qt.QFormLayout()
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.landmarkComboBoxA = landmarkComboBox
-        self.fidListComboBoxA = fidListComboBox
-        landmark2Layout.addRow('Landmark A: ', layout)
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.landmarkComboBoxB = landmarkComboBox
-        self.fidListComboBoxB = fidListComboBox
-        landmark2Layout.addRow('Landmark B: ', layout)
-        self.computeDistancesPushButton = qt.QPushButton(' Calculate ')
-        self.distanceLayout = qt.QVBoxLayout()
-        self.distanceLayout.addLayout(landmark2Layout)
-        self.distanceLayout.addWidget(self.computeDistancesPushButton)
-        self.distanceGroupBox.setLayout(self.distanceLayout)
-
+        self.distanceGroupBox = self.logic.get("distanceGroupBox")
+        self.landmarkComboBoxA = self.logic.get("landmarkComboBoxA")
+        self.fidListComboBoxA = self.logic.get("fidListComboBoxA")
+        self.fidListComboBoxA.setMRMLScene(slicer.mrmlScene)
+        self.landmarkComboBoxB = self.logic.get("landmarkComboBoxB")
+        self.fidListComboBoxB = self.logic.get("fidListComboBoxB")
+        self.fidListComboBoxB.setMRMLScene(slicer.mrmlScene)
+        self.computeDistancesPushButton = self.logic.get("computeDistancesPushButton")
         self.computeDistancesPushButton.connect('clicked()', self.onComputeDistanceClicked)
         self.landmarkComboBoxA.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.landmarkComboBoxB.connect('currentIndexChanged(int)', self.UpdateInterface)
@@ -178,46 +111,37 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxA, self.landmarkComboBoxA))
         self.fidListComboBoxB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxB, self.landmarkComboBoxB))
-
-        self.distanceTable = qt.QTableWidget()
         # ---------------------------- Directory - Export Button -----------------------------
+        self.distanceLayout = self.logic.get("distanceLayout")
+        self.distanceTable = qt.QTableWidget()
         self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.exportDistanceButton = qt.QPushButton(" Export ")
         self.exportDistanceButton.enabled = True
         self.exportDistanceLayout = qt.QHBoxLayout()
         self.exportDistanceLayout.addWidget(self.directoryExportDistance)
         self.exportDistanceLayout.addWidget(self.exportDistanceButton)
-
         self.tableAndExportLayout = qt.QVBoxLayout()
         self.tableAndExportLayout.addWidget(self.distanceTable)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
-
-
 #       ------------------- 2nd OPTION -------------------
-#       GroupBox
-        self.angleGroupBox = ctk.ctkCollapsibleButton()
-        self.angleGroupBox.setText('Calculate angle between two lines: ')
-        self.angleGroupBox.collapsed = True
-        self.parent.layout().addWidget(self.angleGroupBox)
-
-        landmark3Layout = qt.QFormLayout()
-
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.line1LAComboBox = landmarkComboBox
-        self.fidListComboBoxline1LA = fidListComboBox
-        landmark3Layout.addRow('Line 1 Landmark A: ', layout)
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.line1LBComboBox = landmarkComboBox
-        self.fidListComboBoxline1LB = fidListComboBox
-        landmark3Layout.addRow('Line 1 Landmark B:', layout)
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.line2LAComboBox = landmarkComboBox
-        self.fidListComboBoxline2LA = fidListComboBox
-        landmark3Layout.addRow('Line 2 Landmark A: ', layout)
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.line2LBComboBox = landmarkComboBox
-        self.fidListComboBoxline2LB = fidListComboBox
-        landmark3Layout.addRow('Line 2 Landmark B:', layout)
+        self.angleLayout = self.logic.get("angleLayout")
+        self.angleGroupBox = self.logic.get("angleGroupBox")
+        self.line1LAComboBox = self.logic.get("line1LAComboBox")
+        self.fidListComboBoxline1LA = self.logic.get("fidListComboBoxline1LA")
+        self.fidListComboBoxline1LA.setMRMLScene(slicer.mrmlScene)
+        self.line1LBComboBox = self.logic.get("line1LBComboBox")
+        self.fidListComboBoxline1LB = self.logic.get("fidListComboBoxline1LB")
+        self.fidListComboBoxline1LB.setMRMLScene(slicer.mrmlScene)
+        self.line2LAComboBox = self.logic.get("line2LAComboBox")
+        self.fidListComboBoxline2LA = self.logic.get("fidListComboBoxline2LA")
+        self.fidListComboBoxline2LA.setMRMLScene(slicer.mrmlScene)
+        self.line2LBComboBox = self.logic.get("line2LBComboBox")
+        self.fidListComboBoxline2LB = self.logic.get("fidListComboBoxline2LB")
+        self.fidListComboBoxline2LB.setMRMLScene(slicer.mrmlScene)
+        self.pitchCheckBox = self.logic.get("pitchCheckBox")
+        self.rollCheckBox = self.logic.get("rollCheckBox")
+        self.yawCheckBox = self.logic.get("yawCheckBox")
+        self.computeAnglesPushButton = self.logic.get("computeAnglesPushButton")
         self.fidListComboBoxline1LA.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxline1LA, self.line1LAComboBox))
         self.fidListComboBoxline1LB.connect('currentNodeChanged(vtkMRMLNode*)',
@@ -226,107 +150,63 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxline2LA, self.line2LAComboBox))
         self.fidListComboBoxline2LB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxline2LB, self.line2LBComboBox))
+        self.computeAnglesPushButton.connect('clicked()', self.onComputeAnglesClicked)
+        self.line1LAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.line1LBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.line2LAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.line2LBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.pitchCheckBox.connect('clicked(bool)', self.UpdateInterface)
+        self.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
+        self.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
 
-
-        layout = qt.QHBoxLayout()
-        self.pitchCheckBox = qt.QCheckBox('Calculate Pitch')
-        self.rollCheckBox = qt.QCheckBox('Calculate Roll')
-        self.yawCheckBox = qt.QCheckBox('Calculate Yaw')
-        layout.addWidget(self.pitchCheckBox)
-        layout.addWidget(self.rollCheckBox)
-        layout.addWidget(self.yawCheckBox)
-
-        self.angleLayout = qt.QVBoxLayout()
-        self.angleLayout.addLayout(landmark3Layout)
-        self.angleLayout.addLayout(layout)
-
-        self.angleGroupBox.setLayout(self.angleLayout)
-
-        self.computeAnglesPushButton = qt.QPushButton(' Calculate ')
-        self.angleLayout.addWidget(self.computeAnglesPushButton)
-
+        # ---------------------------- Directory - Export Button -----------------------------
         self.anglesTable = qt.QTableWidget()
-
         self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.exportAngleButton = qt.QPushButton("Export")
         self.exportAngleButton.enabled = True
         self.exportAngleLayout = qt.QHBoxLayout()
         self.exportAngleLayout.addWidget(self.directoryExportAngle)
         self.exportAngleLayout.addWidget(self.exportAngleButton)
-
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
         self.tableAndExportAngleLayout.addWidget(self.anglesTable)
         self.tableAndExportAngleLayout.addLayout(self.exportAngleLayout)
-
-        self.computeAnglesPushButton.connect('clicked()', self.onComputeAnglesClicked)
-        self.line1LAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-        self.line1LBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-        self.line2LAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-        self.line2LBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-
-        self.pitchCheckBox.connect('clicked(bool)', self.UpdateInterface)
-        self.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
-        self.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
-
 #       ------------------- 3rd OPTION -------------------
-#       GroupBox
-        self.linePointGroupBox = ctk.ctkCollapsibleButton()
-        self.linePointGroupBox.setText('Calculate distance between a point and a line:')
-        self.linePointGroupBox.collapsed = True
-        self.parent.layout().addWidget(self.linePointGroupBox)
-
-        landmark4Layout = qt.QFormLayout()
-
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.lineLAComboBox = landmarkComboBox
-        self.fidListComboBoxlineLA = fidListComboBox
-        landmark4Layout.addRow('Line Landmark A: ', layout)
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.lineLBComboBox = landmarkComboBox
-        self.fidListComboBoxlineLB = fidListComboBox
-        landmark4Layout.addRow('Line Landmark B:', layout)
-        layout, landmarkComboBox, fidListComboBox = self.logic.newLandmarkSelectionArea()
-        self.linePointComboBox = landmarkComboBox
-        self.fidListComboBoxlinePoint = fidListComboBox
-        landmark4Layout.addRow('       Point:   ', layout)
+        self.linePointGroupBox = self.logic.get("linePointGroupBox")
+        self.lineLAComboBox = self.logic.get("lineLAComboBox")
+        self.fidListComboBoxlineLA = self.logic.get("fidListComboBoxlineLA")
+        self.fidListComboBoxlineLA.setMRMLScene(slicer.mrmlScene)
+        self.lineLBComboBox = self.logic.get("lineLBComboBox")
+        self.fidListComboBoxlineLB = self.logic.get("fidListComboBoxlineLB")
+        self.fidListComboBoxlineLB.setMRMLScene(slicer.mrmlScene)
+        self.linePointComboBox = self.logic.get("linePointComboBox")
+        self.fidListComboBoxlinePoint = self.logic.get("fidListComboBoxlinePoint")
+        self.fidListComboBoxlinePoint.setMRMLScene(slicer.mrmlScene)
+        self.computeLinePointPushButton = self.logic.get("computeLinePointPushButton")
         self.fidListComboBoxlineLA.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlineLA, self.lineLAComboBox))
         self.fidListComboBoxlineLB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlineLB, self.lineLBComboBox))
         self.fidListComboBoxlinePoint.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlinePoint, self.linePointComboBox))
-
-        self.LinePointLayout = qt.QVBoxLayout()
-        self.LinePointLayout.addLayout(landmark4Layout)
-        self.LinePointLayout.addLayout(layout)
-
-        self.linePointGroupBox.setLayout(self.LinePointLayout)
-
-        self.computeLinePointPushButton = qt.QPushButton(' Calculate ')
-        self.LinePointLayout.addWidget(self.computeLinePointPushButton)
-
+        self.computeLinePointPushButton.connect('clicked()', self.onComputeLinePointClicked)
+        self.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        self.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
+        # ---------------------------- Directory - Export Button -----------------------------
+        self.LinePointLayout = self.logic.get("LinePointLayout")
         self.linePointTable = qt.QTableWidget()
-
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.exportLinePointButton = qt.QPushButton("Export")
         self.exportLinePointButton.enabled = True
         self.exportLinePointLayout = qt.QHBoxLayout()
         self.exportLinePointLayout.addWidget(self.directoryExportLinePoint)
         self.exportLinePointLayout.addWidget(self.exportLinePointButton)
-
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
         self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
         self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
-
-        self.computeLinePointPushButton.connect('clicked()', self.onComputeLinePointClicked)
-        self.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-        self.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-
-        # CONNECTIONS:
+        # INITIALISATION:
         slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
         self.UpdateInterface()
         self.logic.initComboboxdict()
-        self.layout.addStretch(1)
 
     def onCloseScene(self, obj, event):
         list = slicer.mrmlScene.GetNodesByClass("vtkMRMLModelNode")
@@ -555,6 +435,28 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         system = qt.QLocale().system()
         self.decimalPoint = chr(system.decimalPoint())
         self.comboboxdict = dict()
+
+    def get(self, objectName):
+        return self.findWidget(self.interface.widget, objectName)
+
+    def getChildren(self, object):
+        '''Return the list of the children and grand children of a Qt object'''
+        children = object.children()
+        allChildren = list(children)
+        for child in children:
+          allChildren.extend( self.getChildren(child) )
+        return allChildren
+
+    def findWidget(self, widget, objectName):
+        if widget.objectName == objectName:
+            return widget
+        else:
+            children = []
+            for w in widget.children():
+                resulting_widget = self.findWidget(w, objectName)
+                if resulting_widget:
+                    return resulting_widget
+            return None
 
     def initComboboxdict(self):
         self.comboboxdict[self.interface.landmarkComboBoxA] = None
@@ -927,6 +829,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         obj.RemoveObserver(tag["PointModifiedEventTag"])
         if selectedLandmarkID:
             activeLandmarkState = landmarkDescription[selectedLandmarkID]
+            print activeLandmarkState
             if activeLandmarkState["projection"]["isProjected"]:
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(obj.GetAttribute("hardenModelID"))
                 activeLandmarkState["projection"]["closestPointIndex"] = \
@@ -1024,6 +927,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def replaceLandmark(self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint):
         landmarkCoord = [-1, -1, -1]
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
+        print landmarkCoord
         fidNode.SetNthFiducialPositionFromArray(landmarkID,landmarkCoord)
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
@@ -1537,10 +1441,11 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         #  Export fields on different csv files
         file = open(filename, 'w')
         cw = csv.writer(file, delimiter=',')
+        print typeCalculation
         if typeCalculation == 'distance':
             cw.writerow([' Landmark A - Landmark B',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
             self.writeDistance(cw, listToExport)
-        if typeCalculation == 'linePoint':
+        elif typeCalculation == 'linePoint':
             cw.writerow([' Landmark A - Landmark B',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
             self.writeLinePoint(cw, listToExport)
         else:
@@ -1576,6 +1481,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def writeAngle(self, fileWriter, listToExport):
         for element in listToExport:
+            print "element"
+            print element
             landmarkALine1Name = element.landmarkALine1Name
             landmarkBLine1Name = element.landmarkBLine1Name
             landmarkALine2Name = element.landmarkALine2Name
@@ -1616,24 +1523,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         file = open(filename, 'w')
         file.writelines(lines)
         file.close()
-
-    def newLandmarkSelectionArea(self):
-        landmarkComboBox = qt.QComboBox()
-        fidListComboBox = slicer.qMRMLNodeComboBox()
-        fidListComboBox.objectName = 'inputFiducialsNodeSelector'
-        fidListComboBox.nodeTypes = ['vtkMRMLMarkupsFiducialNode']
-        fidListComboBox.selectNodeUponCreation = True
-        fidListComboBox.addEnabled = True
-        fidListComboBox.removeEnabled = False
-        fidListComboBox.noneEnabled = True
-        fidListComboBox.renameEnabled = True
-        fidListComboBox.showHidden = False
-        fidListComboBox.showChildNodeTypes = True
-        fidListComboBox.setMRMLScene(slicer.mrmlScene)
-        fidListComboBox.setEnabled(True)
-        layout = qt.QFormLayout()
-        layout.addRow(fidListComboBox, landmarkComboBox)
-        return (layout, landmarkComboBox, fidListComboBox)
 
     def GetConnectedVertices(self, connectedVerticesIDList, polyData, pointID):
         # Return IDs of all the vertices that compose the first neighbor.
