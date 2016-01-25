@@ -85,6 +85,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.loadLandmarksOnSurfacCheckBox = self.logic.get("loadLandmarksOnSurfacCheckBox")
         self.landmarkComboBox = self.logic.get("landmarkComboBox")
         self.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
+        self.surfaceDeplacementCheckBox = self.logic.get("surfaceDeplacementCheckBox")
+        self.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
         #        ----------------- Compute Mid Point -------------
         self.midPointGroupBox = self.logic.get("midPointGroupBox")
         self.landmarkComboBox1 = self.logic.get("landmarkComboBox1")
@@ -331,6 +333,27 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 self.logic.warningMessage("Please select a fiducial list")
         else:
             self.logic.warningMessage("Please select a model")
+
+    def onSurfaceDeplacementStateChanged(self):
+        activeInput = self.logic.selectedModel
+        if not activeInput:
+            return
+        fidList = self.logic.selectedFidList
+        if not fidList:
+            return
+        selectedFidReflID = self.logic.findIDFromLabel(fidList, self.landmarkComboBox.currentText)
+        isOnSurface = self.surfaceDeplacementCheckBox.isChecked()
+        landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        if isOnSurface:
+            hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
+            landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = True
+            landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] =\
+                self.logic.projectOnSurface(hardenModel, fidList, selectedFidReflID)
+        else:
+            landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = False
+            landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] = None
+            landmarkDescription[selectedFidReflID]["ROIradius"] = 0
+        fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
     def onDefineMidPointClicked(self):
         fidList = self.logic.selectedFidList
