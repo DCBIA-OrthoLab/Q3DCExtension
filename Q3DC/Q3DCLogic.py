@@ -301,6 +301,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 else:
                     landmarkSelector.setCurrentNode(None)
                     return
+            else:
+                landmarks.SetAttribute("hardenModelID",model.GetAttribute("hardenModelID"))
         # creation of the data structure
         else:
             self.createNewDataStructure(landmarks, model, onSurface)
@@ -446,6 +448,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def updateLandmarkComboBox(self, fidList, combobox, displayMidPoint = True):
         combobox.blockSignals(True)
+        if not fidList:
+            return
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
         combobox.clear()
         if not fidList:
