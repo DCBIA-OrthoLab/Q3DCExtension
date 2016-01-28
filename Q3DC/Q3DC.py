@@ -290,8 +290,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.renderer3, self.actor3 = \
                 self.logic.drawLineBetween2Landmark(self.lineLAComboBox.currentText,
                                                     self.lineLBComboBox.currentText,
-                                                    self.fidListComboBoxlineLB.currentNode(),
-                                                    self.fidListComboBoxlineLA.currentNode())
+                                                    self.fidListComboBoxlineLA.currentNode(),
+                                                    self.fidListComboBoxlineLB.currentNode())
         self.logic.UpdateThreeDView(self.landmarkComboBox.currentText)
 
     def onModelChanged(self):

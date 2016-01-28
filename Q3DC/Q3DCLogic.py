@@ -484,7 +484,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         for ID, value in landmarkDescription.iteritems():
             if value["landmarkLabel"] == landmarkLabel:
                 return ID
-        return False
+        return None
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
         landmarkCoord = numpy.zeros(3)
@@ -956,6 +956,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
             return
+        print "1:"
+        print fidList1.GetName()
+        print landmark1label
+        print "2:"
+        print fidList2.GetName()
+        print landmark2label
         landmark1ID = self.findIDFromLabel(fidList1, landmark1label)
         landmark2ID = self.findIDFromLabel(fidList2, landmark2label)
 
