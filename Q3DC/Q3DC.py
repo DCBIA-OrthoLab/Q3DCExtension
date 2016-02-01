@@ -242,6 +242,18 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedAnglesList = []
         self.computedLinePointList = []
 
+    def enter(self):
+        print "eneter Q3DC"
+        model = self.inputModelSelector.currentNode()
+        fidlist = self.inputLandmarksSelector.currentNode()
+
+        if fidlist:
+            if fidlist.GetAttribute("connectedModelID") != model.GetID():
+                self.inputModelSelector.setCurrentNode(None)
+                self.inputLandmarksSelector.setCurrentNode(None)
+                self.landmarkComboBox.clear()
+        self.UpdateInterface()
+
     def UpdateInterface(self):
         self.defineMiddlePointButton.enabled = self.landmarkComboBox1.currentText != '' and \
                                                self.landmarkComboBox2.currentText != '' and \

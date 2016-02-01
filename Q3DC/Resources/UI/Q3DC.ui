@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>493</width>
-    <height>1036</height>
+    <width>503</width>
+    <height>765</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -410,7 +410,7 @@
       <string>Calculate angle between two lines:</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="contentsFrameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -628,7 +628,7 @@
       <string>Calculate Distance between a line and a point:</string>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="contentsFrameShape">
       <enum>QFrame::StyledPanel</enum>
