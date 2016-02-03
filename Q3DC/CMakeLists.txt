@@ -4,7 +4,6 @@ set(MODULE_NAME Q3DC)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
-  ${MODULE_NAME}Logic.py
   )
 
 set(MODULE_PYTHON_RESOURCES
