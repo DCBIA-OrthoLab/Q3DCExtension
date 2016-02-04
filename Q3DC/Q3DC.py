@@ -3,6 +3,7 @@ from slicer.ScriptedLoadableModule import *
 import numpy, csv, os
 import json
 import time
+import math
 
 #
 # CalculateDisplacement
