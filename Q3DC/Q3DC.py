@@ -37,7 +37,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.landmarkDictionary = None   # key: landmark ID
                                              # value: ID of the model of reference
     def setup(self):
-        print "------Setup-----"
+        print "-------Q3DC Widget Setup------"
         ScriptedLoadableModuleWidget.setup(self)
         # GLOBALS:
         self.logic = Q3DCLogic(self)
@@ -68,12 +68,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.layout.addWidget(widget)
 
         #--------------------------- Scene --------------------------#
+        self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
         treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
         # --------------- landmark modification --------------
+        self.inputModelLabel = self.logic.get("inputModelLabel")  # this atribute is usefull for Longitudinal quantification extension
+        self.inputLandmarksLabel = self.logic.get("inputLandmarksLabel")  # this atribute is usefull for Longitudinal quantification extension
         self.landmarkModif = self.logic.get("landmarkModif")
         self.inputModelSelector = self.logic.get("inputModelSelector")
         self.inputModelSelector.setMRMLScene(slicer.mrmlScene)
