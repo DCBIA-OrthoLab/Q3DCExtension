@@ -1469,7 +1469,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             messageBox.setInformativeText('Do you want to replace it ?')
             messageBox.setStandardButtons( messageBox.No | messageBox.Yes)
             choice = messageBox.exec_()
-            if choice == messageBox.NoToAll:
+            if choice == messageBox.No:
                 return
         self.exportAsCSV(fileName, listToExport, typeCalculation)
         slicer.util.delayDisplay("Saved to fileName")
