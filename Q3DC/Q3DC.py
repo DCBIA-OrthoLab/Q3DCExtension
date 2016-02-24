@@ -908,10 +908,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def updateLandmarkComboBox(self, fidList, combobox, displayMidPoint = True):
         combobox.blockSignals(True)
+        combobox.clear()
         if not fidList:
             return
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        combobox.clear()
         if not fidList:
             return
         numOfFid = fidList.GetNumberOfMarkups()
