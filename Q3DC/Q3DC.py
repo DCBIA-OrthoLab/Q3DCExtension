@@ -85,6 +85,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.addLandmarkButton.connect('clicked()', self.onAddLandmarkButtonClicked)
         self.inputLandmarksSelector = self.logic.get("inputLandmarksSelector")
         self.inputLandmarksSelector.setMRMLScene(slicer.mrmlScene)
+        self.inputLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
         self.loadLandmarksOnSurfacCheckBox = self.logic.get("loadLandmarksOnSurfacCheckBox")
         self.landmarkComboBox = self.logic.get("landmarkComboBox")
