@@ -275,6 +275,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                (self.pitchCheckBox.isChecked() or
                                                 self.rollCheckBox.isChecked() or
                                                 self.yawCheckBox.isChecked() )
+        self.computeLinePointPushButton.enabled = self.lineLAComboBox.currentText != '' and\
+                                                  self.lineLBComboBox.currentText != '' and\
+                                                  self.linePointComboBox.currentText != '' and\
+                                                  self.lineLAComboBox.currentText != self.lineLBComboBox.currentText
+
         # Clear Lines:
         if self.renderer1 :
             self.renderer1.RemoveActor(self.actor1)
@@ -1666,10 +1671,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             return input
 
     def UpdateLandmarkComboboxA(self, fidListCombobox, landmarkCombobox):
-        print fidListCombobox
-        print landmarkCombobox
         self.comboboxdict[landmarkCombobox] = fidListCombobox.currentNode()
         self.updateLandmarkComboBox(fidListCombobox.currentNode(), landmarkCombobox)
+        self.interface.UpdateInterface()
 
 class Q3DCTest(ScriptedLoadableModuleTest):
 
