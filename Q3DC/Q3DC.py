@@ -731,10 +731,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             landmarkSelector.setCurrentNode(None)
             return
         connectedModelID = landmarks.GetAttribute("connectedModelID")
-        print landmarks
-        print landmarks.GetID()
-        print connectedModelID
-        print landmarks.GetAttribute("landmarkDescription")
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("MarkupAddedEventTag"))
             landmarks.RemoveObserver(tag["MarkupAddedEventTag"])
@@ -772,7 +768,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         else:
             self.createNewDataStructure(landmarks, model, onSurface)
         #update of the landmark Combo Box
-        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox)
+        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox, False)
         self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox1)
         self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox2)
         #adding of listeners
@@ -903,7 +899,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def updateAllLandmarkComboBox(self, fidList, markupID):
         # update of the Combobox that are always updated
-        self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox)
+        self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox, False)
         self.addLandmarkToCombox(fidList, self.interface.landmarkComboBox1, markupID)
         self.addLandmarkToCombox(fidList, self.interface.landmarkComboBox2, markupID)
         #update of the Comboboxes that display the fidcial list just modified
@@ -1421,12 +1417,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
             return
-        print "1:"
-        print fidList1.GetName()
-        print landmark1label
-        print "2:"
-        print fidList2.GetName()
-        print landmark2label
         landmark1ID = self.findIDFromLabel(fidList1, landmark1label)
         landmark2ID = self.findIDFromLabel(fidList2, landmark2label)
 
