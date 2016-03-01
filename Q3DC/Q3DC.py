@@ -248,7 +248,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedLinePointList = []
 
     def enter(self):
-        print "eneter Q3DC"
+        print "enter Q3DC"
         model = self.inputModelSelector.currentNode()
         fidlist = self.inputLandmarksSelector.currentNode()
 
@@ -258,6 +258,20 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 self.inputLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
         self.UpdateInterface()
+
+        # Checking the names of the fiducials
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        end = list.GetNumberOfItems()
+        for i in range(0,end):
+            fidList = list.GetItemAsObject(i)
+            landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+            if landmarkDescription:
+                for n in range(fidList.GetNumberOfMarkups()):
+                    markupID = fidList.GetNthMarkupID(n)
+                    markupLabel = fidList.GetNthMarkupLabel(n)
+                    landmarkDescription[markupID]["landmarkLabel"] = markupLabel
+                fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
+
 
     def UpdateInterface(self):
         self.defineMiddlePointButton.enabled = self.landmarkComboBox1.currentText != '' and \
@@ -678,7 +692,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
             landmarkDescription[markupID] = dict()
-            landmarkLabel = landmarks.GetName() + '-' + str(n + 1)
+            landmarkLabel = landmarks.GetNthMarkupLabel(n)
             landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
             landmarkDescription[markupID]["ROIradius"] = 0
             landmarkDescription[markupID]["projection"] = dict()
