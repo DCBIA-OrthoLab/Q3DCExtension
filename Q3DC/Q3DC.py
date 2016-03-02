@@ -37,7 +37,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.landmarkDictionary = None   # key: landmark ID
                                              # value: ID of the model of reference
     def setup(self):
-        print "------Setup-----"
+        print "-------Q3DC Widget Setup------"
         ScriptedLoadableModuleWidget.setup(self)
         # GLOBALS:
         self.logic = Q3DCLogic(self)
@@ -68,12 +68,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.layout.addWidget(widget)
 
         #--------------------------- Scene --------------------------#
+        self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
         treeView = self.logic.get("treeView")
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
         # --------------- landmark modification --------------
+        self.inputModelLabel = self.logic.get("inputModelLabel")  # this atribute is usefull for Longitudinal quantification extension
+        self.inputLandmarksLabel = self.logic.get("inputLandmarksLabel")  # this atribute is usefull for Longitudinal quantification extension
         self.landmarkModif = self.logic.get("landmarkModif")
         self.inputModelSelector = self.logic.get("inputModelSelector")
         self.inputModelSelector.setMRMLScene(slicer.mrmlScene)
@@ -82,6 +85,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.addLandmarkButton.connect('clicked()', self.onAddLandmarkButtonClicked)
         self.inputLandmarksSelector = self.logic.get("inputLandmarksSelector")
         self.inputLandmarksSelector.setMRMLScene(slicer.mrmlScene)
+        self.inputLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
         self.loadLandmarksOnSurfacCheckBox = self.logic.get("loadLandmarksOnSurfacCheckBox")
         self.landmarkComboBox = self.logic.get("landmarkComboBox")
@@ -244,7 +248,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedLinePointList = []
 
     def enter(self):
-        print "eneter Q3DC"
+        print "enter Q3DC"
         model = self.inputModelSelector.currentNode()
         fidlist = self.inputLandmarksSelector.currentNode()
 
@@ -254,6 +258,20 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 self.inputLandmarksSelector.setCurrentNode(None)
                 self.landmarkComboBox.clear()
         self.UpdateInterface()
+
+        # Checking the names of the fiducials
+        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+        end = list.GetNumberOfItems()
+        for i in range(0,end):
+            fidList = list.GetItemAsObject(i)
+            landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+            if landmarkDescription:
+                for n in range(fidList.GetNumberOfMarkups()):
+                    markupID = fidList.GetNthMarkupID(n)
+                    markupLabel = fidList.GetNthMarkupLabel(n)
+                    landmarkDescription[markupID]["landmarkLabel"] = markupLabel
+                fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
+
 
     def UpdateInterface(self):
         self.defineMiddlePointButton.enabled = self.landmarkComboBox1.currentText != '' and \
@@ -271,6 +289,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                (self.pitchCheckBox.isChecked() or
                                                 self.rollCheckBox.isChecked() or
                                                 self.yawCheckBox.isChecked() )
+        self.computeLinePointPushButton.enabled = self.lineLAComboBox.currentText != '' and\
+                                                  self.lineLBComboBox.currentText != '' and\
+                                                  self.linePointComboBox.currentText != '' and\
+                                                  self.lineLAComboBox.currentText != self.lineLBComboBox.currentText
+
         # Clear Lines:
         if self.renderer1 :
             self.renderer1.RemoveActor(self.actor1)
@@ -669,7 +692,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
             landmarkDescription[markupID] = dict()
-            landmarkLabel = landmarks.GetName() + '-' + str(n + 1)
+            landmarkLabel = landmarks.GetNthMarkupLabel(n)
             landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
             landmarkDescription[markupID]["ROIradius"] = 0
             landmarkDescription[markupID]["projection"] = dict()
@@ -722,10 +745,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             landmarkSelector.setCurrentNode(None)
             return
         connectedModelID = landmarks.GetAttribute("connectedModelID")
-        print landmarks
-        print landmarks.GetID()
-        print connectedModelID
-        print landmarks.GetAttribute("landmarkDescription")
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("MarkupAddedEventTag"))
             landmarks.RemoveObserver(tag["MarkupAddedEventTag"])
@@ -763,7 +782,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         else:
             self.createNewDataStructure(landmarks, model, onSurface)
         #update of the landmark Combo Box
-        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox)
+        self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox, False)
         self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox1)
         self.updateLandmarkComboBox(landmarks, self.interface.landmarkComboBox2)
         #adding of listeners
@@ -894,7 +913,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def updateAllLandmarkComboBox(self, fidList, markupID):
         # update of the Combobox that are always updated
-        self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox)
+        self.updateLandmarkComboBox(fidList, self.interface.landmarkComboBox, False)
         self.addLandmarkToCombox(fidList, self.interface.landmarkComboBox1, markupID)
         self.addLandmarkToCombox(fidList, self.interface.landmarkComboBox2, markupID)
         #update of the Comboboxes that display the fidcial list just modified
@@ -904,10 +923,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def updateLandmarkComboBox(self, fidList, combobox, displayMidPoint = True):
         combobox.blockSignals(True)
+        combobox.clear()
         if not fidList:
             return
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        combobox.clear()
         if not fidList:
             return
         numOfFid = fidList.GetNumberOfMarkups()
@@ -1412,12 +1431,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
             return
-        print "1:"
-        print fidList1.GetName()
-        print landmark1label
-        print "2:"
-        print fidList2.GetName()
-        print landmark2label
         landmark1ID = self.findIDFromLabel(fidList1, landmark1label)
         landmark2ID = self.findIDFromLabel(fidList2, landmark2label)
 
@@ -1466,7 +1479,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             messageBox.setInformativeText('Do you want to replace it ?')
             messageBox.setStandardButtons( messageBox.No | messageBox.Yes)
             choice = messageBox.exec_()
-            if choice == messageBox.NoToAll:
+            if choice == messageBox.No:
                 return
         self.exportAsCSV(fileName, listToExport, typeCalculation)
         slicer.util.delayDisplay("Saved to fileName")
@@ -1662,10 +1675,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             return input
 
     def UpdateLandmarkComboboxA(self, fidListCombobox, landmarkCombobox):
-        print fidListCombobox
-        print landmarkCombobox
         self.comboboxdict[landmarkCombobox] = fidListCombobox.currentNode()
         self.updateLandmarkComboBox(fidListCombobox.currentNode(), landmarkCombobox)
+        self.interface.UpdateInterface()
 
 class Q3DCTest(ScriptedLoadableModuleTest):
 

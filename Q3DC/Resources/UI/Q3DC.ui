@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>503</width>
+    <width>493</width>
     <height>765</height>
    </rect>
   </property>
@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
-    <widget class="ctkCollapsibleButton" name="CollapsibleButton">
+    <widget class="ctkCollapsibleButton" name="SceneCollapsibleButton">
      <property name="text">
       <string>Visibility of models and fiducials</string>
      </property>
@@ -58,9 +58,9 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="inputModelLayout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="inputModelLabel">
           <property name="minimumSize">
            <size>
             <width>140</width>
@@ -99,9 +99,9 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QHBoxLayout" name="inputLandmarksLayout">
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="inputLandmarksLabel">
           <property name="minimumSize">
            <size>
             <width>140</width>
