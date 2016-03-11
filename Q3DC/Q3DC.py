@@ -246,6 +246,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedDistanceList = []
         self.computedAnglesList = []
         self.computedLinePointList = []
+        self.linePointTable.clear()
+        self.linePointTable.setRowCount(0)
+        self.linePointTable.setColumnCount(0)
+        self.anglesTable.clear()
+        self.anglesTable.setRowCount(0)
+        self.anglesTable.setColumnCount(0)
+        self.distanceTable.clear()
+        self.distanceTable.setRowCount(0)
+        self.distanceTable.setColumnCount(0)
 
     def enter(self):
         print "enter Q3DC"
