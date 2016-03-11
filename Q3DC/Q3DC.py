@@ -246,6 +246,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedDistanceList = []
         self.computedAnglesList = []
         self.computedLinePointList = []
+        self.linePointTable.clear()
+        self.linePointTable.setRowCount(0)
+        self.linePointTable.setColumnCount(0)
+        self.anglesTable.clear()
+        self.anglesTable.setRowCount(0)
+        self.anglesTable.setColumnCount(0)
+        self.distanceTable.clear()
+        self.distanceTable.setRowCount(0)
+        self.distanceTable.setColumnCount(0)
 
     def enter(self):
         print "enter Q3DC"
@@ -816,6 +825,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
         self.updateAllLandmarkComboBox(obj, markupID)
         self.interface.UpdateInterface()
+        self.onPointModifiedEvent(obj,None)
 
     def updateLinesEvent(self, obj, event):
         if self.interface.line1LAComboBox.currentText != '' and self.interface.line1LBComboBox.currentText != '' \
