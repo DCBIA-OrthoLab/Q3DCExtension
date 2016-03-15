@@ -418,6 +418,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         landmarkDescription[markupID]["midPoint"]["isMidPoint"] = True
         landmarkDescription[markupID]["midPoint"]["Point1"] = landmark1ID
         landmarkDescription[markupID]["midPoint"]["Point2"] = landmark2ID
+        landmarkDescription[markupID]["projection"]["isProjected"] = False
+        landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
+
         if self.midPointOnSurfaceCheckBox.isChecked():
             landmarkDescription[markupID]["projection"]["isProjected"] = True
             hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
@@ -428,6 +431,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
         self.logic.interface.UpdateInterface()
         self.logic.updateLandmarkComboBox(fidList, self.landmarkComboBox, False)
+        fidList.SetNthFiducialPositionFromArray(numOfMarkups - 1, coord)
 
     def onComputeDistanceClicked(self):
         if self.computedDistanceList:
