@@ -829,7 +829,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
         self.updateAllLandmarkComboBox(obj, markupID)
         self.interface.UpdateInterface()
-        self.onPointModifiedEvent(obj,None)
+        qt.QTimer.singleShot(0, lambda : self.onPointModifiedEvent(obj,None))
 
     def updateLinesEvent(self, obj, event):
         if self.interface.line1LAComboBox.currentText != '' and self.interface.line1LBComboBox.currentText != '' \
