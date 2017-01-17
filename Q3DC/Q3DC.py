@@ -403,7 +403,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
     def onDefineMidPointClicked(self):
         fidList = self.logic.selectedFidList
         if not fidList:
-            self.logic.warningMessage("Please select a model of reference and afiducial List.")
+            self.logic.warningMessage("Please select a model of reference and a fiducial List.")
         landmark1ID = self.logic.findIDFromLabel(fidList,self.landmarkComboBox1.currentText)
         landmark2ID = self.logic.findIDFromLabel(fidList,self.landmarkComboBox2.currentText)
         coord = self.logic.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
@@ -434,6 +434,20 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         fidList.SetNthFiducialPositionFromArray(numOfMarkups - 1, coord)
 
     def onComputeDistanceClicked(self):
+        fidList = self.logic.selectedFidList
+        fidListA = self.fidListComboBoxA.currentNode()
+        fidListB = self.fidListComboBoxB.currentNode()
+        nameList = [fidListA.GetName(), fidListB.GetName()]
+        if not fidList:
+            self.logic.warningMessage("Please connect a fiducial list to a model.")
+            return
+        for fidListIter in list(set(nameList)):
+            landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
+                GetAttribute("landmarkDescription")
+            if not landmarkDescription:
+                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
+                                                        'Landmarks" panel to connect the landmarks to a model.')
+                return
         if self.computedDistanceList:
             self.exportDistanceButton.disconnect('clicked()', self.onExportButton)
             self.layout.removeWidget(self.distanceTable)
@@ -441,8 +455,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedDistanceList = self.logic.addOnDistanceList(self.computedDistanceList,
                                                                  self.landmarkComboBoxA.currentText,
                                                                  self.landmarkComboBoxB.currentText,
-                                                                 self.fidListComboBoxA.currentNode(),
-                                                                 self.fidListComboBoxB.currentNode())
+                                                                 fidListA,fidListB)
         self.distanceTable = self.logic.defineDistanceTable(self.distanceTable, self.computedDistanceList)
         self.distanceLayout.addLayout(self.tableAndExportLayout)
         self.exportDistanceButton.connect('clicked()', self.onExportButton)
@@ -451,6 +464,22 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.exportationFunction(self.directoryExportDistance, self.computedDistanceList, 'distance')
 
     def onComputeAnglesClicked(self):
+        fidList = self.logic.selectedFidList
+        fidListline1LA = self.fidListComboBoxline1LA.currentNode()
+        fidListline1LB = self.fidListComboBoxline1LB.currentNode()
+        fidListline2LA = self.fidListComboBoxline2LA.currentNode()
+        fidListline2LB = self.fidListComboBoxline2LB.currentNode()
+        nameList = [fidListline1LA.GetName(), fidListline1LB.GetName(), fidListline2LA.GetName(), fidListline2LB.GetName()]
+        if not fidList:
+            self.logic.warningMessage("Please connect a fiducial list to a model.")
+            return
+        for fidListIter in list(set(nameList)):
+            landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
+                GetAttribute("landmarkDescription")
+            if not landmarkDescription:
+                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
+                                                        'Landmarks" panel to connect the landmarks to a model.')
+                return
         if self.computedAnglesList:
             self.exportAngleButton.disconnect('clicked()', self.onExportAngleButton)
             self.layout.removeWidget(self.anglesTable)
@@ -477,6 +506,21 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.exportationFunction(self.directoryExportAngle, self.computedAnglesList, 'angle')
 
     def onComputeLinePointClicked(self):
+        fidList = self.logic.selectedFidList
+        if not fidList:
+            self.logic.warningMessage("Please connect a fiducial list to a model.")
+            return
+        fidListlineLA = self.fidListComboBoxlineLA.currentNode()
+        fidListlineLB = self.fidListComboBoxlineLB.currentNode()
+        fidListPoint = self.fidListComboBoxlinePoint.currentNode()
+        nameList = [fidListlineLA.GetName(), fidListlineLB.GetName(), fidListPoint.GetName()]
+        for fidListIter in list(set(nameList)):
+            landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
+                GetAttribute("landmarkDescription")
+            if not landmarkDescription:
+                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
+                                                        'Landmarks" panel to connect the landmarks to a model.')
+                return
         if self.computedLinePointList:
             self.exportLinePointButton.disconnect('clicked()', self.onExportLinePointButton)
             self.layout.removeWidget(self.linePointTable)
@@ -484,10 +528,10 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedLinePointList = self.logic.addOnLinePointList(self.computedLinePointList,
                                                            self.lineLAComboBox.currentText,
                                                            self.lineLBComboBox.currentText,
-                                                           self.fidListComboBoxlineLA.currentNode(),
-                                                           self.fidListComboBoxlineLB.currentNode(),
+                                                                   fidListlineLA,
+                                                                   fidListlineLB,
                                                            self.linePointComboBox.currentText,
-                                                           self.fidListComboBoxlinePoint.currentNode(),
+                                                                   fidListPoint,
                                                            )
         self.linePointTable = self.logic.defineDistanceLinePointTable(self.linePointTable, self.computedLinePointList)
         self.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
@@ -584,13 +628,14 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             fidList = list.GetItemAsObject(i)
             print fidList.GetID()
             landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-            for key in landmarkDescription.iterkeys():
-                markupsIndex = fidList.GetMarkupIndexByID(key)
-                if key != selectedFidReflID:
-                    fidList.SetNthMarkupLocked(markupsIndex, True)
-                else:
-                    fidList.SetNthMarkupLocked(markupsIndex, False)
-                    fidList.SetNthMarkupLocked(markupsIndex, False)
+            if landmarkDescription:
+                for key in landmarkDescription.iterkeys():
+                    markupsIndex = fidList.GetMarkupIndexByID(key)
+                    if key != selectedFidReflID:
+                        fidList.SetNthMarkupLocked(markupsIndex, True)
+                    else:
+                        fidList.SetNthMarkupLocked(markupsIndex, False)
+                        fidList.SetNthMarkupLocked(markupsIndex, False)
         displayNode = self.selectedModel.GetModelDisplayNode()
         displayNode.SetScalarVisibility(False)
         if selectedFidReflID != False:
@@ -970,6 +1015,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
         landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
+        if not landmarkDescription:
+            return None
         for ID, value in landmarkDescription.iteritems():
             if value["landmarkLabel"] == landmarkLabel:
                 return ID
