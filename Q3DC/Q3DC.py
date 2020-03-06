@@ -1,9 +1,20 @@
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
-import numpy, csv, os
+import csv, os
 import json
 import time
 import math
+
+import numpy as np
+
+# needed for kd-trees
+try:
+    import scipy.spatial
+except ModuleNotFoundError as e:
+    # This requires a network connection!
+    slicer.util.pip_install('scipy')
+    import scipy.spatial
+
 
 #
 # CalculateDisplacement
@@ -743,18 +754,85 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             messageBox.exec_()
             return False
 
-    def createNewDataStructure(self,landmarks, model, onSurface):
+    @staticmethod
+    def recover_midpoint_provenance(landmarks):
+        '''
+        When a new list of fiducials is loaded from a file, we know which are
+        midpoints, but we don't know from which points those midpoints were
+        constructed. This function recovers this information.
+        '''
+        # Build the data structures we will need.
+        point_idx_to_id = {}
+        points = []
+        ids_and_midpoints = []
+        all_ids = []
+        scratch_array = np.zeros(3)
+        for n in range(landmarks.GetNumberOfMarkups()):
+            markupID = landmarks.GetNthMarkupID(n)
+            is_sel = landmarks.GetNthFiducialSelected(n)
+            landmarks.GetNthFiducialPosition(n, scratch_array)
+            markup_pos = np.copy(scratch_array)
+            if is_sel:  # not a midpoint
+                point_idx_to_id[len(points)] = markupID
+                points.append(markup_pos)
+            else:       # midpoint
+                ids_and_midpoints.append((markupID, markup_pos))
+            all_ids.append(markupID)
+
+        # This is the structure we want to populate to help build
+        # landmarkDescription in createNewDataStructure.
+        midpoint_data = {
+                point_id: {
+                    'definedByThisMarkup': [],
+                    'isMidPoint': False,
+                    'Point1': None,
+                    'Point2': None,
+                } for point_id in all_ids
+            }
+
+        # Use a kd-tree to find points that could be the missing endpoint of a
+        # hypothetical midpoint operation.
+        points = np.array(points)
+        kdt = scipy.spatial.KDTree(points)
+        for mp_id, mp in ids_and_midpoints:
+            for p_idx, p in enumerate(points):
+                # hp for "hypothetical point"
+                # mp = (hp + p) / 2
+                hp = 2*mp - p
+                max_error = np.linalg.norm(mp - p) / 10000.0
+                distance, kdt_p_idx = kdt.query(
+                        hp, distance_upper_bound=max_error)
+                # distance = np.inf on failure
+                if distance < max_error:
+                    ids = (point_idx_to_id[p_idx], point_idx_to_id[kdt_p_idx])
+                    midpoint_data[mp_id].update({
+                            'isMidPoint': True,
+                            'Point1': ids[0],
+                            'Point2': ids[1],
+                        })
+                    for id_ in ids:
+                        midpoint_data[id_]['definedByThisMarkup'].append(mp_id)
+                    break
+
+        return midpoint_data
+
+    def createNewDataStructure(self, landmarks, model, onSurface):
         landmarks.SetAttribute("connectedModelID",model.GetID())
         landmarks.SetAttribute("hardenModelID",model.GetAttribute("hardenModelID"))
         landmarkDescription = dict()
+
+        midpoint_data = self.recover_midpoint_provenance(landmarks)
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
-            landmarkDescription[markupID] = dict()
+            landmarkDescription[markupID] = {'midPoint': midpoint_data[markupID]}
+
+        for n in range(landmarks.GetNumberOfMarkups()):
+            markupID = landmarks.GetNthMarkupID(n)
             landmarkLabel = landmarks.GetNthMarkupLabel(n)
             landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
             landmarkDescription[markupID]["ROIradius"] = 0
             landmarkDescription[markupID]["projection"] = dict()
-            if onSurface:
+            if onSurface and not landmarkDescription[markupID]['midPoint']['isMidPoint']:
                 landmarkDescription[markupID]["projection"]["isProjected"] = True
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(landmarks.GetAttribute("hardenModelID"))
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
@@ -762,11 +840,18 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             else:
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
-            landmarkDescription[markupID]["midPoint"] = dict()
-            landmarkDescription[markupID]["midPoint"]["definedByThisMarkup"] = list()
-            landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
-            landmarkDescription[markupID]["midPoint"]["Point1"] = None
-            landmarkDescription[markupID]["midPoint"]["Point2"] = None
+
+        if onSurface:
+            for n in range(landmarks.GetNumberOfMarkups()):
+                markupID = landmarks.GetNthMarkupID(n)
+                nth_midpoint_data = landmarkDescription[markupID]['midPoint']
+                if nth_midpoint_data['isMidPoint']:
+                    parent_id1 = nth_midpoint_data['Point1']
+                    parent_id2 = nth_midpoint_data['Point2']
+                    coord = self.calculateMidPointCoord(landmarks, parent_id1, parent_id2)
+                    index = landmarks.GetNthControlPointIndexByID(markupID)
+                    landmarks.SetNthFiducialPositionFromArray(index, coord)
+
         landmarks.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
         planeDescription = dict()
         landmarks.SetAttribute("planeDescription",self.encodeJSON(planeDescription))
@@ -1023,7 +1108,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         return None
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
-        landmarkCoord = numpy.zeros(3)
+        landmarkCoord = np.zeros(3)
         landmarkCoord[1] = 42
         fidNode.GetNthFiducialPosition(landmarkID, landmarkCoord)
         pointLocator = vtk.vtkPointLocator()
@@ -1178,9 +1263,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
 
         vectLine1 = [0, coord2[1]-coord1[1], coord2[2]-coord1[2] ]
-        normVectLine1 = numpy.sqrt( vectLine1[1]*vectLine1[1] + vectLine1[2]*vectLine1[2] )
+        normVectLine1 = np.sqrt( vectLine1[1]*vectLine1[1] + vectLine1[2]*vectLine1[2] )
         vectLine2 = [0, coord4[1]-coord3[1], coord4[2]-coord3[2] ]
-        normVectLine2 = numpy.sqrt( vectLine2[1]*vectLine2[1] + vectLine2[2]*vectLine2[2] )
+        normVectLine2 = np.sqrt( vectLine2[1]*vectLine2[1] + vectLine2[2]*vectLine2[2] )
         pitchNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
                                self.numberOfDecimals)
 
@@ -1209,9 +1294,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
 
         vectLine1 = [coord2[0]-coord1[0], 0, coord2[2]-coord1[2] ]
-        normVectLine1 = numpy.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[2]*vectLine1[2] )
+        normVectLine1 = np.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[2]*vectLine1[2] )
         vectLine2 = [coord4[0]-coord3[0], 0, coord4[2]-coord3[2] ]
-        normVectLine2 = numpy.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[2]*vectLine2[2] )
+        normVectLine2 = np.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[2]*vectLine2[2] )
         rollNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
                               self.numberOfDecimals)
 
@@ -1240,9 +1325,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
 
         vectLine1 = [coord2[0]-coord1[0], coord2[1]-coord1[1], 0 ]
-        normVectLine1 = numpy.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[1]*vectLine1[1] )
+        normVectLine1 = np.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[1]*vectLine1[1] )
         vectLine2 = [coord4[0]-coord3[0],coord4[1]-coord3[1], 0]
-        normVectLine2 = numpy.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[1]*vectLine2[1] )
+        normVectLine2 = np.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[1]*vectLine2[1] )
         yawNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
                              self.numberOfDecimals)
 
@@ -1341,7 +1426,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
             table.setCellWidget(i, 0, label)
             if element.Yaw != None:
-                sign = numpy.sign(element.Yaw)
+                sign = np.sign(element.Yaw)
                 label = qt.QLabel(str(element.Yaw)+' / '+str(sign*(180-abs(element.Yaw))))
                 label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
                 table.setCellWidget(i, 1, label)
@@ -1351,7 +1436,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 table.setCellWidget(i, 1, label)
 
             if element.Pitch != None:
-                sign = numpy.sign(element.Pitch)
+                sign = np.sign(element.Pitch)
                 label = qt.QLabel(str(element.Pitch) + ' / ' + str(sign*(180 - abs(element.Pitch))))
                 label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
                 table.setCellWidget(i, 2, label)
@@ -1361,7 +1446,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 table.setCellWidget(i, 2, label)
 
             if element.Roll != None:
-                sign = numpy.sign(element.Roll)
+                sign = np.sign(element.Roll)
                 label = qt.QLabel(str(element.Roll) + ' / ' + str(sign * (180 - abs(element.Roll))))
                 label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
                 table.setCellWidget(i, 3, label)
@@ -1597,9 +1682,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             landmarkBLine2Name = element.landmarkBLine2Name
 
             label = landmarkALine1Name + '-' + landmarkBLine1Name + ' | ' + landmarkALine2Name + '-' + landmarkBLine2Name
-            signY = numpy.sign(element.Yaw)
-            signP = numpy.sign(element.Pitch)
-            signR = numpy.sign(element.Roll)
+            signY = np.sign(element.Yaw)
+            signP = np.sign(element.Pitch)
+            signR = np.sign(element.Roll)
 
             if element.Yaw:
                 YawLabel = str(element.Yaw) +' | '+str(signY*(180-abs(element.Yaw)))
