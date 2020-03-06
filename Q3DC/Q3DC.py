@@ -792,27 +792,28 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         # Use a kd-tree to find points that could be the missing endpoint of a
         # hypothetical midpoint operation.
-        points = np.array(points)
-        kdt = scipy.spatial.KDTree(points)
-        for mp_id, mp in ids_and_midpoints:
-            for p_idx, p in enumerate(points):
-                # hp for "hypothetical point"
-                # mp = (hp + p) / 2
-                hp = 2*mp - p
-                max_error = np.linalg.norm(mp - p) / 10000.0
-                distance, kdt_p_idx = kdt.query(
-                        hp, distance_upper_bound=max_error)
-                # distance = np.inf on failure
-                if distance < max_error:
-                    ids = (point_idx_to_id[p_idx], point_idx_to_id[kdt_p_idx])
-                    midpoint_data[mp_id].update({
-                            'isMidPoint': True,
-                            'Point1': ids[0],
-                            'Point2': ids[1],
-                        })
-                    for id_ in ids:
-                        midpoint_data[id_]['definedByThisMarkup'].append(mp_id)
-                    break
+        if len(points) > 0:
+            points = np.array(points)
+            kdt = scipy.spatial.KDTree(points)
+            for mp_id, mp in ids_and_midpoints:
+                for p_idx, p in enumerate(points):
+                    # hp for "hypothetical point"
+                    # mp = (hp + p) / 2
+                    hp = 2*mp - p
+                    max_error = np.linalg.norm(mp - p) / 10000.0
+                    distance, kdt_p_idx = kdt.query(
+                            hp, distance_upper_bound=max_error)
+                    # distance = np.inf on failure
+                    if distance < max_error:
+                        ids = (point_idx_to_id[p_idx], point_idx_to_id[kdt_p_idx])
+                        midpoint_data[mp_id].update({
+                                'isMidPoint': True,
+                                'Point1': ids[0],
+                                'Point2': ids[1],
+                            })
+                        for id_ in ids:
+                            midpoint_data[id_]['definedByThisMarkup'].append(mp_id)
+                        break
 
         return midpoint_data
 
