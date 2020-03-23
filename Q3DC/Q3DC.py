@@ -876,6 +876,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         D = nx.DiGraph()
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
+            D.add_node(markupID)
             dbtm = landmarkDescription[markupID]['midPoint']['definedByThisMarkup']
             for dependent_point in dbtm:
                 D.add_edge(markupID, dependent_point)
