@@ -15,6 +15,14 @@ except ModuleNotFoundError as e:
     slicer.util.pip_install('scipy')
     import scipy.spatial
 
+# needed for topological sort. Yes, this is basically just DFS.
+try:
+    import networkx as nx
+except ModuleNotFoundError as e:
+    # This requires a network connection!
+    slicer.util.pip_install('networkx')
+    import networkx as nx
+
 
 #
 # CalculateDisplacement
@@ -860,21 +868,35 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarks.SetAttribute("lastTransformID",None)
         landmarks.SetAttribute("arrayName",model.GetName() + "_ROI")
 
-    def changementOfConnectedModel(self,landmarks, model, onSurface):
-        landmarks.SetAttribute("connectedModelID",model.GetID())
-        landmarks.SetAttribute("hardenModelID",model.GetAttribute("hardenModelID"))
+    def changementOfConnectedModel(self, landmarks, model, onSurface):
+        landmarks.SetAttribute("connectedModelID", model.GetID())
+        landmarks.SetAttribute("hardenModelID", model.GetAttribute("hardenModelID"))
         landmarkDescription = self.decodeJSON(landmarks.GetAttribute("landmarkDescription"))
+
+        D = nx.DiGraph()
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
+            dbtm = landmarkDescription[markupID]['midPoint']['definedByThisMarkup']
+            for dependent_point in dbtm:
+                D.add_edge(markupID, dependent_point)
+
+        for markupID in nx.topological_sort(D):
             if onSurface:
                 if landmarkDescription[markupID]["projection"]["isProjected"] == True:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(landmarks.GetAttribute("hardenModelID"))
                     landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
                         self.projectOnSurface(hardenModel, landmarks, markupID)
+                elif landmarkDescription[markupID]['midPoint']['isMidPoint']:
+                    parent_id1 = landmarkDescription[markupID]['midPoint']['Point1']
+                    parent_id2 = landmarkDescription[markupID]['midPoint']['Point2']
+                    coord = self.calculateMidPointCoord(landmarks, parent_id1, parent_id2)
+                    index = landmarks.GetNthControlPointIndexByID(markupID)
+                    landmarks.SetNthFiducialPositionFromArray(index, coord)
             else:
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
-            landmarks.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
+
+        landmarks.SetAttribute("landmarkDescription", self.encodeJSON(landmarkDescription))
         landmarks.SetAttribute("isClean",self.encodeJSON({"isClean":False}))
 
     def connectLandmarks(self, modelSelector, landmarkSelector, onSurface):
