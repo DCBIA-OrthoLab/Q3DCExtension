@@ -868,6 +868,15 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarks.SetAttribute("lastTransformID",None)
         landmarks.SetAttribute("arrayName",model.GetName() + "_ROI")
 
+        self.conform_selectedness_to_midpoint_status(landmarks)
+
+    def conform_selectedness_to_midpoint_status(self, landmarks):
+        landmarkDescription = self.decodeJSON(landmarks.GetAttribute("landmarkDescription"))
+        for n in range(landmarks.GetNumberOfMarkups()):
+            markupID = landmarks.GetNthMarkupID(n)
+            isMidPoint = landmarkDescription[markupID]['midPoint']['isMidPoint']
+            landmarks.SetNthFiducialSelected(n, not isMidPoint)
+
     def changementOfConnectedModel(self, landmarks, model, onSurface):
         landmarks.SetAttribute("connectedModelID", model.GetID())
         landmarks.SetAttribute("hardenModelID", model.GetAttribute("hardenModelID"))
