@@ -800,10 +800,14 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         # Use a kd-tree to find points that could be the missing endpoint of a
         # hypothetical midpoint operation.
-        if len(points) > 0:
-            points = np.array(points)
+        points = np.array(points)
+        n_new_points = len(points)
+        while n_new_points > 0 and len(ids_and_midpoints) > 0:
             kdt = scipy.spatial.KDTree(points)
+            n_new_points = 0
+            new_ids_and_midpoints = []
             for mp_id, mp in ids_and_midpoints:
+                provenance_found = False
                 for p_idx, p in enumerate(points):
                     # hp for "hypothetical point"
                     # mp = (hp + p) / 2
@@ -821,7 +825,15 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                             })
                         for id_ in ids:
                             midpoint_data[id_]['definedByThisMarkup'].append(mp_id)
+
+                        provenance_found = True
+                        point_ids.append(mp_id)
+                        points = np.concatenate((points, mp.reshape((1, 3))))
+                        n_new_points += 1
                         break
+                if not provenance_found:
+                    new_ids_and_midpoints.append((mp_id, mp))
+            ids_and_midpoints = new_ids_and_midpoints
 
         return midpoint_data
 
