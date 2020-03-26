@@ -770,7 +770,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         constructed. This function recovers this information.
         '''
         # Build the data structures we will need.
-        point_idx_to_id = {}
+        point_ids = []
         points = []
         ids_and_midpoints = []
         all_ids = []
@@ -781,7 +781,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             landmarks.GetNthFiducialPosition(n, scratch_array)
             markup_pos = np.copy(scratch_array)
             if is_sel:  # not a midpoint
-                point_idx_to_id[len(points)] = markupID
+                point_ids.append(markupID)
                 points.append(markup_pos)
             else:       # midpoint
                 ids_and_midpoints.append((markupID, markup_pos))
@@ -813,7 +813,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                             hp, distance_upper_bound=max_error)
                     # distance = np.inf on failure
                     if distance < max_error:
-                        ids = (point_idx_to_id[p_idx], point_idx_to_id[kdt_p_idx])
+                        ids = (point_ids[p_idx], point_ids[kdt_p_idx])
                         midpoint_data[mp_id].update({
                                 'isMidPoint': True,
                                 'Point1': ids[0],
