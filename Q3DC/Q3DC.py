@@ -423,10 +423,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         fidList = self.logic.selectedFidList
         if not fidList:
             self.logic.warningMessage("Please select a model of reference and a fiducial List.")
-        landmark1ID = self.logic.findIDFromLabel(fidList,self.landmarkComboBox1.currentText)
-        landmark2ID = self.logic.findIDFromLabel(fidList,self.landmarkComboBox2.currentText)
+        label1 = self.landmarkComboBox1.currentText
+        label2 = self.landmarkComboBox2.currentText
+        landmark1ID = self.logic.findIDFromLabel(fidList, label1)
+        landmark2ID = self.logic.findIDFromLabel(fidList, label2)
         coord = self.logic.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
-        fidList.AddFiducial(coord[0],coord[1],coord[2])
+        fidList.AddFiducial(coord[0],coord[1],coord[2], f'{label1}_{label2}')
         fidList.SetNthFiducialSelected(fidList.GetNumberOfMarkups() - 1, False)
         # update of the data structure
         landmarkDescription = self.logic.decodeJSON(fidList.GetAttribute("landmarkDescription"))
