@@ -181,7 +181,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.tableAndExportLayout.addWidget(self.distanceTable)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
 #       ------------------- 2nd OPTION -------------------
-        self.angleLayout = self.logic.get("angleLayout")
         self.angleGroupBox = self.logic.get("angleGroupBox")
         self.line1LAComboBox = self.logic.get("line1LAComboBox")
         self.fidListComboBoxline1LA = self.logic.get("fidListComboBoxline1LA")
@@ -217,6 +216,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
 
         # ---------------------------- Directory - Export Button -----------------------------
+        self.angleLayout = self.logic.get("angleLayout")
         self.anglesTable = qt.QTableWidget()
         self.filenameExportAngle = myFilePathButton('angle.csv')
         self.exportAngleButton = qt.QPushButton("Export")
