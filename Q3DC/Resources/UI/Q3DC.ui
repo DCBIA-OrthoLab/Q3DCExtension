@@ -56,7 +56,7 @@
      <property name="contentsFrameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="landmarkModifLayout">
       <item>
        <layout class="QHBoxLayout" name="inputModelLayout">
         <item>
@@ -188,6 +188,13 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="landmarkLegendLabel">
+        <property name="text">
+         <string>Landmark Legend</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

@@ -1,0 +1,72 @@
+Region,Landmark,Name
+CRANIAL BASE,Ba,Basion
+CRANIAL BASE,S,Sella
+CRANIAL BASE,N,Nasion
+NASOMAXILLARY COMPLEX,A,A-point
+NASOMAXILLARY COMPLEX,ANS,Anterior Nasal Spine
+NASOMAXILLARY COMPLEX,PNS,Posterior Nasal Spine
+NASOMAXILLARY COMPLEX,OrR,Right Orbitale
+NASOMAXILLARY COMPLEX,OrL,Left Orbitale
+NASOMAXILLARY COMPLEX,ZygR,Right Zygomatic
+NASOMAXILLARY COMPLEX,ZygL,Left Zygomatic
+NASOMAXILLARY COMPLEX,NCR,Right Nasal Cavity
+NASOMAXILLARY COMPLEX,NCL,Left Nasal Cavity
+NASOMAXILLARY COMPLEX,PFR,Right Palatine Foramen
+NASOMAXILLARY COMPLEX,PFL,Left Palatine Foramen
+NASOMAXILLARY COMPLEX,IFr,Incisal Foramen
+NASOMAXILLARY COMPLEX,UR6,Right Maxillary molar cusp tip
+NASOMAXILLARY COMPLEX,UL6,Left Maxillary molar cusp tip
+NASOMAXILLARY COMPLEX,UR’6,Right Maxillary molar root apex
+NASOMAXILLARY COMPLEX,UL’6,Left Maxillary molar root apex
+NASOMAXILLARY COMPLEX,UR6AB,Buccal Alveolar Bone Level at first molar
+NASOMAXILLARY COMPLEX,UL6AB,Buccal Alveolar Bone Level at first molar
+NASOMAXILLARY COMPLEX,UR5,Right Maxillary 2nd premolar cusp tip
+NASOMAXILLARY COMPLEX,UL5,Left Maxillary 2nd premolar cusp tip
+NASOMAXILLARY COMPLEX,UR’5,Right Maxillary 2nd premolar root apex
+NASOMAXILLARY COMPLEX,UL’5,Left Maxillary 2nd premolar root apex
+NASOMAXILLARY COMPLEX,UR4,Right Maxillary 1st premolar cusp tip
+NASOMAXILLARY COMPLEX,UL4,Left Maxillary 1st premolar cusp tip
+NASOMAXILLARY COMPLEX,UR’4,Right Maxillary 1st premolar root apex
+NASOMAXILLARY COMPLEX,UL’4,Left Maxillary 1st premolar root apex
+NASOMAXILLARY COMPLEX,UR3,Right Maxillary 1st premolar cusp tip
+NASOMAXILLARY COMPLEX,UL3,Left Maxillary 1st premolar cusp tip
+NASOMAXILLARY COMPLEX,UR’3,Right Maxillary 1st premolar root apex
+NASOMAXILLARY COMPLEX,UL’3,Left Maxillary 1st premolar root apex
+NASOMAXILLARY COMPLEX,U1,Maxillary incisor incisal edge
+NASOMAXILLARY COMPLEX,U’1,Maxillary incisor root apex
+MANDIBLE,B,B-point
+MANDIBLE,Pog,Pogonion
+MANDIBLE,Me,Menton
+MANDIBLE,Gn,Gnathion
+MANDIBLE,RGo,Right Gonion
+MANDIBLE,LGo,Left  Gonion
+MANDIBLE,RSGo,Right Superior Gonion
+MANDIBLE,RIGo,Right Inferior Gonion
+MANDIBLE,LSGo,Left Superior Gonion
+MANDIBLE,LIGo,Left Inferior Gonion
+MANDIBLE,RCo,Right Condylion
+MANDIBLE,LCo,Left Condylion
+MANDIBLE,RLCP,Right Lateral Condylar pole
+MANDIBLE,RMCP,Right Medial Condylar pole
+MANDIBLE,LLCP,Left Lateral Condylar pole
+MANDIBLE,LMCP,Left Medial Condylar pole
+MANDIBLE,LR6,Right Mandibular molar cusp tip
+MANDIBLE,LL6,Left Maxillary molar cusp tip
+MANDIBLE,LR’6,Right Maxillary molar root apex
+MANDIBLE,LL’6,Left Maxillary molar root apex
+MANDIBLE,LR6AB,Buccal Alveolar Bone Level at first molar
+MANDIBLE,LL6AB,Buccal Alveolar Bone Level at first molar
+MANDIBLE,LR5,Right Maxillary 2nd premolar cusp tip
+MANDIBLE,LL5,Left Maxillary 2nd premolar cusp tip
+MANDIBLE,LR’5,Right Maxillary 2nd premolar root apex
+MANDIBLE,LL’5,Left Maxillary 2nd premolar root apex
+MANDIBLE,LR4,Right Maxillary 1st premolar cusp tip
+MANDIBLE,LL4,Left Maxillary 1st premolar cusp tip
+MANDIBLE,LR’4,Right Maxillary 1st premolar root apex
+MANDIBLE,LL’4,Left Maxillary 1st premolar root apex
+MANDIBLE,LR3,Right Maxillary 1st premolar cusp tip
+MANDIBLE,LL3,Left Maxillary 1st premolar cusp tip
+MANDIBLE,LR’3,Right Maxillary 1st premolar root apex
+MANDIBLE,LL’3,Left Maxillary 1st premolar root apex
+MANDIBLE,L1,Maxillary incisor incisal edge
+MANDIBLE,L’1,Maxillary incisor root apex
