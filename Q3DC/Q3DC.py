@@ -4,7 +4,6 @@ import csv, os
 import json
 import time
 import math
-import logging
 
 import numpy as np
 
@@ -18,42 +17,6 @@ except ModuleNotFoundError as e:
     # This requires a network connection!
     slicer.util.pip_install('networkx')
     import networkx as nx
-
-
-class myFilePathButton(qt.QPushButton):
-    '''
-    This file selector button was inspired by ctkDirectoryButton, but it
-    is for selecting CSV files, not directories. It was introduced to
-    address Q3DC issue 18 on Github, which requested the ability to
-    select the filename when exporting results as CSV:
-    https://github.com/DCBIA-OrthoLab/Q3DCExtension/issues/18
-    '''
-    def __init__(self, default_filename):
-        qt.QPushButton.__init__(self, default_filename)
-
-        self.default_filename = default_filename
-        self.default_directory = os.path.abspath('.')
-        self.file_path = os.path.join(self.default_directory, self.default_filename)
-
-        # self.setIcon(qt.QIcon(qt.QStyle.SP_DirIcon))
-        self.updateDisplayText()
-        self.connect('clicked()', self.browse)
-
-    def updateDisplayText(self):
-        self.setText(os.path.abspath(self.file_path))
-
-    def browse(self):
-        new_file_path = qt.QFileDialog.getSaveFileName(
-            self,
-            'Save As',
-            self.file_path,
-            'Comma Separated Value (*.csv)',
-        )
-        if new_file_path != '':
-            slicer.util.delayDisplay('You have not saved until you click Export!')
-            self.file_path = new_file_path
-            self.default_directory = os.path.dirname(self.file_path)
-            self.updateDisplayText()
 
 
 #
@@ -171,11 +134,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         # ---------------------------- Directory - Export Button -----------------------------
         self.distanceLayout = self.logic.get("distanceLayout")
         self.distanceTable = qt.QTableWidget()
-        self.filenameExportDistance = myFilePathButton('distance.csv')
+        self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.exportDistanceButton = qt.QPushButton(" Export ")
         self.exportDistanceButton.enabled = True
         self.exportDistanceLayout = qt.QHBoxLayout()
-        self.exportDistanceLayout.addWidget(self.filenameExportDistance)
+        self.exportDistanceLayout.addWidget(self.directoryExportDistance)
         self.exportDistanceLayout.addWidget(self.exportDistanceButton)
         self.tableAndExportLayout = qt.QVBoxLayout()
         self.tableAndExportLayout.addWidget(self.distanceTable)
@@ -218,11 +181,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         # ---------------------------- Directory - Export Button -----------------------------
         self.angleLayout = self.logic.get("angleLayout")
         self.anglesTable = qt.QTableWidget()
-        self.filenameExportAngle = myFilePathButton('angle.csv')
+        self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.exportAngleButton = qt.QPushButton("Export")
         self.exportAngleButton.enabled = True
         self.exportAngleLayout = qt.QHBoxLayout()
-        self.exportAngleLayout.addWidget(self.filenameExportAngle)
+        self.exportAngleLayout.addWidget(self.directoryExportAngle)
         self.exportAngleLayout.addWidget(self.exportAngleButton)
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
         self.tableAndExportAngleLayout.addWidget(self.anglesTable)
@@ -251,11 +214,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         # ---------------------------- Directory - Export Button -----------------------------
         self.LinePointLayout = self.logic.get("LinePointLayout")
         self.linePointTable = qt.QTableWidget()
-        self.filenameExportLinePoint = myFilePathButton('linePoint.csv')
+        self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.exportLinePointButton = qt.QPushButton("Export")
         self.exportLinePointButton.enabled = True
         self.exportLinePointLayout = qt.QHBoxLayout()
-        self.exportLinePointLayout.addWidget(self.filenameExportLinePoint)
+        self.exportLinePointLayout.addWidget(self.directoryExportLinePoint)
         self.exportLinePointLayout.addWidget(self.exportLinePointButton)
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
         self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
@@ -514,7 +477,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportDistanceButton.connect('clicked()', self.onExportButton)
 
     def onExportButton(self):
-        self.logic.exportationFunction(self.filenameExportDistance, self.computedDistanceList, 'distance')
+        self.logic.exportationFunction(self.directoryExportDistance, self.computedDistanceList, 'distance')
 
     def onComputeAnglesClicked(self):
         fidList = self.logic.selectedFidList
@@ -556,7 +519,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
 
     def onExportAngleButton(self):
-        self.logic.exportationFunction(self.filenameExportAngle, self.computedAnglesList, 'angle')
+        self.logic.exportationFunction(self.directoryExportAngle, self.computedAnglesList, 'angle')
 
     def onComputeLinePointClicked(self):
         fidList = self.logic.selectedFidList
@@ -591,7 +554,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
 
     def onExportLinePointButton(self):
-        self.logic.exportationFunction(self.filenameExportLinePoint, self.computedLinePointList, 'linePoint')
+        self.logic.exportationFunction(self.directoryExportLinePoint, self.computedLinePointList, 'linePoint')
 
 class Q3DCLogic(ScriptedLoadableModuleLogic):
     def __init__(self, interface):
@@ -1692,12 +1655,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         return renderer, actor
 
-    def exportationFunction(self, file_path_widget, listToExport, typeCalculation):
+    def exportationFunction(self, directoryExport, listToExport, typeCalculation):
         messageBox = ctk.ctkMessageBox()
         messageBox.setWindowTitle(' /!\ WARNING /!\ ')
         messageBox.setIcon(messageBox.Warning)
 
-        fileName = file_path_widget.file_path
+        fileName = os.path.join(directoryExport.directory, typeCalculation + '.csv')
         if os.path.exists(fileName):
             messageBox.setText('File ' + fileName + ' already exists!')
             messageBox.setInformativeText('Do you want to replace it ?')
