@@ -306,7 +306,7 @@
         <item>
          <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>Landmarks A:</string>
+           <string>Landmark A:</string>
           </property>
          </widget>
         </item>
@@ -348,7 +348,7 @@
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>Landmarks B:</string>
+           <string>Landmark B:</string>
           </property>
          </widget>
         </item>
@@ -735,7 +735,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Landmark:</string>
+           <string>Landmark X:</string>
           </property>
          </widget>
         </item>
