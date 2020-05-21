@@ -8,12 +8,7 @@ import math
 import numpy as np
 
 # needed for kd-trees
-try:
-    import scipy.spatial
-except ModuleNotFoundError as e:
-    # This requires a network connection!
-    slicer.util.pip_install('scipy')
-    import scipy.spatial
+import scipy.spatial
 
 # needed for topological sort. Yes, this is basically just DFS.
 try:
