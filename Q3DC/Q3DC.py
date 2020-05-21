@@ -135,10 +135,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.distanceLayout = self.logic.get("distanceLayout")
         self.distanceTable = qt.QTableWidget()
         self.directoryExportDistance = ctk.ctkDirectoryButton()
+        self.filenameExportDistance = qt.QLineEdit('distance.csv')
         self.exportDistanceButton = qt.QPushButton(" Export ")
         self.exportDistanceButton.enabled = True
+        self.pathExportDistanceLayout = qt.QVBoxLayout()
+        self.pathExportDistanceLayout.addWidget(self.directoryExportDistance)
+        self.pathExportDistanceLayout.addWidget(self.filenameExportDistance)
         self.exportDistanceLayout = qt.QHBoxLayout()
-        self.exportDistanceLayout.addWidget(self.directoryExportDistance)
+        self.exportDistanceLayout.addLayout(self.pathExportDistanceLayout)
         self.exportDistanceLayout.addWidget(self.exportDistanceButton)
         self.tableAndExportLayout = qt.QVBoxLayout()
         self.tableAndExportLayout.addWidget(self.distanceTable)
@@ -182,10 +186,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.angleLayout = self.logic.get("angleLayout")
         self.anglesTable = qt.QTableWidget()
         self.directoryExportAngle = ctk.ctkDirectoryButton()
+        self.filenameExportAngle = qt.QLineEdit('angle.csv')
         self.exportAngleButton = qt.QPushButton("Export")
         self.exportAngleButton.enabled = True
+        self.pathExportAngleLayout = qt.QVBoxLayout()
+        self.pathExportAngleLayout.addWidget(self.directoryExportAngle)
+        self.pathExportAngleLayout.addWidget(self.filenameExportAngle)
         self.exportAngleLayout = qt.QHBoxLayout()
-        self.exportAngleLayout.addWidget(self.directoryExportAngle)
+        self.exportAngleLayout.addLayout(self.pathExportAngleLayout)
         self.exportAngleLayout.addWidget(self.exportAngleButton)
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
         self.tableAndExportAngleLayout.addWidget(self.anglesTable)
@@ -215,10 +223,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.LinePointLayout = self.logic.get("LinePointLayout")
         self.linePointTable = qt.QTableWidget()
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
+        self.filenameExportLinePoint = qt.QLineEdit('linePoint.csv')
         self.exportLinePointButton = qt.QPushButton("Export")
         self.exportLinePointButton.enabled = True
+        self.pathExportLinePointLayout = qt.QVBoxLayout()
+        self.pathExportLinePointLayout.addWidget(self.directoryExportLinePoint)
+        self.pathExportLinePointLayout.addWidget(self.filenameExportLinePoint)
         self.exportLinePointLayout = qt.QHBoxLayout()
-        self.exportLinePointLayout.addWidget(self.directoryExportLinePoint)
+        self.exportLinePointLayout.addLayout(self.pathExportLinePointLayout)
         self.exportLinePointLayout.addWidget(self.exportLinePointButton)
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
         self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
@@ -477,7 +489,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportDistanceButton.connect('clicked()', self.onExportButton)
 
     def onExportButton(self):
-        self.logic.exportationFunction(self.directoryExportDistance, self.computedDistanceList, 'distance')
+        self.logic.exportationFunction(
+            self.directoryExportDistance,
+            self.filenameExportDistance,
+            self.computedDistanceList,
+            'distance'
+        )
 
     def onComputeAnglesClicked(self):
         fidList = self.logic.selectedFidList
@@ -519,7 +536,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
 
     def onExportAngleButton(self):
-        self.logic.exportationFunction(self.directoryExportAngle, self.computedAnglesList, 'angle')
+        self.logic.exportationFunction(
+            self.directoryExportAngle,
+            self.filenameExportAngle,
+            self.computedAnglesList,
+            'angle'
+        )
 
     def onComputeLinePointClicked(self):
         fidList = self.logic.selectedFidList
@@ -554,7 +576,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
 
     def onExportLinePointButton(self):
-        self.logic.exportationFunction(self.directoryExportLinePoint, self.computedLinePointList, 'linePoint')
+        self.logic.exportationFunction(
+            self.directoryExportLinePoint,
+            self.filenameExportLinePoint,
+            self.computedLinePointList,
+            'linePoint'
+        )
 
 class Q3DCLogic(ScriptedLoadableModuleLogic):
     def __init__(self, interface):
@@ -1655,12 +1682,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         return renderer, actor
 
-    def exportationFunction(self, directoryExport, listToExport, typeCalculation):
+    def exportationFunction(self, directoryExport, filenameExport, listToExport, typeCalculation):
         messageBox = ctk.ctkMessageBox()
         messageBox.setWindowTitle(' /!\ WARNING /!\ ')
         messageBox.setIcon(messageBox.Warning)
 
-        fileName = os.path.join(directoryExport.directory, typeCalculation + '.csv')
+        fileName = os.path.join(directoryExport.directory, filenameExport.text)
         if os.path.exists(fileName):
             messageBox.setText('File ' + fileName + ' already exists!')
             messageBox.setInformativeText('Do you want to replace it ?')
