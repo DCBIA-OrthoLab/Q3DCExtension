@@ -29,7 +29,11 @@ class Q3DC(ScriptedLoadableModule):
         parent.title = "Q3DC "
         parent.categories = ["Quantification"]
         parent.dependencies = []
-        parent.contributors = ["Lucie Macron (University of Michigan)","Jean-Baptiste VIMORT (University of Michigan)"]
+        parent.contributors = [
+            'Lucie Macron (University of Michigan)',
+            'Jean-Baptiste VIMORT (University of Michigan)',
+            'James Hoctor (Kitware Inc)',
+        ]
         parent.helpText = """
             """
         parent.acknowledgementText = """
