@@ -46,6 +46,7 @@ class Q3DC(ScriptedLoadableModule):
     """
         self.parent = parent
 
+
 class Q3DCWidget(ScriptedLoadableModuleWidget):
 
     def setup(self):
@@ -295,7 +296,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                     landmarkDescription[markupID]["landmarkLabel"] = markupLabel
                 fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
-
     def UpdateInterface(self):
         self.defineMiddlePointButton.enabled = self.landmarkComboBox1.currentText != '' and \
                                                self.landmarkComboBox2.currentText != '' and \
@@ -522,7 +522,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.angleLayout.addLayout(self.tableAndExportAngleLayout)
         self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
 
-
     def onExportAngleButton(self):
         self.logic.exportationFunction(
             self.directoryExportAngle,
@@ -570,6 +569,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.computedLinePointList,
             'linePoint'
         )
+
 
 class Q3DCLogic(ScriptedLoadableModuleLogic):
     def __init__(self, interface):
@@ -1144,7 +1144,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         combobox.setCurrentIndex(combobox.count - 1)
         combobox.blockSignals(False)
 
-
     def deleteLandmark(self, fidList, label):
         # update of the Combobox that are always updated
         self.interface.landmarkComboBox.removeItem(self.interface.landmarkComboBox.findText(label))
@@ -1402,7 +1401,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                        fidLabel2A, fidLabel2B, fidlist2A, fidlist2B,
                        PitchState, YawState, RollState):
         fidID1A = self.findIDFromLabel(fidlist1A,fidLabel1A)
-        fidID1B= self.findIDFromLabel(fidlist1B,fidLabel1B)
+        fidID1B = self.findIDFromLabel(fidlist1B,fidLabel1B)
         fidID2A = self.findIDFromLabel(fidlist2A,fidLabel2A)
         fidID2B = self.findIDFromLabel(fidlist2B,fidLabel2B)
         landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
@@ -1871,13 +1870,13 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.updateLandmarkComboBox(fidListCombobox.currentNode(), landmarkCombobox)
         self.interface.UpdateInterface()
 
+
 class Q3DCTest(ScriptedLoadableModuleTest):
 
     def setUp(self):
         """ Do whatever is needed to reset the state - typically a scene clear will be enough.
             """
         slicer.mrmlScene.Clear(0)
-
 
     def runTest(self):
         """Run as few or as many tests as needed here.
