@@ -1712,10 +1712,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             cw.writerow([' Landmark A - Landmark B',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
             self.writeDistance(cw, listToExport)
         elif typeCalculation == 'linePoint':
-            cw.writerow([' Landmark A - Landmark B',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
+            cw.writerow([' Landmark A - Landmark B / Landmark X',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
             self.writeLinePoint(cw, listToExport)
         else:
-            cw.writerow([' Line 1 (Landmark A - Landmark B) /  Line 2 (Landmark A - Landmark B)',  ' YAW ', ' PITCH ', ' ROLL '])
+            cw.writerow([' Line 1 (Landmark A - Landmark B) |  Line 2 (Landmark A - Landmark B)',  ' YAW ', ' PITCH ', ' ROLL '])
             self.writeAngle(cw, listToExport)
         file.close()
         if self.decimalPoint != '.':
