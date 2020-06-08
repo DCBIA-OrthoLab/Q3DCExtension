@@ -48,12 +48,6 @@ class Q3DC(ScriptedLoadableModule):
 
 class Q3DCWidget(ScriptedLoadableModuleWidget):
 
-    class MarkupsNodeStorage(object):
-        def __init__(self):
-            self.PointAddedEventTag = None
-            self.PointModifiedEventTag = None
-            self.landmarkDictionary = None   # key: landmark ID
-                                             # value: ID of the model of reference
     def setup(self):
         print("-------Q3DC Widget Setup------")
         ScriptedLoadableModuleWidget.setup(self)
@@ -71,7 +65,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.actor3 = None
 
         # Load widget from .ui file (created by Qt Designer)
-        loader = qt.QUiLoader()
         uiWidget = slicer.util.loadUI(self.resourcePath('UI/Q3DC.ui'))
         self.layout.addWidget(uiWidget)
         self.widget = uiWidget
@@ -1961,7 +1954,6 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
         modelNodes = {}
         mandibleFiles = ("AH1m.vtk", "AH2m.vtk")
-        fiducialFiles = ("AH1f.vtk", "AH2f.vtk")
         for mandibleFile in mandibleFiles:
             name = os.path.splitext(mandibleFile)[0]
             self.delayDisplay("loading: %s" % name)
@@ -1980,7 +1972,6 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         points = ( (43, 25, -10), (-49, 22, -8), (-6, 64, -53) )
 
         firstMarkupsNode = None
-        firstMarkupID = None
 
         movingMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
         movingMarkupsFiducial.SetName("F")
@@ -2002,7 +1993,6 @@ class Q3DCTest(ScriptedLoadableModuleTest):
             markupsNode.AddFiducial(*point)
             if not firstMarkupsNode:
                 firstMarkupsNode = markupsNode
-                firstMarkupID = markupsNode.GetNthMarkupID(0)
             self.delayDisplay("Added point %d" % index)
             index += 1
 
