@@ -68,51 +68,52 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         # Load widget from .ui file (created by Qt Designer)
         uiWidget = slicer.util.loadUI(self.resourcePath('UI/Q3DC.ui'))
         self.layout.addWidget(uiWidget)
+        self.ui = slicer.util.childWidgetVariables(uiWidget)
         self.widget = uiWidget
 
         #--------------------------- Scene --------------------------#
-        self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
-        treeView = self.logic.get("treeView")
+        self.SceneCollapsibleButton = self.ui.SceneCollapsibleButton # this attribute is usefull for Longitudinal quantification extension
+        treeView = self.ui.treeView
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
         # --------------- landmark modification --------------
-        self.inputModelLabel = self.logic.get("inputModelLabel")  # this atribute is usefull for Longitudinal quantification extension
-        self.inputLandmarksLabel = self.logic.get("inputLandmarksLabel")  # this atribute is usefull for Longitudinal quantification extension
-        self.landmarkModif = self.logic.get("landmarkModif")
-        self.inputModelSelector = self.logic.get("inputModelSelector")
+        self.inputModelLabel = self.ui.inputModelLabel  # this attribute is usefull for Longitudinal quantification extension
+        self.inputLandmarksLabel = self.ui.inputLandmarksLabel  # this attribute is usefull for Longitudinal quantification extension
+        self.landmarkModif = self.ui.landmarkModif
+        self.inputModelSelector = self.ui.inputModelSelector
         self.inputModelSelector.setMRMLScene(slicer.mrmlScene)
         self.inputModelSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onModelChanged)
-        self.addLandmarkButton = self.logic.get("addLandmarkButton")
+        self.addLandmarkButton = self.ui.addLandmarkButton
         self.addLandmarkButton.connect('clicked()', self.onAddLandmarkButtonClicked)
-        self.inputLandmarksSelector = self.logic.get("inputLandmarksSelector")
+        self.inputLandmarksSelector = self.ui.inputLandmarksSelector
         self.inputLandmarksSelector.setMRMLScene(slicer.mrmlScene)
         self.inputLandmarksSelector.setEnabled(False) # The "enable" property seems to not be imported from the .ui
         self.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
-        self.loadLandmarksOnSurfacCheckBox = self.logic.get("loadLandmarksOnSurfacCheckBox")
-        self.landmarkComboBox = self.logic.get("landmarkComboBox")
+        self.loadLandmarksOnSurfacCheckBox = self.ui.loadLandmarksOnSurfacCheckBox
+        self.landmarkComboBox = self.ui.landmarkComboBox
         self.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
-        self.surfaceDeplacementCheckBox = self.logic.get("surfaceDeplacementCheckBox")
+        self.surfaceDeplacementCheckBox = self.ui.surfaceDeplacementCheckBox
         self.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
         #        ----------------- Compute Mid Point -------------
-        self.midPointGroupBox = self.logic.get("midPointGroupBox")
-        self.landmarkComboBox1 = self.logic.get("landmarkComboBox1")
+        self.midPointGroupBox = self.ui.midPointGroupBox
+        self.landmarkComboBox1 = self.ui.landmarkComboBox1
         self.landmarkComboBox1.connect('currentIndexChanged(int)', self.UpdateInterface)
-        self.landmarkComboBox2 = self.logic.get("landmarkComboBox2")
+        self.landmarkComboBox2 = self.ui.landmarkComboBox2
         self.landmarkComboBox2.connect('currentIndexChanged(int)', self.UpdateInterface)
-        self.defineMiddlePointButton = self.logic.get("defineMiddlePointButton")
+        self.defineMiddlePointButton = self.ui.defineMiddlePointButton
         self.defineMiddlePointButton.connect('clicked()', self.onDefineMidPointClicked)
-        self.midPointOnSurfaceCheckBox = self.logic.get("midPointOnSurfaceCheckBox")
+        self.midPointOnSurfaceCheckBox = self.ui.midPointOnSurfaceCheckBox
 #        ------------------- 1st OPTION -------------------
-        self.distanceGroupBox = self.logic.get("distanceGroupBox")
-        self.landmarkComboBoxA = self.logic.get("landmarkComboBoxA")
-        self.fidListComboBoxA = self.logic.get("fidListComboBoxA")
+        self.distanceGroupBox = self.ui.distanceGroupBox
+        self.landmarkComboBoxA = self.ui.landmarkComboBoxA
+        self.fidListComboBoxA = self.ui.fidListComboBoxA
         self.fidListComboBoxA.setMRMLScene(slicer.mrmlScene)
-        self.landmarkComboBoxB = self.logic.get("landmarkComboBoxB")
-        self.fidListComboBoxB = self.logic.get("fidListComboBoxB")
+        self.landmarkComboBoxB = self.ui.landmarkComboBoxB
+        self.fidListComboBoxB = self.ui.fidListComboBoxB
         self.fidListComboBoxB.setMRMLScene(slicer.mrmlScene)
-        self.computeDistancesPushButton = self.logic.get("computeDistancesPushButton")
+        self.computeDistancesPushButton = self.ui.computeDistancesPushButton
         self.computeDistancesPushButton.connect('clicked()', self.onComputeDistanceClicked)
         self.landmarkComboBoxA.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.landmarkComboBoxB.connect('currentIndexChanged(int)', self.UpdateInterface)
@@ -121,7 +122,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.fidListComboBoxB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxB, self.landmarkComboBoxB))
         # ---------------------------- Directory - Export Button -----------------------------
-        self.distanceLayout = self.logic.get("distanceLayout")
+        self.distanceLayout = self.ui.distanceLayout
         self.distanceTable = qt.QTableWidget()
         self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.filenameExportDistance = qt.QLineEdit('distance.csv')
@@ -137,23 +138,23 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.tableAndExportLayout.addWidget(self.distanceTable)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
 #       ------------------- 2nd OPTION -------------------
-        self.angleGroupBox = self.logic.get("angleGroupBox")
-        self.line1LAComboBox = self.logic.get("line1LAComboBox")
-        self.fidListComboBoxline1LA = self.logic.get("fidListComboBoxline1LA")
+        self.angleGroupBox = self.ui.angleGroupBox
+        self.line1LAComboBox = self.ui.line1LAComboBox
+        self.fidListComboBoxline1LA = self.ui.fidListComboBoxline1LA
         self.fidListComboBoxline1LA.setMRMLScene(slicer.mrmlScene)
-        self.line1LBComboBox = self.logic.get("line1LBComboBox")
-        self.fidListComboBoxline1LB = self.logic.get("fidListComboBoxline1LB")
+        self.line1LBComboBox = self.ui.line1LBComboBox
+        self.fidListComboBoxline1LB = self.ui.fidListComboBoxline1LB
         self.fidListComboBoxline1LB.setMRMLScene(slicer.mrmlScene)
-        self.line2LAComboBox = self.logic.get("line2LAComboBox")
-        self.fidListComboBoxline2LA = self.logic.get("fidListComboBoxline2LA")
+        self.line2LAComboBox = self.ui.line2LAComboBox
+        self.fidListComboBoxline2LA = self.ui.fidListComboBoxline2LA
         self.fidListComboBoxline2LA.setMRMLScene(slicer.mrmlScene)
-        self.line2LBComboBox = self.logic.get("line2LBComboBox")
-        self.fidListComboBoxline2LB = self.logic.get("fidListComboBoxline2LB")
+        self.line2LBComboBox = self.ui.line2LBComboBox
+        self.fidListComboBoxline2LB = self.ui.fidListComboBoxline2LB
         self.fidListComboBoxline2LB.setMRMLScene(slicer.mrmlScene)
-        self.pitchCheckBox = self.logic.get("pitchCheckBox")
-        self.rollCheckBox = self.logic.get("rollCheckBox")
-        self.yawCheckBox = self.logic.get("yawCheckBox")
-        self.computeAnglesPushButton = self.logic.get("computeAnglesPushButton")
+        self.pitchCheckBox = self.ui.pitchCheckBox
+        self.rollCheckBox = self.ui.rollCheckBox
+        self.yawCheckBox = self.ui.yawCheckBox
+        self.computeAnglesPushButton = self.ui.computeAnglesPushButton
         self.fidListComboBoxline1LA.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxline1LA, self.line1LAComboBox))
         self.fidListComboBoxline1LB.connect('currentNodeChanged(vtkMRMLNode*)',
@@ -172,7 +173,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
 
         # ---------------------------- Directory - Export Button -----------------------------
-        self.angleLayout = self.logic.get("angleLayout")
+        self.angleLayout = self.ui.angleLayout
         self.anglesTable = qt.QTableWidget()
         self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.filenameExportAngle = qt.QLineEdit('angle.csv')
@@ -188,17 +189,17 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.tableAndExportAngleLayout.addWidget(self.anglesTable)
         self.tableAndExportAngleLayout.addLayout(self.exportAngleLayout)
 #       ------------------- 3rd OPTION -------------------
-        self.linePointGroupBox = self.logic.get("linePointGroupBox")
-        self.lineLAComboBox = self.logic.get("lineLAComboBox")
-        self.fidListComboBoxlineLA = self.logic.get("fidListComboBoxlineLA")
+        self.linePointGroupBox = self.ui.linePointGroupBox
+        self.lineLAComboBox = self.ui.lineLAComboBox
+        self.fidListComboBoxlineLA = self.ui.fidListComboBoxlineLA
         self.fidListComboBoxlineLA.setMRMLScene(slicer.mrmlScene)
-        self.lineLBComboBox = self.logic.get("lineLBComboBox")
-        self.fidListComboBoxlineLB = self.logic.get("fidListComboBoxlineLB")
+        self.lineLBComboBox = self.ui.lineLBComboBox
+        self.fidListComboBoxlineLB = self.ui.fidListComboBoxlineLB
         self.fidListComboBoxlineLB.setMRMLScene(slicer.mrmlScene)
-        self.linePointComboBox = self.logic.get("linePointComboBox")
-        self.fidListComboBoxlinePoint = self.logic.get("fidListComboBoxlinePoint")
+        self.linePointComboBox = self.ui.linePointComboBox
+        self.fidListComboBoxlinePoint = self.ui.fidListComboBoxlinePoint
         self.fidListComboBoxlinePoint.setMRMLScene(slicer.mrmlScene)
-        self.computeLinePointPushButton = self.logic.get("computeLinePointPushButton")
+        self.computeLinePointPushButton = self.ui.computeLinePointPushButton
         self.fidListComboBoxlineLA.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.fidListComboBoxlineLA, self.lineLAComboBox))
         self.fidListComboBoxlineLB.connect('currentNodeChanged(vtkMRMLNode*)',
@@ -209,7 +210,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         # ---------------------------- Directory - Export Button -----------------------------
-        self.LinePointLayout = self.logic.get("LinePointLayout")
+        self.LinePointLayout = self.ui.LinePointLayout
         self.linePointTable = qt.QTableWidget()
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.filenameExportLinePoint = qt.QLineEdit('linePoint.csv')
@@ -580,19 +581,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         system = qt.QLocale().system()
         self.decimalPoint = chr(system.decimalPoint())
         self.comboboxdict = dict()
-
-    def get(self, objectName):
-        return self.findWidget(self.interface.widget, objectName)
-
-    def findWidget(self, widget, objectName):
-        if widget.objectName == objectName:
-            return widget
-        else:
-            for w in widget.children():
-                resulting_widget = self.findWidget(w, objectName)
-                if resulting_widget:
-                    return resulting_widget
-            return None
 
     def initComboboxdict(self):
         self.comboboxdict[self.interface.landmarkComboBoxA] = None
