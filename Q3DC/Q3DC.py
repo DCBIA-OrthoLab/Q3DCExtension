@@ -70,20 +70,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.renderer3 = None
         self.actor3 = None
 
-
-        # UI setup
+        # Load widget from .ui file (created by Qt Designer)
         loader = qt.QUiLoader()
-        moduleName = 'Q3DC'
-        scriptedModulesPath = eval('slicer.modules.%s.path' % moduleName.lower())
-        scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-        path = os.path.join(scriptedModulesPath, 'Resources', 'UI', '%s.ui' %moduleName)
-
-        qfile = qt.QFile(path)
-        qfile.open(qt.QFile.ReadOnly)
-        widget = loader.load(qfile, self.parent)
-        self.layout = self.parent.layout()
-        self.widget = widget
-        self.layout.addWidget(widget)
+        uiWidget = slicer.util.loadUI(self.resourcePath('UI/Q3DC.ui'))
+        self.layout.addWidget(uiWidget)
+        self.widget = uiWidget
 
         #--------------------------- Scene --------------------------#
         self.SceneCollapsibleButton = self.logic.get("SceneCollapsibleButton") # this atribute is usefull for Longitudinal quantification extension
