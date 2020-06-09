@@ -1,5 +1,6 @@
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
+from slicer.util import NodeModify
 import csv, os
 import json
 import time
@@ -1768,10 +1769,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         PolyData.Modified()
         displayNode = inputModelNode.GetModelDisplayNode()
         displayNode.SetScalarVisibility(False)
-        disabledModify = displayNode.StartModify()
-        displayNode.SetActiveScalarName(scalarName)
-        displayNode.SetScalarVisibility(True)
-        displayNode.EndModify(disabledModify)
+        with NodeModify(displayNode):
+            displayNode.SetActiveScalarName(scalarName)
+            displayNode.SetScalarVisibility(True)
 
     def findROI(self, fidList):
         hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
