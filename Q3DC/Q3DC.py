@@ -1,6 +1,9 @@
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
+from slicer.util import NodeModify
 import csv, os
+from collections import defaultdict
+from pathlib import Path
 import json
 import time
 import math
@@ -90,6 +93,27 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
         self.ui.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
         self.ui.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
+
+        # --------------- anatomical legend --------------
+        self.suggested_landmarks = self.logic.load_suggested_landmarks()
+        self.anatomical_legend_space = self.ui.landmarkModifLayout
+        self.anatomical_radio_buttons_layout = qt.QHBoxLayout()
+        self.anatomical_legend_space.addLayout(self.anatomical_radio_buttons_layout)
+        self.init_anatomical_radio_buttons()
+
+        self.anatomical_legend = None
+        self.init_anatomical_legend()
+        self.anatomical_legend_view = slicer.qMRMLTableView()
+        self.anatomical_legend_view.setMRMLTableNode(self.anatomical_legend)
+        self.anatomical_legend_space.addWidget(self.anatomical_legend_view)
+        self.anatomical_legend_view.show()
+        self.anatomical_legend_view.setSelectionBehavior(
+            qt.QAbstractItemView.SelectRows
+        )
+        self.anatomical_legend_view.connect('selectionChanged()', self.on_legend_row_selected)
+
+        self.anatomical_radio_buttons[0].toggle()
+
         #        ----------------- Compute Mid Point -------------
         self.ui.landmarkComboBox1.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.landmarkComboBox2.connect('currentIndexChanged(int)', self.UpdateInterface)
@@ -312,6 +336,94 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                     self.ui.fidListComboBoxlineLA.currentNode(),
                                                     self.ui.fidListComboBoxlineLB.currentNode())
         self.logic.UpdateThreeDView(self.ui.landmarkComboBox.currentText)
+
+    def init_anatomical_legend(self):
+        if self.anatomical_legend is None:
+            for table_node in slicer.mrmlScene.GetNodesByClass('vtkMRMLTableNode'):
+                if table_node.GetAttribute('Q3DC.is_anatomical_legend') == 'True':
+                    self.anatomical_legend = table_node
+            if self.anatomical_legend is None:
+                self.anatomical_legend = slicer.vtkMRMLTableNode()
+                self.anatomical_legend.SetSaveWithScene(False)
+                self.anatomical_legend.SetLocked(True)
+                slicer.mrmlScene.AddNode(self.anatomical_legend)
+                self.anatomical_legend.SetAttribute('Q3DC.is_anatomical_legend', 'True')
+
+        al = self.anatomical_legend
+        with NodeModify(al):
+            al.RemoveAllColumns()
+            al.AddColumn().SetName('Landmark')
+            al.AddColumn().SetName('Description')
+            al.SetUseColumnNameAsColumnHeader(True)
+
+    def init_anatomical_radio_buttons(self):
+        self.anatomical_radio_buttons = \
+            [qt.QRadioButton(region) for region in self.suggested_landmarks.keys()]
+        for i in range(self.anatomical_radio_buttons_layout.count()-1, -1, -1):
+            self.anatomical_radio_buttons_layout.itemAt[i].widget().setParent(None)
+        for radio_button in self.anatomical_radio_buttons:
+            self.anatomical_radio_buttons_layout.addWidget(radio_button)
+            radio_button.toggled.connect(
+                lambda state, _radio_button=radio_button:
+                    self.on_anatomical_radio_button_toggled(state, _radio_button)
+            )
+
+    def on_anatomical_radio_button_toggled(self, state, radio_button):
+        if state:
+            self.init_anatomical_legend()
+            region = radio_button.text
+
+            al = self.anatomical_legend
+            with NodeModify(al):
+                for landmark, description in self.suggested_landmarks[region]:
+                    new_row_index = al.AddEmptyRow()
+                    al.SetCellText(new_row_index, 0, landmark)
+                    al.SetCellText(new_row_index, 1, description)
+            self.anatomical_legend_view.resizeColumnsToContents()
+
+    def on_legend_row_selected(self):
+        # Calculate the index of the selected point.
+        fidList = self.logic.selectedFidList
+        if not fidList:
+            return
+        selectedFidReflID = self.logic.findIDFromLabel(
+            fidList,
+            self.ui.landmarkComboBox.currentText
+        )
+        if selectedFidReflID is None:
+            # code would run correctly if we continued but wouldn't do anything
+            return
+        fid_index = fidList.GetNthControlPointIndexByID(selectedFidReflID)
+        old_name = fidList.GetNthControlPointLabel(fid_index)
+
+        # Look in the legend for the info from the selected row.
+        selected_indices = self.anatomical_legend_view.selectedIndexes()
+        if len(selected_indices) != 2:
+            return
+        name_index, description_index = selected_indices
+        row_index = name_index.row()
+        name = self.anatomical_legend.GetCellText(row_index, 0)
+        description = self.anatomical_legend.GetCellText(row_index, 1)
+
+        # Refuse to create multiple fiducials with the same name.
+        for i in range(fidList.GetNumberOfControlPoints()):
+            if name == fidList.GetNthControlPointLabel(i):
+                return
+
+        # Set the name and description of the selected point.
+        fidList.SetNthControlPointLabel(fid_index, name)
+        fidList.SetNthControlPointDescription(fid_index, description)
+
+        # Update the landmark combo boxes to reflect the name change.
+        self.logic.updateLandmarkComboBox(fidList, self.ui.landmarkComboBox, False)
+        self.ui.landmarkComboBox.setCurrentText(name)
+        for box in (self.ui.landmarkComboBox1, self.ui.landmarkComboBox2):
+            new_selection = box.currentText
+            if new_selection == old_name:
+                new_selection = name
+            self.logic.updateLandmarkComboBox(fidList, box)
+            box.setCurrentText(new_selection)
+        self.UpdateInterface()
 
     def onModelChanged(self):
         print("-------Model Changed--------")
@@ -540,6 +652,20 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         system = qt.QLocale().system()
         self.decimalPoint = chr(system.decimalPoint())
         self.comboboxdict = dict()
+
+    @staticmethod
+    def load_suggested_landmarks():
+        suggested_landmarks = defaultdict(list)
+        suggestions_path = \
+            Path(__file__).parent / 'Resources' / 'Data' / 'base_fiducial_legend.csv'
+        with suggestions_path.open(newline='') as suggestions_file:
+            reader = csv.DictReader(suggestions_file)
+            for row in reader:
+                region = row['Region'].title()
+                landmark = row['Landmark']
+                name = row['Name']
+                suggested_landmarks[region].append((landmark, name))
+        return suggested_landmarks
 
     def initComboboxdict(self):
         self.comboboxdict[self.interface.landmarkComboBoxA] = None
@@ -1100,14 +1226,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             if value is fidList:
                 key.removeItem(key.findText(label))
 
-    def findIDFromLabel(self, fidList, landmarkLabel):
+    @staticmethod
+    def findIDFromLabel(fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
-        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        if not landmarkDescription:
-            return None
-        for ID, value in landmarkDescription.items():
-            if value["landmarkLabel"] == landmarkLabel:
-                return ID
+        for i in range(fidList.GetNumberOfFiducials()):
+            if landmarkLabel == fidList.GetNthFiducialLabel(i):
+                return fidList.GetNthMarkupID(i)
         return None
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
@@ -1768,10 +1892,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         PolyData.Modified()
         displayNode = inputModelNode.GetModelDisplayNode()
         displayNode.SetScalarVisibility(False)
-        disabledModify = displayNode.StartModify()
-        displayNode.SetActiveScalarName(scalarName)
-        displayNode.SetScalarVisibility(True)
-        displayNode.EndModify(disabledModify)
+        with NodeModify(displayNode):
+            displayNode.SetActiveScalarName(scalarName)
+            displayNode.SetScalarVisibility(True)
 
     def findROI(self, fidList):
         hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
