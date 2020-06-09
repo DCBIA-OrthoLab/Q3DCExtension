@@ -1101,14 +1101,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             if value is fidList:
                 key.removeItem(key.findText(label))
 
-    def findIDFromLabel(self, fidList, landmarkLabel):
+    @staticmethod
+    def findIDFromLabel(fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
-        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        if not landmarkDescription:
-            return None
-        for ID, value in landmarkDescription.items():
-            if value["landmarkLabel"] == landmarkLabel:
-                return ID
+        for i in range(fidList.GetNumberOfFiducials()):
+            if landmarkLabel == fidList.GetNthFiducialLabel(i):
+                return fidList.GetNthMarkupID(i)
         return None
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
