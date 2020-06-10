@@ -95,7 +95,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
 
         # --------------- anatomical legend --------------
-        self.suggested_landmarks = self.logic.load_suggested_landmarks()
+        self.suggested_landmarks = self.logic.load_suggested_landmarks(
+            self.resourcePath('Data/base_fiducial_legend.csv'))
         self.anatomical_legend_space = self.ui.landmarkModifLayout
         self.anatomical_radio_buttons_layout = qt.QHBoxLayout()
         self.anatomical_legend_space.addLayout(self.anatomical_radio_buttons_layout)
@@ -654,11 +655,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.comboboxdict = dict()
 
     @staticmethod
-    def load_suggested_landmarks():
+    def load_suggested_landmarks(filepath):
         suggested_landmarks = defaultdict(list)
-        suggestions_path = \
-            Path(__file__).parent / 'Resources' / 'Data' / 'base_fiducial_legend.csv'
-        with suggestions_path.open(newline='') as suggestions_file:
+        with open(filepath, newline='') as suggestions_file:
             reader = csv.DictReader(suggestions_file)
             for row in reader:
                 region = row['Region'].title()
