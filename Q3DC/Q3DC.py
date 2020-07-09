@@ -115,6 +115,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.anatomical_radio_buttons[0].toggle()
 
+        self.ui.legendFileButton.connect('clicked()', self.on_select_legend_file_clicked)
+
         #        ----------------- Compute Mid Point -------------
         self.ui.landmarkComboBox1.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.landmarkComboBox2.connect('currentIndexChanged(int)', self.UpdateInterface)
@@ -361,7 +363,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.anatomical_radio_buttons = \
             [qt.QRadioButton(region) for region in self.suggested_landmarks.keys()]
         for i in range(self.anatomical_radio_buttons_layout.count()-1, -1, -1):
-            self.anatomical_radio_buttons_layout.itemAt[i].widget().setParent(None)
+            self.anatomical_radio_buttons_layout.itemAt(i).widget().setParent(None)
         for radio_button in self.anatomical_radio_buttons:
             self.anatomical_radio_buttons_layout.addWidget(radio_button)
             radio_button.toggled.connect(
@@ -425,6 +427,21 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.logic.updateLandmarkComboBox(fidList, box)
             box.setCurrentText(new_selection)
         self.UpdateInterface()
+
+    def on_select_legend_file_clicked(self):
+        legend_filename = qt.QFileDialog.getOpenFileName(
+            None,'Select File', '', 'CSV (*.csv)')
+        if legend_filename == '':
+            # User canceled the file selection dialog.
+            return
+        try:
+            self.suggested_landmarks = self.logic.load_suggested_landmarks(
+                legend_filename)
+        except KeyError:
+            slicer.util.delayDisplay('The selected file does not have the right column names.')
+            return
+        self.init_anatomical_radio_buttons()
+        self.anatomical_radio_buttons[0].toggle()
 
     def onModelChanged(self):
         print("-------Model Changed--------")
