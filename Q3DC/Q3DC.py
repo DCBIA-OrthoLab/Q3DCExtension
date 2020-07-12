@@ -1,17 +1,16 @@
-import vtk, qt, ctk, slicer
-from slicer.ScriptedLoadableModule import *
-from slicer.util import NodeModify
-import csv, os
+import csv
 from collections import defaultdict
-from pathlib import Path
 import json
-import time
+import logging
 import math
+import os
+import time
 
+import ctk
 import numpy as np
-
-# needed for kd-trees
+import qt
 import scipy.spatial
+import vtk
 
 # needed for topological sort. Yes, this is basically just DFS.
 try:
@@ -20,6 +19,10 @@ except ModuleNotFoundError as e:
     # This requires a network connection!
     slicer.util.pip_install('networkx')
     import networkx as nx
+
+import slicer
+from slicer.ScriptedLoadableModule import *
+from slicer.util import NodeModify
 
 
 #
@@ -100,7 +103,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.anatomical_legend_space = self.ui.landmarkModifLayout
         self.anatomical_radio_buttons_layout = qt.QHBoxLayout()
         self.anatomical_legend_space.addLayout(self.anatomical_radio_buttons_layout)
-        self.init_anatomical_radio_buttons()
 
         self.anatomical_legend = None
         self.init_anatomical_legend()
@@ -113,7 +115,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         )
         self.anatomical_legend_view.connect('selectionChanged()', self.on_legend_row_selected)
 
-        self.anatomical_radio_buttons[0].toggle()
+        self.init_anatomical_radio_buttons()
 
         self.ui.legendFileButton.connect('clicked()', self.on_select_legend_file_clicked)
 
@@ -370,6 +372,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 lambda state, _radio_button=radio_button:
                     self.on_anatomical_radio_button_toggled(state, _radio_button)
             )
+        self.anatomical_radio_buttons[0].toggle()
 
     def on_anatomical_radio_button_toggled(self, state, radio_button):
         if state:
@@ -434,14 +437,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         if legend_filename == '':
             # User canceled the file selection dialog.
             return
-        try:
-            self.suggested_landmarks = self.logic.load_suggested_landmarks(
-                legend_filename)
-        except KeyError:
-            slicer.util.delayDisplay('The selected file does not have the right column names.')
+        suggested_landmarks = self.logic.load_suggested_landmarks(
+            legend_filename)
+        if suggested_landmarks is None:
             return
+        self.suggested_landmarks = suggested_landmarks
         self.init_anatomical_radio_buttons()
-        self.anatomical_radio_buttons[0].toggle()
 
     def onModelChanged(self):
         print("-------Model Changed--------")
@@ -674,14 +675,27 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     @staticmethod
     def load_suggested_landmarks(filepath):
         suggested_landmarks = defaultdict(list)
-        with open(filepath, newline='') as suggestions_file:
-            reader = csv.DictReader(suggestions_file)
-            for row in reader:
-                region = row['Region'].title()
-                landmark = row['Landmark']
-                name = row['Name']
-                suggested_landmarks[region].append((landmark, name))
-        return suggested_landmarks
+        try:
+            with open(filepath, newline='') as suggestions_file:
+                reader = csv.DictReader(suggestions_file)
+                for row in reader:
+                    region = row['Region'].title()
+                    landmark = row['Landmark']
+                    name = row['Name']
+                    suggested_landmarks[region].append((landmark, name))
+            return suggested_landmarks
+        except OSError as e:
+            slicer.util.delayDisplay('Unable to find/open file.')
+            logging.info('User attempted to open a landmark legend file.\n' + repr(e))
+            return None
+        except csv.Error as e:
+            slicer.util.delayDisplay('The selected file is not formatted properly.')
+            logging.info('User attempted to open a landmark legend file.\n' + repr(e))
+            return None
+        except KeyError as e:
+            slicer.util.delayDisplay('The selected file does not have the right column names.')
+            logging.info('User attempted to open a landmark legend file.\n' + repr(e))
+            return None
 
     def initComboboxdict(self):
         self.comboboxdict[self.interface.landmarkComboBoxA] = None
