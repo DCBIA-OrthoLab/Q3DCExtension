@@ -190,11 +190,22 @@
        </layout>
       </item>
       <item>
-       <widget class="QLabel" name="landmarkLegendLabel">
-        <property name="text">
-         <string>Landmark Legend</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="landmarkLegendLabel">
+          <property name="text">
+           <string>Landmark Legend</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="legendFileButton">
+          <property name="text">
+           <string>Select Legend File</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
