@@ -78,14 +78,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic = Q3DCLogic(self.ui)
         self.logic.UpdateInterface = self.UpdateInterface
 
-        #--------------------------- Scene --------------------------#
+        # -------------------------- Scene ---------------------------
         self.SceneCollapsibleButton = self.ui.SceneCollapsibleButton # this attribute is usefull for Longitudinal quantification extension
         treeView = self.ui.treeView
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
-        # --------------- landmark modification --------------
+
+        # ------------------ Landmark Modification -------------------
         self.inputModelLabel = self.ui.inputModelLabel  # this attribute is usefull for Longitudinal quantification extension
         self.inputLandmarksLabel = self.ui.inputLandmarksLabel  # this attribute is usefull for Longitudinal quantification extension
         self.ui.inputModelSelector.setMRMLScene(slicer.mrmlScene)
@@ -97,7 +98,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
         self.ui.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
 
-        # --------------- anatomical legend --------------
+        # --------------------- Anatomical Legend --------------------
         self.suggested_landmarks = self.logic.load_suggested_landmarks(
             self.resourcePath('Data/base_fiducial_legend.csv'))
         self.anatomical_legend_space = self.ui.landmarkModifLayout
@@ -119,11 +120,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.ui.legendFileButton.connect('clicked()', self.on_select_legend_file_clicked)
 
-        #        ----------------- Compute Mid Point -------------
+        # -------------------- Compute Mid Point ---------------------
         self.ui.landmarkComboBox1.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.landmarkComboBox2.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.defineMiddlePointButton.connect('clicked()', self.onDefineMidPointClicked)
-#        ------------------- 1st OPTION -------------------
+
+        # ------------------- Calculate Distances --------------------
         self.ui.fidListComboBoxA.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxB.setMRMLScene(slicer.mrmlScene)
         self.ui.computeDistancesPushButton.connect('clicked()', self.onComputeDistanceClicked)
@@ -133,7 +135,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.ui.fidListComboBoxA, self.ui.landmarkComboBoxA))
         self.ui.fidListComboBoxB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.ui.fidListComboBoxB, self.ui.landmarkComboBoxB))
-        # ---------------------------- Directory - Export Button -----------------------------
+        # ---------------------- Save Distances ----------------------
         self.distanceTable = qt.QTableWidget()
         self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.filenameExportDistance = qt.QLineEdit('distance.csv')
@@ -148,7 +150,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.tableAndExportLayout = qt.QVBoxLayout()
         self.tableAndExportLayout.addWidget(self.distanceTable)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
-#       ------------------- 2nd OPTION -------------------
+
+        # --------------------- Calculate Angles ---------------------
         self.ui.fidListComboBoxline1LA.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxline1LB.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxline2LA.setMRMLScene(slicer.mrmlScene)
@@ -169,8 +172,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.pitchCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.ui.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.ui.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
-
-        # ---------------------------- Directory - Export Button -----------------------------
+        # ----------------------- Save Angles ------------------------
         self.anglesTable = qt.QTableWidget()
         self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.filenameExportAngle = qt.QLineEdit('angle.csv')
@@ -185,7 +187,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
         self.tableAndExportAngleLayout.addWidget(self.anglesTable)
         self.tableAndExportAngleLayout.addLayout(self.exportAngleLayout)
-#       ------------------- 3rd OPTION -------------------
+
+        # -------------- Calculate Line-Point Distances --------------
         self.ui.fidListComboBoxlineLA.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxlineLB.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxlinePoint.setMRMLScene(slicer.mrmlScene)
@@ -198,7 +201,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.computeLinePointPushButton.connect('clicked()', self.onComputeLinePointClicked)
         self.ui.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-        # ---------------------------- Directory - Export Button -----------------------------
+        # ---------------- Save Line-Point Distances -----------------
         self.linePointTable = qt.QTableWidget()
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.filenameExportLinePoint = qt.QLineEdit('linePoint.csv')
@@ -213,6 +216,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
         self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
         self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
+
         # INITIALISATION:
         slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
         self.UpdateInterface()
