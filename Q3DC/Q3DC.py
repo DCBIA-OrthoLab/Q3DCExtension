@@ -136,7 +136,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.fidListComboBoxB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.ui.fidListComboBoxB, self.ui.landmarkComboBoxB))
         # ---------------------- Save Distances ----------------------
-        self.distanceTable = qt.QTableWidget()
+        self.distance_table = slicer.vtkMRMLTableNode()
+        self.distance_table.SetSaveWithScene(False)
+        self.distance_table.SetLocked(True)
+        slicer.mrmlScene.AddNode(self.distance_table)
+        self.distance_table_view = slicer.qMRMLTableView()
+        self.distance_table_view.setMRMLTableNode(self.distance_table)
         self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.filenameExportDistance = qt.QLineEdit('distance.csv')
         self.exportDistanceButton = qt.QPushButton(" Export ")
@@ -148,7 +153,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportDistanceLayout.addLayout(self.pathExportDistanceLayout)
         self.exportDistanceLayout.addWidget(self.exportDistanceButton)
         self.tableAndExportLayout = qt.QVBoxLayout()
-        self.tableAndExportLayout.addWidget(self.distanceTable)
+        self.tableAndExportLayout.addWidget(self.distance_table_view)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
 
         # --------------------- Calculate Angles ---------------------
@@ -260,9 +265,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.anglesTable.clear()
         self.anglesTable.setRowCount(0)
         self.anglesTable.setColumnCount(0)
-        self.distanceTable.clear()
-        self.distanceTable.setRowCount(0)
-        self.distanceTable.setColumnCount(0)
+        self.distance_table.RemoveAllColumns()
 
     def enter(self):
         print("enter Q3DC")
@@ -561,14 +564,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 return
         if self.computedDistanceList:
             self.exportDistanceButton.disconnect('clicked()', self.onExportButton)
-            self.layout.removeWidget(self.distanceTable)
-            self.layout.removeItem(self.tableAndExportLayout)
+        else:
+            self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
         self.computedDistanceList = self.logic.addOnDistanceList(self.computedDistanceList,
                                                                  self.ui.landmarkComboBoxA.currentText,
                                                                  self.ui.landmarkComboBoxB.currentText,
                                                                  fidListA,fidListB)
-        self.distanceTable = self.logic.defineDistanceTable(self.distanceTable, self.computedDistanceList)
-        self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
+        self.logic.defineDistanceTable(
+            self.distance_table, self.distance_table_view, self.computedDistanceList)
         self.exportDistanceButton.connect('clicked()', self.onExportButton)
 
     def onExportButton(self):
@@ -1356,57 +1359,30 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         distanceList.append(elementToAdd)
         return distanceList
 
-    def defineDistanceTable(self, table, distanceList):
-        table.clear()
-        table.setRowCount(distanceList.__len__())
-        table.setColumnCount(5)
-        table.setMinimumHeight(50*distanceList.__len__())
-        table.setHorizontalHeaderLabels(['  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
-        i = 0
-        for element in distanceList:
-            startLandName = element.startLandmarkName
-            endLandName = element.endLandmarkName
-            label = qt.QLabel(' ' + startLandName + ' - ' + endLandName + ' ')
-            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-            table.setCellWidget(i, 0,label)
-            if element.RLComponent != None:
-                label = qt.QLabel(element.RLComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-
-            if element.APComponent != None:
-                label = qt.QLabel(element.APComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-
-            if element.SIComponent != None:
-                label = qt.QLabel(element.SIComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-
-            if element.ThreeDComponent != None:
-                label = qt.QLabel(element.ThreeDComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-
-            i += 1
-        return table
+    def defineDistanceTable(self, table, table_view, distanceList):
+        col_names = ('  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance ')
+        with NodeModify(table):
+            table.RemoveAllColumns()
+            for col_name in col_names:
+                table.AddColumn().SetName(col_name)
+            table.SetUseColumnNameAsColumnHeader(True)
+            for element in distanceList:
+                new_row_index = table.AddEmptyRow()
+                startLandName = element.startLandmarkName
+                endLandName = element.endLandmarkName
+                table.SetCellText(new_row_index, 0, f' {startLandName} - {endLandName} ')
+                col_contents = (
+                    element.RLComponent,
+                    element.APComponent,
+                    element.SIComponent,
+                    element.ThreeDComponent
+                )
+                for col_idx, content in enumerate(col_contents, start=1):
+                    if content is None:
+                        content = ' - '
+                    table.SetCellText(new_row_index, col_idx, str(content))
+        table_view.resizeColumnsToContents()
+        table_view.setMinimumHeight(50 * len(distanceList))
 
     def computePitch(self, markupsNode1, landmark1Index,
                      markupsNode2, landmark2Index,
