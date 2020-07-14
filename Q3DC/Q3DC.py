@@ -178,7 +178,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.ui.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
         # ----------------------- Save Angles ------------------------
-        self.anglesTable = qt.QTableWidget()
+        self.angles_table = slicer.vtkMRMLTableNode()
+        self.angles_table.SetSaveWithScene(False)
+        self.angles_table.SetLocked(True)
+        slicer.mrmlScene.AddNode(self.angles_table)
+        self.angles_table_view = slicer.qMRMLTableView()
+        self.angles_table_view.setMRMLTableNode(self.angles_table)
         self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.filenameExportAngle = qt.QLineEdit('angle.csv')
         self.exportAngleButton = qt.QPushButton("Export")
@@ -190,7 +195,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportAngleLayout.addLayout(self.pathExportAngleLayout)
         self.exportAngleLayout.addWidget(self.exportAngleButton)
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
-        self.tableAndExportAngleLayout.addWidget(self.anglesTable)
+        self.tableAndExportAngleLayout.addWidget(self.angles_table_view)
         self.tableAndExportAngleLayout.addLayout(self.exportAngleLayout)
 
         # -------------- Calculate Line-Point Distances --------------
@@ -262,9 +267,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.linePointTable.clear()
         self.linePointTable.setRowCount(0)
         self.linePointTable.setColumnCount(0)
-        self.anglesTable.clear()
-        self.anglesTable.setRowCount(0)
-        self.anglesTable.setColumnCount(0)
+        self.angles_table.RemoveAllColumns()
         self.distance_table.RemoveAllColumns()
 
     def enter(self):
@@ -596,13 +599,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
-                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
-                                                        'Landmarks" panel to connect the landmarks to a model.')
+                self.logic.warningMessage(
+                        f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                        'Landmarks" panel to connect the landmarks to a model.')
                 return
         if self.computedAnglesList:
             self.exportAngleButton.disconnect('clicked()', self.onExportAngleButton)
-            self.layout.removeWidget(self.anglesTable)
-            self.layout.removeItem(self.tableAndExportAngleLayout)
+        else:
+            self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
         self.computedAnglesList = self.logic.addOnAngleList(self.computedAnglesList,
                                                             self.ui.line1LAComboBox.currentText,
                                                             self.ui.line1LBComboBox.currentText,
@@ -616,8 +620,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                             self.ui.yawCheckBox.isChecked(),
                                                             self.ui.rollCheckBox.isChecked()
                                                             )
-        self.anglesTable = self.logic.defineAnglesTable(self.anglesTable, self.computedAnglesList)
-        self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
+        self.logic.defineAnglesTable(
+            self.angles_table, self.angles_table_view, self.computedAnglesList)
         self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
 
     def onExportAngleButton(self):
@@ -1545,56 +1549,37 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         angleList.append(elementToAdd)
         return angleList
 
-    def defineAnglesTable(self, table, angleList):
-
-        table.clear()
-        table.setRowCount(angleList.__len__())
-        table.setColumnCount(4)
-        table.setMinimumHeight(50*angleList.__len__())
-        table.setHorizontalHeaderLabels([' ', ' YAW ', ' PITCH ', ' ROLL '])
-        i = 0
-
-        for element in angleList:
-            landmarkALine1Name = element.landmarkALine1Name
-            landmarkBLine1Name = element.landmarkBLine1Name
-            landmarkALine2Name = element.landmarkALine2Name
-            landmarkBLine2Name = element.landmarkBLine2Name
-
-            label = qt.QLabel(' ' + landmarkALine1Name + '-' + landmarkBLine1Name + ' / ' + landmarkALine2Name + '-' + landmarkBLine2Name)
-            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-            table.setCellWidget(i, 0, label)
-            if element.Yaw != None:
-                sign = np.sign(element.Yaw)
-                label = qt.QLabel(str(element.Yaw)+' / '+str(sign*(180-abs(element.Yaw))))
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-
-            if element.Pitch != None:
-                sign = np.sign(element.Pitch)
-                label = qt.QLabel(str(element.Pitch) + ' / ' + str(sign*(180 - abs(element.Pitch))))
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-
-            if element.Roll != None:
-                sign = np.sign(element.Roll)
-                label = qt.QLabel(str(element.Roll) + ' / ' + str(sign * (180 - abs(element.Roll))))
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-
-            i += 1
-        return table
+    @staticmethod
+    def defineAnglesTable(table, table_view, angleList):
+        col_names = (' ', ' YAW ', ' PITCH ', ' ROLL ')
+        with NodeModify(table):
+            table.RemoveAllColumns()
+            for col_name in col_names:
+                table.AddColumn().SetName(col_name)
+            table.SetUseColumnNameAsColumnHeader(True)
+            for element in angleList:
+                new_row_index = table.AddEmptyRow()
+                landmarkALine1Name = element.landmarkALine1Name
+                landmarkBLine1Name = element.landmarkBLine1Name
+                landmarkALine2Name = element.landmarkALine2Name
+                landmarkBLine2Name = element.landmarkBLine2Name
+                table.SetCellText(new_row_index, 0,
+                    f' {landmarkALine1Name}-{landmarkBLine1Name} / {landmarkALine2Name}-{landmarkBLine2Name}')
+                col_contents = (
+                    element.Yaw,
+                    element.Pitch,
+                    element.Roll
+                )
+                for col_idx, content in enumerate(col_contents, start=1):
+                    if content is None:
+                        content_formatted = ' - '
+                    else:
+                        sign = np.sign(content)
+                        content_flipped = sign * (180 - abs(content))
+                        content_formatted = f'{content} / {content_flipped}'
+                    table.SetCellText(new_row_index, col_idx, content_formatted)
+        table_view.resizeColumnsToContents()
+        table_view.setMinimumHeight(50 * len(angleList))
 
     def defineDistancesLinePoint(self, markupsNodeLine1, landmarkLine1Index,
                                  markupsNodeLine2, landmarkLine2Index,
