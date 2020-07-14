@@ -834,47 +834,31 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             inputLandmarksSelector.setCurrentNode(None)
             inputLandmarksSelector.setEnabled(False)
 
-    def isUnderTransform(self, markups):
+    @staticmethod
+    def isUnderTransform(markups):
         if markups.GetParentTransformNode():
-            messageBox = ctk.ctkMessageBox()
-            messageBox.setWindowTitle(" /!\ WARNING /!\ ")
-            messageBox.setIcon(messageBox.Warning)
-            messageBox.setText("Your Markup Fiducial Node is currently modified by a transform,"
-                               "if you choose to continue the program will apply the transform"
-                               "before doing anything else!")
-            messageBox.setInformativeText("Do you want to continue?")
-            messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
-            choice = messageBox.exec_()
-            if choice == messageBox.Yes:
+            message = 'Your Markup Fiducial Node is currently modified by a transform, '
+                      'if you choose to continue the program will apply the transform '
+                      'before doing anything else!'
+            if Q3DCLogic.warningMessage(message, is_query=True):
                 logic = slicer.vtkSlicerTransformLogic()
                 logic.hardenTransform(markups)
                 return False
             else:
-                messageBox.setText(" Node not modified")
-                messageBox.setStandardButtons(messageBox.Ok)
-                messageBox.setInformativeText("")
-                messageBox.exec_()
+                Q3DCLogic.warningMessage(' Node not modified')
                 return True
         else:
             return False
 
-    def connectedModelChangement(self):
-        messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
-        messageBox.setIcon(messageBox.Warning)
-        messageBox.setText("The Markup Fiducial Node selected is curently projected on an"
-                           "other model, if you chose to continue the fiducials will be  "
-                           "reprojected, and this could impact the functioning of other modules")
-        messageBox.setInformativeText("Do you want to continue?")
-        messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
-        choice = messageBox.exec_()
-        if choice == messageBox.Yes:
+    @staticmethod
+    def connectedModelChangement():
+        message = 'The Markup Fiducial Node selected is curently projected on an'
+                  'other model, if you chose to continue the fiducials will be  '
+                  'reprojected, and this could impact the functioning of other modules'
+        if Q3DCLogic.warningMessage(message, is_query=True):
             return True
         else:
-            messageBox.setText(" Node not modified")
-            messageBox.setStandardButtons(messageBox.Ok)
-            messageBox.setInformativeText("")
-            messageBox.exec_()
+            Q3DCLogic.warningMessage(' Node not modified')
             return False
 
     @staticmethod
@@ -1771,17 +1755,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         return renderer, actor
 
     def exportationFunction(self, directoryExport, filenameExport, listToExport, typeCalculation):
-        messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(' /!\ WARNING /!\ ')
-        messageBox.setIcon(messageBox.Warning)
-
         fileName = os.path.join(directoryExport.directory, filenameExport.text)
         if os.path.exists(fileName):
-            messageBox.setText('File ' + fileName + ' already exists!')
-            messageBox.setInformativeText('Do you want to replace it ?')
-            messageBox.setStandardButtons( messageBox.No | messageBox.Yes)
-            choice = messageBox.exec_()
-            if choice == messageBox.No:
+            message = f'File {fileName} already exists!'
+            informative_text = 'Do you want to replace it?'
+            if not Q3DCLogic.warningMessage(
+                    messageBox, is_query=True, informative_text=informative_text):
                 return
         self.exportAsCSV(fileName, listToExport, typeCalculation)
         slicer.util.delayDisplay(f'Saved to {fileName}')
@@ -1946,13 +1925,19 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.displayROI(connectedModel, arrayName)
         return ROIPointListID
 
-    def warningMessage(self, message):
+    @staticmethod
+    def warningMessage(message, is_query=False, informative_text='Do you want to continue?'):
         messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+        messageBox.setWindowTitle(' /!\ WARNING /!\ ')
         messageBox.setIcon(messageBox.Warning)
         messageBox.setText(message)
-        messageBox.setStandardButtons(messageBox.Ok)
-        messageBox.exec_()
+        if is_query:
+            messageBox.setInformativeText(informative_text)
+            messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
+            return messageBox.Yes == messageBox.exec_()
+        else:
+            messageBox.setStandardButtons(messageBox.Ok)
+            messageBox.exec_()
 
     def encodeJSON(self, input):
         encodedString = json.dumps(input)
