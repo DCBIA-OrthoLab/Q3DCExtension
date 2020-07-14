@@ -1371,7 +1371,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         distanceList.append(elementToAdd)
         return distanceList
 
-    def defineDistanceTable(self, table, table_view, distanceList):
+    @staticmethod
+    def defineDistanceTable(table, table_view, distanceList):
         col_names = ('  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance ')
         with NodeModify(table):
             table.RemoveAllColumns()
