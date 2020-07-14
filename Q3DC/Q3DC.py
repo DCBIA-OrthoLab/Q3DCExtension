@@ -212,7 +212,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         # ---------------- Save Line-Point Distances -----------------
-        self.linePointTable = qt.QTableWidget()
+        self.line_point_table = slicer.vtkMRMLTableNode()
+        self.line_point_table.SetSaveWithScene(False)
+        self.line_point_table.SetLocked(True)
+        slicer.mrmlScene.AddNode(self.line_point_table)
+        self.line_point_table_view = slicer.qMRMLTableView()
+        self.line_point_table_view.setMRMLTableNode(self.line_point_table)
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.filenameExportLinePoint = qt.QLineEdit('linePoint.csv')
         self.exportLinePointButton = qt.QPushButton("Export")
@@ -224,7 +229,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportLinePointLayout.addLayout(self.pathExportLinePointLayout)
         self.exportLinePointLayout.addWidget(self.exportLinePointButton)
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
-        self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
+        self.tableAndExportLinePointLayout.addWidget(self.line_point_table_view)
         self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
 
         # INITIALISATION:
@@ -264,9 +269,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedDistanceList = []
         self.computedAnglesList = []
         self.computedLinePointList = []
-        self.linePointTable.clear()
-        self.linePointTable.setRowCount(0)
-        self.linePointTable.setColumnCount(0)
+        self.line_point_table.RemoveAllColumns()
         self.angles_table.RemoveAllColumns()
         self.distance_table.RemoveAllColumns()
 
@@ -564,8 +567,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
-                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
-                                                        'Landmarks" panel to connect the landmarks to a model.')
+                self.logic.warningMessage(
+                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                    'Landmarks" panel to connect the landmarks to a model.')
                 return
         if self.computedDistanceList:
             self.exportDistanceButton.disconnect('clicked()', self.onExportButton)
@@ -602,8 +606,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
                 self.logic.warningMessage(
-                        f'{fidListIter} is not connected to a model. Please use "Add and Move '
-                        'Landmarks" panel to connect the landmarks to a model.')
+                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                    'Landmarks" panel to connect the landmarks to a model.')
                 return
         if self.computedAnglesList:
             self.exportAngleButton.disconnect('clicked()', self.onExportAngleButton)
@@ -647,13 +651,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
-                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
-                                                        'Landmarks" panel to connect the landmarks to a model.')
+                self.logic.warningMessage(
+                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                    'Landmarks" panel to connect the landmarks to a model.')
                 return
         if self.computedLinePointList:
             self.exportLinePointButton.disconnect('clicked()', self.onExportLinePointButton)
-            self.layout.removeWidget(self.linePointTable)
-            self.layout.removeItem(self.tableAndExportLinePointLayout)
+        else:
+            self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
         self.computedLinePointList = self.logic.addOnLinePointList(self.computedLinePointList,
                                                            self.ui.lineLAComboBox.currentText,
                                                            self.ui.lineLBComboBox.currentText,
@@ -662,8 +667,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                            self.ui.linePointComboBox.currentText,
                                                                    fidListPoint,
                                                            )
-        self.linePointTable = self.logic.defineDistanceLinePointTable(self.linePointTable, self.computedLinePointList)
-        self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
+        self.logic.defineDistanceLinePointTable(
+            self.line_point_table, self.line_point_table_view, self.computedLinePointList)
         self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
 
     def onExportLinePointButton(self):
@@ -1655,59 +1660,33 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         linePointList.append(elementToAdd)
         return linePointList
 
-    def defineDistanceLinePointTable(self, table, distanceList):
-        table.clear()
-        table.setRowCount(distanceList.__len__())
-        table.setColumnCount(5)
-        table.setMinimumHeight(50*distanceList.__len__())
-        table.setHorizontalHeaderLabels(['  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
-        i = 0
-        for element in distanceList:
-            landmarkALineName = element.landmarkALineName
-            landmarkBLineName = element.landmarkBLineName
-            landmarkPoint = element.landmarkPointName
-
-            label = qt.QLabel(' ' + str(landmarkALineName) + ' - ' + str(landmarkBLineName) + ' / ' + str(landmarkPoint) + ' ')
-            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-            table.setCellWidget(i, 0,label)
-            if element.RLComponent != None:
-                label = qt.QLabel(element.RLComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-
-            if element.APComponent != None:
-                label = qt.QLabel(element.APComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-
-            if element.SIComponent != None:
-                label = qt.QLabel(element.SIComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-
-            if element.ThreeDComponent != None:
-                label = qt.QLabel(element.ThreeDComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-
-            i += 1
-        return table
+    @staticmethod
+    def defineDistanceLinePointTable(table, table_view, distanceList):
+        col_names = ('  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance ')
+        with NodeModify(table):
+            table.RemoveAllColumns()
+            for col_name in col_names:
+                table.AddColumn().SetName(col_name)
+            table.SetUseColumnNameAsColumnHeader(True)
+            for element in distanceList:
+                new_row_index = table.AddEmptyRow()
+                landmarkALineName = element.landmarkALineName
+                landmarkBLineName = element.landmarkBLineName
+                landmarkPoint = element.landmarkPointName
+                table.SetCellText(new_row_index, 0,
+                    f' {landmarkALineName} - {landmarkBLineName} / {landmarkPoint} ')
+                col_contents = (
+                    element.RLComponent,
+                    element.APComponent,
+                    element.SIComponent,
+                    element.ThreeDComponent
+                )
+                for col_idx, content in enumerate(col_contents, start=1):
+                    if content is None:
+                        content = ' - '
+                    table.SetCellText(new_row_index, col_idx, str(content))
+        table_view.resizeColumnsToContents()
+        table_view.setMinimumHeight(50 * len(distanceList))
 
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
