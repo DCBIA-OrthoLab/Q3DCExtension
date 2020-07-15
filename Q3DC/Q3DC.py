@@ -12,6 +12,10 @@ import qt
 import scipy.spatial
 import vtk
 
+import slicer
+from slicer.ScriptedLoadableModule import *
+from slicer.util import NodeModify
+
 # needed for topological sort. Yes, this is basically just DFS.
 try:
     import networkx as nx
@@ -19,10 +23,6 @@ except ModuleNotFoundError as e:
     # This requires a network connection!
     slicer.util.pip_install('networkx')
     import networkx as nx
-
-import slicer
-from slicer.ScriptedLoadableModule import *
-from slicer.util import NodeModify
 
 
 #
