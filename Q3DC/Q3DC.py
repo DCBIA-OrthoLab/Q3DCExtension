@@ -269,9 +269,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.computedDistanceList = []
         self.computedAnglesList = []
         self.computedLinePointList = []
-        self.line_point_table.RemoveAllColumns()
-        self.angles_table.RemoveAllColumns()
         self.distance_table.RemoveAllColumns()
+        self.angles_table.RemoveAllColumns()
+        self.line_point_table.RemoveAllColumns()
 
     def enter(self):
         print("enter Q3DC")
