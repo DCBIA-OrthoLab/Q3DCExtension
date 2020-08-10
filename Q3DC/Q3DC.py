@@ -676,7 +676,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def load_suggested_landmarks(filepath):
         suggested_landmarks = defaultdict(list)
         try:
-            with open(filepath, newline='') as suggestions_file:
+            with open(filepath, newline='', encoding='utf8') as suggestions_file:
                 reader = csv.DictReader(suggestions_file)
                 for row in reader:
                     region = row['Region'].title()
