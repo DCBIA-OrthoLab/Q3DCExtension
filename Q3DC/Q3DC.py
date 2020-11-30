@@ -1839,21 +1839,21 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             landmarkBLine2Name = element.landmarkBLine2Name
 
             label = landmarkALine1Name + '-' + landmarkBLine1Name + ' | ' + landmarkALine2Name + '-' + landmarkBLine2Name
-            signY = np.sign(element.Yaw)
-            signP = np.sign(element.Pitch)
-            signR = np.sign(element.Roll)
 
             if element.Yaw:
+                signY = np.sign(element.Yaw)
                 YawLabel = str(element.Yaw) +' | '+str(signY*(180-abs(element.Yaw)))
             else:
                 YawLabel = '-'
 
             if element.Pitch:
+                signP = np.sign(element.Pitch)
                 PitchLabel = str(element.Pitch)+' | '+str(signP*(180-abs(element.Pitch)))
             else:
                 PitchLabel = '-'
 
             if element.Roll:
+                signR = np.sign(element.Roll)
                 RollLabel = str(element.Roll)+' | '+str(signR*(180-abs(element.Roll)))
             else:
                 RollLabel = '-'
