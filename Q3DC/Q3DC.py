@@ -1159,7 +1159,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 landmark2ID = landmarkDescription[midPointID]["midPoint"]["Point2"]
                 coord = self.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
                 index = fidList.GetNthControlPointIndexByID(midPointID)
-                fidList.SetNthFiducialPositionFromArray(index, coord)
+                fidList.SetNthControlPointPositionFromArray(index, coord, fidList.PositionPreview)
                 if landmarkDescription[midPointID]["projection"]["isProjected"]:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
                     landmarkDescription[midPointID]["projection"]["closestPointIndex"] = \
@@ -1279,7 +1279,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarkCoord = [-1, -1, -1]
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
         print(landmarkCoord)
-        fidNode.SetNthFiducialPositionFromArray(landmarkID,landmarkCoord)
+        fidNode.SetNthControlPointPositionFromArray(landmarkID, landmarkCoord, fidNode.PositionPreview)
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
