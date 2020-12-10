@@ -11,5 +11,5 @@ It is covered by the Apache License, Version 2.0:
 
 http://www.apache.org/licenses/LICENSE-2.0
 
-The license file was added at revision 241cee9 on 2020-12-10, but you may consider that the license applies to all prior revisions as well.
+The license file was added at revision 6cc3ad4 on 2020-12-10, but you may consider that the license applies to all prior revisions as well.
 
