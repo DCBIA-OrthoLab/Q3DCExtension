@@ -378,10 +378,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         if state:
             self.init_anatomical_legend()
             region = radio_button.text
+            self.logic.current_suggested_landmarks = self.suggested_landmarks[region]
 
             al = self.anatomical_legend
             with NodeModify(al):
-                for landmark, description in self.suggested_landmarks[region]:
+                for landmark, description in self.logic.current_suggested_landmarks:
                     new_row_index = al.AddEmptyRow()
                     al.SetCellText(new_row_index, 0, landmark)
                     al.SetCellText(new_row_index, 1, description)
@@ -667,6 +668,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.interface = interface
         self.selectedModel = None
         self.selectedFidList = None
+        self.current_suggested_landmarks = None
         self.numberOfDecimals = 3
         system = qt.QLocale().system()
         self.decimalPoint = chr(system.decimalPoint())
@@ -1101,6 +1103,14 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     # Called when a landmark is added on a model
     def onPointAddedEvent(self, obj, event):
         print("------markup adding-------")
+
+        try:
+            n = obj.GetNumberOfMarkups()
+            label, description = self.current_suggested_landmarks[n - 1]
+            obj.SetNthMarkupLabel(n - 1, label)
+        except IndexError:
+            print('Not changing label; wrong number of markups.')
+
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         numOfMarkups = obj.GetNumberOfMarkups()
         markupID = obj.GetNthMarkupID(numOfMarkups - 1)
