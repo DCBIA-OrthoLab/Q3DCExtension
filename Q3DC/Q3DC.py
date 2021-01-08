@@ -378,6 +378,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         if state:
             self.init_anatomical_legend()
             region = radio_button.text
+
+            # set this in the logic rather than the widget since events are handled there.
             self.logic.current_suggested_landmarks = self.suggested_landmarks[region]
 
             al = self.anatomical_legend
@@ -1105,10 +1107,13 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         print("------markup adding-------")
 
         try:
+            # Find the index of the last-placed landmark and get the landmark label at that position.
+            # Ex. if the last-placed landmark was at the 3rd position, we want to use the 3rd landmark label.
             n = obj.GetNumberOfMarkups()
             label, description = self.current_suggested_landmarks[n - 1]
             obj.SetNthMarkupLabel(n - 1, label)
         except IndexError:
+            # If there are more landmarks than suggested labels then fetching the label would fail.
             print('Not changing label; wrong number of markups.')
 
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
