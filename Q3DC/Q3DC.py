@@ -1209,6 +1209,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def onPointRemovedEvent(self, obj, event):
         logging.debug("markup deleting")
+
+        # ensure that onPointModified won't be called
+        tag = self.decodeJSON(obj.GetAttribute("PointModifiedEventTag"))
+        logging.info('Modified %r', tag)
+        obj.RemoveObserver(tag["PointModifiedEventTag"])
+
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         IDs = []
         for ID, value in landmarkDescription.items():
