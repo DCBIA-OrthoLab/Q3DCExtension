@@ -56,7 +56,7 @@ class Q3DC(ScriptedLoadableModule):
 class Q3DCWidget(ScriptedLoadableModuleWidget):
 
     def setup(self):
-        print("-------Q3DC Widget Setup------")
+        logging.debug("Q3DC Widget Setup")
         ScriptedLoadableModuleWidget.setup(self)
         # GLOBALS:
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
@@ -261,7 +261,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.distanceTable.setColumnCount(0)
 
     def enter(self):
-        print("enter Q3DC")
+        logging.debug("enter Q3DC")
         model = self.ui.inputModelSelector.currentNode()
         fidlist = self.ui.inputLandmarksSelector.currentNode()
 
@@ -448,7 +448,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.init_anatomical_radio_buttons()
 
     def onModelChanged(self):
-        print("-------Model Changed--------")
+        logging.debug("Model Changed")
         if self.logic.selectedModel:
             Model = self.logic.selectedModel
             try:
@@ -460,7 +460,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.inputLandmarksSelector.setCurrentNode(None)
 
     def onLandmarksChanged(self):
-        print("-------Landmarks Changed--------")
+        logging.debug("Landmarks Changed")
         if self.ui.inputModelSelector.currentNode():
             self.logic.FidList = self.ui.inputLandmarksSelector.currentNode()
             self.logic.selectedFidList = self.ui.inputLandmarksSelector.currentNode()
@@ -756,7 +756,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             return
         if not self.selectedModel:
             return
-        print("UpdateThreeDView")
+        logging.debug("UpdateThreeDView")
         active = self.selectedFidList
         #deactivate all landmarks
         list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
@@ -764,7 +764,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         selectedFidReflID = self.findIDFromLabel(active,landmarkLabel)
         for i in range(0,end):
             fidList = list.GetItemAsObject(i)
-            print(fidList.GetID())
+            logging.info('fidList ID: %s', fidList.GetID())
             landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
             if landmarkDescription:
                 for key in landmarkDescription.keys():
@@ -1055,25 +1055,25 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("PointAddedEventTag"))
             landmarks.RemoveObserver(tag["PointAddedEventTag"])
-            print("adding observers removed!")
+            logging.debug("adding observers removed!")
         except:
             pass
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("UpdatesLinesEventTag"))
             landmarks.RemoveObserver(tag["UpdatesLinesEventTag"])
-            print("lines observers removed!")
+            logging.debug("lines observers removed!")
         except:
             pass
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("PointModifiedEventTag"))
             landmarks.RemoveObserver(tag["PointModifiedEventTag"])
-            print("moving observers removed!")
+            logging.debug("moving observers removed!")
         except:
             pass
         try:
             tag = self.decodeJSON(landmarks.GetAttribute("PointRemovedEventTag"))
             landmarks.RemoveObserver(tag["PointRemovedEventTag"])
-            print("removing observers removed!")
+            logging.debug("removing observers removed!")
         except:
             pass
         if connectedModelID:
@@ -1104,7 +1104,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     # Called when a landmark is added on a model
     def onPointAddedEvent(self, obj, event):
-        print("------markup adding-------")
+        logging.debug("markup adding")
 
         try:
             # Find the index of the last-placed landmark and get the landmark label at that position.
@@ -1114,7 +1114,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             obj.SetNthMarkupLabel(n - 1, label)
         except IndexError:
             # If there are more landmarks than suggested labels then fetching the label would fail.
-            print('Not changing label; wrong number of markups.')
+            logging.error('Not changing label; wrong number of markups.')
 
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         numOfMarkups = obj.GetNumberOfMarkups()
@@ -1184,7 +1184,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     # Called when a landmarks is moved
     def onPointModifiedEvent(self, obj, event):
-        print("----onPointModifiedEvent Q3DC-----")
+        logging.debug("onPointModifiedEvent Q3DC")
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         if not landmarkDescription:
             return
@@ -1194,7 +1194,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         obj.RemoveObserver(tag["PointModifiedEventTag"])
         if selectedLandmarkID:
             activeLandmarkState = landmarkDescription[selectedLandmarkID]
-            print(activeLandmarkState)
+            logging.debug('activeLandmarkState: %s', activeLandmarkState)
             if activeLandmarkState["projection"]["isProjected"]:
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(obj.GetAttribute("hardenModelID"))
                 activeLandmarkState["projection"]["closestPointIndex"] = \
@@ -1208,7 +1208,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         obj.SetAttribute("PointModifiedEventTag",self.encodeJSON({"PointModifiedEventTag":PointModifiedEventTag}))
 
     def onPointRemovedEvent(self, obj, event):
-        print("------markup deleting-------")
+        logging.debug("markup deleting")
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         IDs = []
         for ID, value in landmarkDescription.items():
@@ -1293,7 +1293,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def replaceLandmark(self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint):
         landmarkCoord = [-1, -1, -1]
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
-        print(landmarkCoord)
+        logging.debug('ReplaceLandmark Coord: %s', landmarkCoord)
         fidNode.SetNthControlPointPositionFromArray(landmarkID, landmarkCoord, fidNode.PositionPreview)
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
@@ -1478,7 +1478,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             det2D = normalizedVectLine1[0]*normalizedVectLine2[2] - normalizedVectLine1[2]*normalizedVectLine2[0]
             return math.copysign(rollNotSigned, det2D)
         else:
-            print (" ERROR, norm of your vector is 0! DEFINE A VECTOR!")
+            logging.error(" ERROR, norm of your vector is 0! DEFINE A VECTOR!")
             return None
 
     def computeYaw(self, markupsNode1, landmark1Index,
@@ -1806,7 +1806,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         #  Export fields on different csv files
         file = open(filename, 'w')
         cw = csv.writer(file, delimiter=',')
-        print(typeCalculation)
+        logging.debug('exportAsCSV typeCalculation: %s', typeCalculation)
         if typeCalculation == 'distance':
             cw.writerow([' Landmark A - Landmark B',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
             self.writeDistance(cw, listToExport)
@@ -1846,8 +1846,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def writeAngle(self, fileWriter, listToExport):
         for element in listToExport:
-            print("element")
-            print(element)
+            logging.info('element %s', element)
             landmarkALine1Name = element.landmarkALine1Name
             landmarkBLine1Name = element.landmarkBLine1Name
             landmarkALine2Name = element.landmarkALine2Name
@@ -2120,7 +2119,7 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         q3dcWidget.defineMiddlePointButton.clicked()
         midpointMarkupID = q3dcWidget.logic.findIDFromLabel(movingMarkupsFiducial,"F-4")
         if not midpointMarkupID:
-            print ("Did not define a midpoint node")
+            logging.error("Did not define a midpoint node")
             return False
 
         self.delayDisplay("Calculate a distance")
@@ -2166,7 +2165,7 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         movedPosition = [0,]*3
         movingMarkupsFiducial.GetNthFiducialPosition(midpointMarkupIndex, movedPosition)
         if initialPosition == movedPosition:
-            print('midpoint landmark did not move')
+            logging.info('midpoint landmark did not move')
             return False
 
         return True
