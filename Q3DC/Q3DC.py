@@ -505,7 +505,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         else:
             landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = False
             landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] = None
-            landmarkDescription[selectedFidReflID]["ROIradius"] = 0
         fidList.SetAttribute("landmarkDescription",self.logic.encodeJSON(landmarkDescription))
 
     def onDefineMidPointClicked(self):
@@ -774,10 +773,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                     else:
                         fidList.SetNthMarkupLocked(markupsIndex, False)
                         fidList.SetNthMarkupLocked(markupsIndex, False)
-        displayNode = self.selectedModel.GetModelDisplayNode()
-        displayNode.SetScalarVisibility(False)
-        if selectedFidReflID != False:
-            displayNode.SetScalarVisibility(True)
 
     def createIntermediateHardenModel(self, model):
         hardenModel = slicer.mrmlScene.GetNodesByName("SurfaceRegistration_" + model.GetName() + "_hardenCopy_" + str(
@@ -970,7 +965,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             markupID = landmarks.GetNthMarkupID(n)
             landmarkLabel = landmarks.GetNthMarkupLabel(n)
             landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
-            landmarkDescription[markupID]["ROIradius"] = 0
             landmarkDescription[markupID]["projection"] = dict()
             if onSurface and not landmarkDescription[markupID]['midPoint']['isMidPoint']:
                 landmarkDescription[markupID]["projection"]["isProjected"] = True
@@ -997,7 +991,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarks.SetAttribute("planeDescription",self.encodeJSON(planeDescription))
         landmarks.SetAttribute("isClean",self.encodeJSON({"isClean":False}))
         landmarks.SetAttribute("lastTransformID",None)
-        landmarks.SetAttribute("arrayName",model.GetName() + "_ROI")
 
         self.conform_selectedness_to_midpoint_status(landmarks)
 
@@ -1122,7 +1115,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarkDescription[markupID] = dict()
         landmarkLabel = obj.GetNthMarkupLabel(numOfMarkups - 1)
         landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
-        landmarkDescription[markupID]["ROIradius"] = 0
         landmarkDescription[markupID]["projection"] = dict()
         landmarkDescription[markupID]["projection"]["isProjected"] = True
         # The landmark will be projected by onPointModifiedEvent
@@ -1201,7 +1193,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                     self.projectOnSurface(hardenModel, obj, selectedLandmarkID)
                 obj.SetAttribute("landmarkDescription",self.encodeJSON(landmarkDescription))
             self.updateMidPoint(obj,selectedLandmarkID)
-            self.findROI(obj)
         time.sleep(0.08)
         # Add the observer again
         PointModifiedEventTag = obj.AddObserver(obj.PointModifiedEvent, self.onPointModifiedEvent)
@@ -1902,63 +1893,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             for j in range(0, pointIdList.GetNumberOfIds()):
                 connectedVerticesIDList.InsertUniqueId(pointIdList.GetId(j))
         return connectedVerticesIDList
-
-    def addArrayFromIdList(self, connectedIdList, inputModelNode, arrayName):
-        if not inputModelNode:
-            return
-        inputModelNodePolydata = inputModelNode.GetPolyData()
-        pointData = inputModelNodePolydata.GetPointData()
-        numberofIds = connectedIdList.GetNumberOfIds()
-        hasArrayInt = pointData.HasArray(arrayName)
-        if hasArrayInt == 1:  # ROI Array found
-            pointData.RemoveArray(arrayName)
-        arrayToAdd = vtk.vtkDoubleArray()
-        arrayToAdd.SetName(arrayName)
-        for i in range(0, inputModelNodePolydata.GetNumberOfPoints()):
-            arrayToAdd.InsertNextValue(0.0)
-        for i in range(0, numberofIds):
-            arrayToAdd.SetValue(connectedIdList.GetId(i), 1.0)
-        lut = vtk.vtkLookupTable()
-        tableSize = 2
-        lut.SetNumberOfTableValues(tableSize)
-        lut.Build()
-        displayNode = inputModelNode.GetDisplayNode()
-        rgb = displayNode.GetColor()
-        lut.SetTableValue(0, rgb[0], rgb[1], rgb[2], 1)
-        lut.SetTableValue(1, 1.0, 0.0, 0.0, 1)
-        arrayToAdd.SetLookupTable(lut)
-        pointData.AddArray(arrayToAdd)
-        inputModelNodePolydata.Modified()
-        return True
-
-    def displayROI(self, inputModelNode, scalarName):
-        PolyData = inputModelNode.GetPolyData()
-        PolyData.Modified()
-        displayNode = inputModelNode.GetModelDisplayNode()
-        displayNode.SetScalarVisibility(False)
-        with NodeModify(displayNode):
-            displayNode.SetActiveScalarName(scalarName)
-            displayNode.SetScalarVisibility(True)
-
-    def findROI(self, fidList):
-        hardenModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("hardenModelID"))
-        connectedModel = slicer.app.mrmlScene().GetNodeByID(fidList.GetAttribute("connectedModelID"))
-        landmarkDescription = self.decodeJSON(fidList.GetAttribute("landmarkDescription"))
-        arrayName = fidList.GetAttribute("arrayName")
-        ROIPointListID = vtk.vtkIdList()
-        for key,activeLandmarkState in landmarkDescription.items():
-            tempROIPointListID = vtk.vtkIdList()
-            if activeLandmarkState["ROIradius"] != 0:
-                self.defineNeighbor(tempROIPointListID,
-                                    hardenModel.GetPolyData(),
-                                    activeLandmarkState["projection"]["closestPointIndex"],
-                                    activeLandmarkState["ROIradius"])
-            for j in range(0, tempROIPointListID.GetNumberOfIds()):
-                ROIPointListID.InsertUniqueId(tempROIPointListID.GetId(j))
-        listID = ROIPointListID
-        self.addArrayFromIdList(listID, connectedModel, arrayName)
-        self.displayROI(connectedModel, arrayName)
-        return ROIPointListID
 
     def warningMessage(self, message):
         messageBox = ctk.ctkMessageBox()
