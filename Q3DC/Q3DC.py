@@ -587,7 +587,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.exportationFunction(
             self.directoryExportDistance,
             self.filenameExportDistance,
-            self.computedDistanceList,
+            self.distance_table,
             'distance'
         )
 
@@ -634,7 +634,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.exportationFunction(
             self.directoryExportAngle,
             self.filenameExportAngle,
-            self.computedAnglesList,
+            self.angles_table,
             'angle'
         )
 
@@ -675,7 +675,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.exportationFunction(
             self.directoryExportLinePoint,
             self.filenameExportLinePoint,
-            self.computedLinePointList,
+            self.line_point_table,
             'linePoint'
         )
 
@@ -1727,7 +1727,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         return renderer, actor
 
-    def exportationFunction(self, directoryExport, filenameExport, listToExport, typeCalculation):
+    def exportationFunction(self, directoryExport, filenameExport, tableToExport, typeCalculation):
         messageBox = ctk.ctkMessageBox()
         messageBox.setWindowTitle(' /!\ WARNING /!\ ')
         messageBox.setIcon(messageBox.Warning)
@@ -1740,7 +1740,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             choice = messageBox.exec_()
             if choice == messageBox.No:
                 return
-        self.exportAsCSV(fileName, listToExport, typeCalculation)
+
+        slicer.util.saveNode(tableToExport, fileName)
         slicer.util.delayDisplay(f'Saved to {fileName}')
 
 
