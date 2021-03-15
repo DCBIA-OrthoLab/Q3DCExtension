@@ -547,99 +547,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.updateLandmarkComboBox(fidList, self.ui.landmarkComboBox, False)
         fidList.SetNthFiducialPositionFromArray(numOfMarkups - 1, coord)
 
-    def getDistanceArgs(self):
-        """ returns: key, (point1, point2) """
-        fidListA = self.ui.fidListComboBoxA.currentNode()
-        fidListB = self.ui.fidListComboBoxB.currentNode()
-
-        fidLabelA = self.ui.landmarkComboBoxA.currentText
-        fidLabelB = self.ui.landmarkComboBoxB.currentText
-
-        fidIDA = self.logic.findIDFromLabel(fidListA, fidLabelA)
-        fidIDB = self.logic.findIDFromLabel(fidListB, fidLabelB)
-
-        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
-        fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
-
-        point1 = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
-        point2 = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
-
-        args = point1, point2
-
-        key = f'{fidLabelA} - {fidLabelB}'
-
-        return key, args
-
-    def getAnglesArgs(self):
-        """ returns: key, (line1, line2, states) """
-
-        fidlist1A = self.ui.fidListComboBoxline1LA.currentNode()
-        fidlist1B = self.ui.fidListComboBoxline1LB.currentNode()
-        fidlist2A = self.ui.fidListComboBoxline2LA.currentNode()
-        fidlist2B = self.ui.fidListComboBoxline2LB.currentNode()
-
-        fidLabel1A = self.ui.line1LAComboBox.currentText
-        fidLabel1B = self.ui.line1LBComboBox.currentText
-        fidLabel2A = self.ui.line2LAComboBox.currentText
-        fidLabel2B = self.ui.line2LBComboBox.currentText
-
-        fidID1A = self.logic.findIDFromLabel(fidlist1A, fidLabel1A)
-        fidID1B = self.logic.findIDFromLabel(fidlist1B, fidLabel1B)
-        fidID2A = self.logic.findIDFromLabel(fidlist2A, fidLabel2A)
-        fidID2B = self.logic.findIDFromLabel(fidlist2B, fidLabel2B)
-
-        landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
-        landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
-        landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
-        landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
-
-        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
-        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
-        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
-        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
-
-        line1 = coord2 - coord1
-        line2 = coord4 - coord3
-
-        states = (
-            self.ui.yawCheckBox.isChecked(),
-            self.ui.pitchCheckBox.isChecked(),
-            self.ui.rollCheckBox.isChecked(),
-        )
-
-        args = line1, line2, states
-
-        key = f'{fidLabel1A}-{fidLabel1B} / {fidLabel2A}-{fidLabel2B}'
-
-        return key, args
-
-    def getLinePointArgs(self):
-        fidListLineA = self.ui.fidListComboBoxlineLA.currentNode()
-        fidListLineB = self.ui.fidListComboBoxlineLB.currentNode()
-        fidListPoint = self.ui.fidListComboBoxlinePoint.currentNode()
-
-        fidLabelLineA = self.ui.lineLAComboBox.currentText
-        fidLabelLineB = self.ui.lineLBComboBox.currentText
-        fidLabelPoint = self.ui.linePointComboBox.currentText
-
-        fidIDLineA = self.logic.findIDFromLabel(fidListLineA, fidLabelLineA)
-        fidIDLineB = self.logic.findIDFromLabel(fidListLineB, fidLabelLineB)
-        fidIDPoint = self.logic.findIDFromLabel(fidListPoint, fidLabelPoint)
-
-        landmarkLineAIndex = fidListLineA.GetNthControlPointIndexByID(fidIDLineA)
-        landmarkLineBIndex = fidListLineB.GetNthControlPointIndexByID(fidIDLineB)
-        landmarkPointIndex = fidListPoint.GetNthControlPointIndexByID(fidIDPoint)
-
-        lineA = np.array(fidListLineA.GetMarkupPointVector(landmarkLineAIndex, 0))
-        lineB = np.array(fidListLineB.GetMarkupPointVector(landmarkLineBIndex, 0))
-        point = np.array(fidListPoint.GetMarkupPointVector(landmarkPointIndex, 0))
-
-        args = lineA, lineB, point
-
-        key = f'{fidLabelLineA}-{fidLabelLineB} / {fidLabelPoint}'
-
-        return key, args
-
     def onComputeDistanceClicked(self):
         fidList = self.logic.selectedFidList
         fidListA = self.ui.fidListComboBoxA.currentNode()
@@ -659,10 +566,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
 
-        key, args = self.getDistanceArgs()
+        key, args = self.logic.getDistanceArgs(
+            fidListA=self.ui.fidListComboBoxA.currentNode(),
+            fidListB=self.ui.fidListComboBoxB.currentNode(),
+            fidLabelA=self.ui.landmarkComboBoxA.currentText,
+            fidLabelB=self.ui.landmarkComboBoxB.currentText
+        )
         data = self.logic.computeDistance(*args)
 
-        self.logic.updateTable(self.distance_table, key, args)
+        self.logic.updateTable(self.distance_table, key, data)
         self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
     def onComputeAnglesClicked(self):
@@ -686,7 +598,19 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
 
-        key, args = self.getAnglesArgs()
+        key, args = self.logic.getAnglesArgs(
+            fidlist1A=self.ui.fidListComboBoxline1LA.currentNode(),
+            fidlist1B=self.ui.fidListComboBoxline1LB.currentNode(),
+            fidlist2A=self.ui.fidListComboBoxline2LA.currentNode(),
+            fidlist2B=self.ui.fidListComboBoxline2LB.currentNode(),
+            fidLabel1A=self.ui.line1LAComboBox.currentText,
+            fidLabel1B=self.ui.line1LBComboBox.currentText,
+            fidLabel2A=self.ui.line2LAComboBox.currentText,
+            fidLabel2B=self.ui.line2LBComboBox.currentText,
+            yawState=self.ui.yawCheckBox.isChecked(),
+            pitchState=self.ui.pitchCheckBox.isChecked(),
+            rollState=self.ui.rollCheckBox.isChecked()
+        )
         data = self.logic.computeAngles(*args)
 
         self.logic.updateTable(self.angles_table, key, data)
@@ -712,7 +636,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
 
-        key, args = self.getLinePointArgs()
+        key, args = self.logic.getLinePointArgs(
+            fidListLineA=self.ui.fidListComboBoxlineLA.currentNode(),
+            fidListLineB=self.ui.fidListComboBoxlineLB.currentNode(),
+            fidListPoint=self.ui.fidListComboBoxlinePoint.currentNode(),
+            fidLabelLineA=self.ui.lineLAComboBox.currentText,
+            fidLabelLineB=self.ui.lineLBComboBox.currentText,
+            fidLabelPoint=self.ui.linePointComboBox.currentText
+        )
         data = self.logic.computeLinePoint(*args)
 
         self.logic.updateTable(self.line_point_table, key, data)
@@ -1447,6 +1378,82 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         result = [*delta, norm]
         return [self.round(value) for value in result]
 
+    def getDistanceArgs(self,
+                        fidListA, fidListB,
+                        fidLabelA, fidLabelB):
+        """ returns: key, (point1, point2) """
+        fidIDA = self.findIDFromLabel(fidListA, fidLabelA)
+        fidIDB = self.findIDFromLabel(fidListB, fidLabelB)
+
+        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
+        fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
+
+        point1 = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
+        point2 = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
+
+        args = point1, point2
+
+        key = f'{fidLabelA} - {fidLabelB}'
+
+        return key, args
+
+    def getAnglesArgs(self,
+                      fidlist1A, fidlist1B, fidlist2A, fidlist2B,
+                      fidLabel1A, fidLabel1B, fidLabel2A, fidLabel2B,
+                      yawState, pitchState, rollState
+                      ):
+        """ returns: key, (line1, line2, states) """
+        fidID1A = self.findIDFromLabel(fidlist1A, fidLabel1A)
+        fidID1B = self.findIDFromLabel(fidlist1B, fidLabel1B)
+        fidID2A = self.findIDFromLabel(fidlist2A, fidLabel2A)
+        fidID2B = self.findIDFromLabel(fidlist2B, fidLabel2B)
+
+        landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
+        landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
+        landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
+        landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
+
+        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
+        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
+        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
+        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
+
+        line1 = coord2 - coord1
+        line2 = coord4 - coord3
+
+        states = (
+            yawState,
+            pitchState,
+            rollState,
+        )
+
+        args = line1, line2, states
+
+        key = f'{fidLabel1A}-{fidLabel1B} / {fidLabel2A}-{fidLabel2B}'
+
+        return key, args
+
+    def getLinePointArgs(self,
+                         fidListLineA, fidListLineB, fidListPoint,
+                         fidLabelLineA, fidLabelLineB, fidLabelPoint):
+        fidIDLineA = self.findIDFromLabel(fidListLineA, fidLabelLineA)
+        fidIDLineB = self.findIDFromLabel(fidListLineB, fidLabelLineB)
+        fidIDPoint = self.findIDFromLabel(fidListPoint, fidLabelPoint)
+
+        landmarkLineAIndex = fidListLineA.GetNthControlPointIndexByID(fidIDLineA)
+        landmarkLineBIndex = fidListLineB.GetNthControlPointIndexByID(fidIDLineB)
+        landmarkPointIndex = fidListPoint.GetNthControlPointIndexByID(fidIDPoint)
+
+        lineA = np.array(fidListLineA.GetMarkupPointVector(landmarkLineAIndex, 0))
+        lineB = np.array(fidListLineB.GetMarkupPointVector(landmarkLineBIndex, 0))
+        point = np.array(fidListPoint.GetMarkupPointVector(landmarkPointIndex, 0))
+
+        args = lineA, lineB, point
+
+        key = f'{fidLabelLineA}-{fidLabelLineB} / {fidLabelPoint}'
+
+        return key, args
+
     @classmethod
     def createTable(cls, col_names):
         table = slicer.vtkMRMLTableNode()
@@ -1625,7 +1632,14 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
         markupsNode1.AddFiducial(-5.331, 51.955, 4.831)
         markupsNode1.AddFiducial(-8.018, 41.429, -52.621)
-        diffXAxis, diffYAxis, diffZAxis, threeDDistance = logic.defineDistances(markupsNode1, 0, markupsNode1, 1)
+
+        key, args = logic.getDistanceArgs(
+            markupsNode1, markupsNode1,
+            markupsNode1.GetNthControlPointLabel(0),
+            markupsNode1.GetNthControlPointLabel(1)
+        )
+
+        diffXAxis, diffYAxis, diffZAxis, threeDDistance = logic.computeDistance(*args)
         if diffXAxis != -2.687 or diffYAxis != -10.526 or diffZAxis != -57.452 or threeDDistance != 58.47:
             return False
         return True
@@ -1639,18 +1653,40 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         markupsNode1.AddFiducial(62.21,-45.31,7.41)
         markupsNode1.AddFiducial(41.97,-61.24,11.30)
 
-        yaw = logic.computeYaw(markupsNode1, 0, markupsNode1, 1, markupsNode1, 2, markupsNode1, 3)
-        roll = logic.computeRoll(markupsNode1, 0, markupsNode1, 1, markupsNode1, 2, markupsNode1, 3)
-        if yaw != 4.964 or roll != 3.565:
-            return False
+        key, args = logic.getAnglesArgs(
+            markupsNode1,markupsNode1,markupsNode1,markupsNode1,
+            markupsNode1.GetNthControlPointLabel(0),
+            markupsNode1.GetNthControlPointLabel(1),
+            markupsNode1.GetNthControlPointLabel(2),
+            markupsNode1.GetNthControlPointLabel(3),
+            True, False, True
+        )
+
+        yaw, pitch, roll = logic.computeAngles(*args)
+
+        assert yaw == '4.964 / 175.036'
+        assert pitch is None
+        assert roll == '3.565 / 176.435'
 
         markupsNode1.AddFiducial(53.80,-53.57,9.47)
         markupsNode1.AddFiducial(53.98,-52.13,9.13)
         markupsNode1.AddFiducial(52.09,-53.27,9.36)
         markupsNode1.AddFiducial(51.77,-50.10,9.80)
-        pitch = logic.computePitch(markupsNode1, 4, markupsNode1, 5, markupsNode1, 6, markupsNode1, 7)
-        if pitch != 21.187:
-            return False
+
+        key, args = logic.getAnglesArgs(
+            markupsNode1,markupsNode1,markupsNode1,markupsNode1,
+            markupsNode1.GetNthControlPointLabel(4),
+            markupsNode1.GetNthControlPointLabel(5),
+            markupsNode1.GetNthControlPointLabel(6),
+            markupsNode1.GetNthControlPointLabel(7),
+            False, True, False
+        )
+
+        yaw, pitch, roll = logic.computeAngles(*args)
+
+        assert yaw is None
+        assert pitch == '21.187 / 158.813'
+        assert roll is None
 
         return True
 
