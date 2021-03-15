@@ -60,7 +60,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         ScriptedLoadableModuleWidget.setup(self)
         # GLOBALS:
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
-        self.computedDistanceList = list()
         self.computedAnglesList = list()
         self.computedLinePointList = list()
         self.renderer1 = None
@@ -136,15 +135,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.fidListComboBoxB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.ui.fidListComboBoxB, self.ui.landmarkComboBoxB))
         # ---------------------- Save Distances ----------------------
-        self.distance_table = slicer.vtkMRMLTableNode()
-        self.distance_table.SetSaveWithScene(False)
-        self.distance_table.SetLocked(True)
+        self.distance_table = self.logic.createDistanceTable()
         slicer.mrmlScene.AddNode(self.distance_table)
         self.distance_table_view = slicer.qMRMLTableView()
         self.distance_table_view.setMRMLTableNode(self.distance_table)
         self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.filenameExportDistance = qt.QLineEdit('distance.csv')
         self.exportDistanceButton = qt.QPushButton(" Export ")
+        self.exportDistanceButton.connect('clicked()', self.onExportButton)
         self.exportDistanceButton.enabled = True
         self.pathExportDistanceLayout = qt.QVBoxLayout()
         self.pathExportDistanceLayout.addWidget(self.directoryExportDistance)
@@ -266,7 +264,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.fidListComboBoxline2LB.setCurrentNode(None)
         self.ui.inputModelSelector.setCurrentNode(None)
         self.ui.inputLandmarksSelector.setCurrentNode(None)
-        self.computedDistanceList = []
         self.computedAnglesList = []
         self.computedLinePointList = []
         self.distance_table.RemoveAllColumns()
@@ -555,6 +552,24 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.updateLandmarkComboBox(fidList, self.ui.landmarkComboBox, False)
         fidList.SetNthFiducialPositionFromArray(numOfMarkups - 1, coord)
 
+    def getDistanceArgs(self):
+        """returns points A, B as numpy arrays"""
+        fidListA = self.ui.fidListComboBoxA.currentNode()
+        fidLabelA = self.ui.landmarkComboBoxA.currentText
+        fidIDA = self.logic.findIDFromLabel(fidListA, fidLabelA)
+        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
+        A = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
+
+        fidListB = self.ui.fidListComboBoxB.currentNode()
+        fidLabelB = self.ui.landmarkComboBoxB.currentText
+        fidIDB = self.logic.findIDFromLabel(fidListB, fidLabelB)
+        fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
+        B = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
+
+        key = f'{fidLabelA} - {fidLabelB}'
+
+        return key, A, B
+
     def onComputeDistanceClicked(self):
         fidList = self.logic.selectedFidList
         fidListA = self.ui.fidListComboBoxA.currentNode()
@@ -571,17 +586,13 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                     f'{fidListIter} is not connected to a model. Please use "Add and Move '
                     'Landmarks" panel to connect the landmarks to a model.')
                 return
-        if self.computedDistanceList:
-            self.exportDistanceButton.disconnect('clicked()', self.onExportButton)
-        else:
-            self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
-        self.computedDistanceList = self.logic.addOnDistanceList(self.computedDistanceList,
-                                                                 self.ui.landmarkComboBoxA.currentText,
-                                                                 self.ui.landmarkComboBoxB.currentText,
-                                                                 fidListA,fidListB)
-        self.logic.defineDistanceTable(
-            self.distance_table, self.distance_table_view, self.computedDistanceList)
-        self.exportDistanceButton.connect('clicked()', self.onExportButton)
+
+        self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
+
+        key, A, B = self.getDistanceArgs()
+
+        self.logic.updateDistanceTable(self.distance_table, key, A, B)
+        self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
     def onExportButton(self):
         self.logic.exportationFunction(
@@ -1342,69 +1353,49 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             element.ThreeDComponent = None
         return element
 
-    def defineDistances(self, markupsNode1, landmark1Index, markupsNode2, landmark2Index):
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        diffRAxis = coord2[0] - coord1[0]
-        diffAAxis = coord2[1] - coord1[1]
-        diffSAxis = coord2[2] - coord1[2]
-        threeDDistance = math.sqrt(vtk.vtkMath().Distance2BetweenPoints(coord1, coord2))
-        return round(diffRAxis, self.numberOfDecimals),\
-               round(diffAAxis, self.numberOfDecimals),\
-               round(diffSAxis, self.numberOfDecimals),\
-               round(threeDDistance, self.numberOfDecimals)
+    def computeDistance(self, A, B):
+        delta = B - A
+        norm = np.linalg.norm(delta)
 
-    def addOnDistanceList(self, distanceList, fidLabel1, fidLabel2, fidlist1, fidlist2):
-        fidID1 = self.findIDFromLabel(fidlist1,fidLabel1)
-        fidID2 = self.findIDFromLabel(fidlist2,fidLabel2)
-        landmark1Index = fidlist1.GetNthControlPointIndexByID(fidID1)
-        landmark2Index = fidlist2.GetNthControlPointIndexByID(fidID2)
-        elementToAdd = self.distanceValuesStorage()
-        # if this distance has already been computed before -> replace values
-        for element in distanceList:
-            if element.startLandmarkID == fidID1 and element.endLandmarkID == fidID2:
-                element = self.removecomponentFromStorage('distance', element)
-                element.startLandmarkName = fidLabel1
-                element.endLandmarkName = fidLabel2
-                element.RLComponent, element.APComponent, element.SIComponent, element.ThreeDComponent = \
-                    self.defineDistances(fidlist1, landmark1Index, fidlist2, landmark2Index)
-                return distanceList
-        elementToAdd.startLandmarkID = fidID1
-        elementToAdd.endLandmarkID = fidID2
-        elementToAdd.startLandmarkName = fidLabel1
-        elementToAdd.endLandmarkName = fidLabel2
-        elementToAdd.RLComponent, elementToAdd.APComponent, elementToAdd.SIComponent, elementToAdd.ThreeDComponent = \
-            self.defineDistances(fidlist1, landmark1Index, fidlist2, landmark2Index)
-        distanceList.append(elementToAdd)
-        return distanceList
+        result = [*delta, norm]
+        return [round(e, self.numberOfDecimals) for e in result]
+
+    def updateDistanceTable(self, table, key, A, B):
+        data = self.computeDistance(A, B)
+
+        empty = ' - '  # text to use if data is not present
+
+        with NodeModify(table):
+            for row in range(table.GetNumberOfRows()):
+                if table.GetCellText(row, 0) == key:
+                    break
+            else:
+                row = table.AddEmptyRow()
+                table.SetCellText(row, 0, key)
+
+            for col, text in enumerate(map(str, data), start=1):
+                table.SetCellText(row, col, text or empty)
 
     @staticmethod
-    def defineDistanceTable(table, table_view, distanceList):
+    def createDistanceTable():
+        table = slicer.vtkMRMLTableNode()
+        table.SetSaveWithScene(False)
+        table.SetLocked(True)
+
         col_names = ('  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance ')
+
         with NodeModify(table):
             table.RemoveAllColumns()
             for col_name in col_names:
                 table.AddColumn().SetName(col_name)
-            table.SetUseColumnNameAsColumnHeader(True)
-            for element in distanceList:
-                new_row_index = table.AddEmptyRow()
-                startLandName = element.startLandmarkName
-                endLandName = element.endLandmarkName
-                table.SetCellText(new_row_index, 0, f' {startLandName} - {endLandName} ')
-                col_contents = (
-                    element.RLComponent,
-                    element.APComponent,
-                    element.SIComponent,
-                    element.ThreeDComponent
-                )
-                for col_idx, content in enumerate(col_contents, start=1):
-                    if content is None:
-                        content = ' - '
-                    table.SetCellText(new_row_index, col_idx, str(content))
+                table.SetUseColumnNameAsColumnHeader(True)
+
+        return table
+
+    @staticmethod
+    def updateTableView(table, table_view):
         table_view.resizeColumnsToContents()
-        table_view.setMinimumHeight(50 * len(distanceList))
+        table_view.setMinimumHeight(50 * table.GetNumberOfRows())
 
     def computeAngle(self, line1, line2, axis):
         """
