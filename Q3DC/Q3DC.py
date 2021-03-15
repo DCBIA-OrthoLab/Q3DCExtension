@@ -61,7 +61,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         # GLOBALS:
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
         self.computedAnglesList = list()
-        self.computedLinePointList = list()
         self.renderer1 = None
         self.actor1 = None
         self.renderer2 = None
@@ -209,15 +208,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         # ---------------- Save Line-Point Distances -----------------
-        self.line_point_table = slicer.vtkMRMLTableNode()
-        self.line_point_table.SetSaveWithScene(False)
-        self.line_point_table.SetLocked(True)
+        self.line_point_table = self.logic.createLinePointTable()
         slicer.mrmlScene.AddNode(self.line_point_table)
         self.line_point_table_view = slicer.qMRMLTableView()
         self.line_point_table_view.setMRMLTableNode(self.line_point_table)
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.filenameExportLinePoint = qt.QLineEdit('linePoint.csv')
         self.exportLinePointButton = qt.QPushButton("Export")
+        self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
         self.exportLinePointButton.enabled = True
         self.pathExportLinePointLayout = qt.QVBoxLayout()
         self.pathExportLinePointLayout.addWidget(self.directoryExportLinePoint)
@@ -615,6 +613,33 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         return key, args
 
+    def getLinePointArgs(self):
+        fidListLineA = self.ui.fidListComboBoxlineLA.currentNode()
+        fidListLineB = self.ui.fidListComboBoxlineLB.currentNode()
+        fidListPoint = self.ui.fidListComboBoxlinePoint.currentNode()
+
+        fidLabelLineA = self.ui.lineLAComboBox.currentText
+        fidLabelLineB = self.ui.lineLBComboBox.currentText
+        fidLabelPoint = self.ui.linePointComboBox.currentText
+
+        fidIDLineA = self.logic.findIDFromLabel(fidListLineA, fidLabelLineA)
+        fidIDLineB = self.logic.findIDFromLabel(fidListLineB, fidLabelLineB)
+        fidIDPoint = self.logic.findIDFromLabel(fidListPoint, fidLabelPoint)
+
+        landmarkLineAIndex = fidListLineA.GetNthControlPointIndexByID(fidIDLineA)
+        landmarkLineBIndex = fidListLineB.GetNthControlPointIndexByID(fidIDLineB)
+        landmarkPointIndex = fidListPoint.GetNthControlPointIndexByID(fidIDPoint)
+
+        lineA = np.array(fidListLineA.GetMarkupPointVector(landmarkLineAIndex, 0))
+        lineB = np.array(fidListLineB.GetMarkupPointVector(landmarkLineBIndex, 0))
+        point = np.array(fidListPoint.GetMarkupPointVector(landmarkPointIndex, 0))
+
+        args = lineA, lineB, point
+
+        key = f'{fidLabelLineA}-{fidLabelLineB} / {fidLabelPoint}'
+
+        return key, args
+
     def onComputeDistanceClicked(self):
         fidList = self.logic.selectedFidList
         fidListA = self.ui.fidListComboBoxA.currentNode()
@@ -700,21 +725,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                     f'{fidListIter} is not connected to a model. Please use "Add and Move '
                     'Landmarks" panel to connect the landmarks to a model.')
                 return
-        if self.computedLinePointList:
-            self.exportLinePointButton.disconnect('clicked()', self.onExportLinePointButton)
-        else:
-            self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
-        self.computedLinePointList = self.logic.addOnLinePointList(self.computedLinePointList,
-                                                           self.ui.lineLAComboBox.currentText,
-                                                           self.ui.lineLBComboBox.currentText,
-                                                                   fidListlineLA,
-                                                                   fidListlineLB,
-                                                           self.ui.linePointComboBox.currentText,
-                                                                   fidListPoint,
-                                                           )
-        self.logic.defineDistanceLinePointTable(
-            self.line_point_table, self.line_point_table_view, self.computedLinePointList)
-        self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
+
+        self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
+
+        key, args = self.getLinePointArgs()
+        data = self.logic.computeLinePoint(*args)
+
+        self.logic.updateTable(self.line_point_table, key, data)
+        self.logic.updateTableView(self.line_point_table, self.line_point_table_view)
 
     def onExportLinePointButton(self):
         self.logic.exportationFunction(
@@ -1509,95 +1527,17 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         return result
 
-    def defineDistancesLinePoint(self, markupsNodeLine1, landmarkLine1Index,
-                                 markupsNodeLine2, landmarkLine2Index,
-                                 markupsNodepoint, landmarkpointIndex):
-        line = vtk.vtkLine()
-        coordLine1 = [-1, -1, -1]
-        coordLine2 = [-1, -1, -1]
-        coordPoint = [-1, -1, -1]
-        markupsNodeLine1.GetNthFiducialPosition(landmarkLine1Index, coordLine1)
-        markupsNodeLine2.GetNthFiducialPosition(landmarkLine2Index, coordLine2)
-        markupsNodepoint.GetNthFiducialPosition(landmarkpointIndex, coordPoint)
-        parametric = vtk.mutable(0)
-        projectCoord = [0, 0, 0]
-        distance = line.DistanceToLine(coordPoint, coordLine1, coordLine2, parametric, projectCoord)
-        diffRAxis = coordPoint[0] - projectCoord[0]
-        diffAAxis = coordPoint[1] - projectCoord[1]
-        diffSAxis = coordPoint[2] - projectCoord[2]
-        return round(diffRAxis, self.numberOfDecimals), \
-               round(diffAAxis, self.numberOfDecimals), \
-               round(diffSAxis, self.numberOfDecimals), \
-               round(math.sqrt(distance), self.numberOfDecimals)
+    def computeLinePoint(self, lineA, lineB, point):
+        closestPoint = np.zeros(3)
+        t = vtk.reference(0)
+        squared = vtk.vtkLine.DistanceToLine(point, lineA, lineB, t, closestPoint)
+        norm = np.sqrt(squared)
 
-    def addOnLinePointList(self, linePointList,
-                           fidLabelLineA, fidLabelLineB,
-                           fidListLineLA, fidListLineLB,
-                           fidLabelPoint, fidListPoint):
-        lineLAID = self.findIDFromLabel(fidListLineLA, fidLabelLineA)
-        lineLAIndex = fidListLineLA.GetNthControlPointIndexByID(lineLAID)
-        lineLBID = self.findIDFromLabel(fidListLineLB, fidLabelLineB)
-        lineLBIndex = fidListLineLB.GetNthControlPointIndexByID(lineLBID)
-        PointID = self.findIDFromLabel(fidListPoint, fidLabelPoint)
-        PointIndex = fidListPoint.GetNthControlPointIndexByID(PointID)
-        elementToAdd = self.distanceLinePointStorage()
-        # if this distance has already been computed before -> replace values
-        for element in linePointList:
-            if element.landmarkALineID == lineLAID and \
-                            element.landmarkBLineID == lineLBID and\
-                            element.landmarkPointID == PointID:
-                element = self.removecomponentFromStorage('distance', element)
-                element.landmarkALineID = lineLAID
-                element.landmarkBLineID = lineLBID
-                element.landmarkPointID = PointID
-                element.landmarkALineName = fidLabelLineA
-                element.landmarkBLineName = fidLabelLineB
-                element.landmarkPointName = fidLabelPoint
-                element.RLComponent, element.APComponent, element.SIComponent, element.ThreeDComponent = \
-                    self.defineDistancesLinePoint(fidListLineLA, lineLAIndex,
-                                                  fidListLineLB, lineLBIndex,
-                                                  fidListPoint, PointIndex)
-                return linePointList
-        elementToAdd.landmarkALineID = lineLAID
-        elementToAdd.landmarkBLineID = lineLBID
-        elementToAdd.landmarkPointID = PointID
-        elementToAdd.landmarkALineName = fidLabelLineA
-        elementToAdd.landmarkBLineName = fidLabelLineB
-        elementToAdd.landmarkPointName = fidLabelPoint
-        elementToAdd.RLComponent, elementToAdd.APComponent, elementToAdd.SIComponent, elementToAdd.ThreeDComponent = \
-            self.defineDistancesLinePoint(fidListLineLA, lineLAIndex,
-                                          fidListLineLB, lineLBIndex,
-                                          fidListPoint, PointIndex)
-        linePointList.append(elementToAdd)
-        return linePointList
+        delta = point - closestPoint
+        norm = np.linalg.norm(delta)
 
-    @staticmethod
-    def defineDistanceLinePointTable(table, table_view, distanceList):
-        col_names = ('  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance ')
-        with NodeModify(table):
-            table.RemoveAllColumns()
-            for col_name in col_names:
-                table.AddColumn().SetName(col_name)
-            table.SetUseColumnNameAsColumnHeader(True)
-            for element in distanceList:
-                new_row_index = table.AddEmptyRow()
-                landmarkALineName = element.landmarkALineName
-                landmarkBLineName = element.landmarkBLineName
-                landmarkPoint = element.landmarkPointName
-                table.SetCellText(new_row_index, 0,
-                    f' {landmarkALineName} - {landmarkBLineName} / {landmarkPoint} ')
-                col_contents = (
-                    element.RLComponent,
-                    element.APComponent,
-                    element.SIComponent,
-                    element.ThreeDComponent
-                )
-                for col_idx, content in enumerate(col_contents, start=1):
-                    if content is None:
-                        content = ' - '
-                    table.SetCellText(new_row_index, col_idx, str(content))
-        table_view.resizeColumnsToContents()
-        table_view.setMinimumHeight(50 * len(distanceList))
+        result = [*delta, norm]
+        return [self.round(value) for value in result]
 
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
