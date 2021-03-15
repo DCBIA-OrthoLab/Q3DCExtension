@@ -1406,98 +1406,40 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         table_view.resizeColumnsToContents()
         table_view.setMinimumHeight(50 * len(distanceList))
 
-    def computePitch(self, markupsNode1, landmark1Index,
-                     markupsNode2, landmark2Index,
-                     markupsNode3, landmark3Index,
-                     markupsNode4, landmark4Index):
-        # Pitch is computed by projection on the plan (y,z)
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        coord3 = [-1, -1, -1]
-        coord4 = [-1, -1, -1]
+    def computeAngle(self, line1, line2, axis):
+        """
+        line1: np.array of the first line
+        line2: np.array of the second line
 
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        markupsNode3.GetNthFiducialPosition(landmark3Index, coord3)
-        markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
+        axis: project the lines onto the plane defined by this axis.
+        ex. axis=3 (z) would project lines to the 0-1 (x-y) plane
+        """
 
-        vectLine1 = [0, coord2[1]-coord1[1], coord2[2]-coord1[2] ]
-        normVectLine1 = np.sqrt( vectLine1[1]*vectLine1[1] + vectLine1[2]*vectLine1[2] )
-        vectLine2 = [0, coord4[1]-coord3[1], coord4[2]-coord3[2] ]
-        normVectLine2 = np.sqrt( vectLine2[1]*vectLine2[1] + vectLine2[2]*vectLine2[2] )
-        pitchNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
-                               self.numberOfDecimals)
+        # create a mask which removes the coordinate on axis. this performs the projection
+        mask = [True] * 3
+        mask[axis] = False
+        line1 = line1[mask]
+        line2 = line2[mask]
 
-        if normVectLine1 != 0 and normVectLine2 != 0:
-            normalizedVectLine1 = [0, (1/normVectLine1)*vectLine1[1], (1/normVectLine1)*vectLine1[2]]
-            normalizedVectLine2 = [0, (1/normVectLine2)*vectLine2[1], (1/normVectLine2)*vectLine2[2]]
-            det2D = normalizedVectLine1[1]*normalizedVectLine2[2] - normalizedVectLine1[2]*normalizedVectLine2[1]
-            return math.copysign(pitchNotSigned, det2D)
-        else:
+        norm1 = np.linalg.norm(line1)
+        norm2 = np.linalg.norm(line2)
+
+        if norm1 == 0 or norm2 == 0:
             slicer.util.errorDisplay("ERROR, norm of your vector is 0! DEFINE A VECTOR!")
             return None
 
-    def computeRoll(self, markupsNode1, landmark1Index,
-                    markupsNode2, landmark2Index,
-                    markupsNode3, landmark3Index,
-                    markupsNode4, landmark4Index):
-        # Roll is computed by projection on the plan (x,z)
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        coord3 = [-1, -1, -1]
-        coord4 = [-1, -1, -1]
+        try:
+            # find the _signed_ angle using the determinant of a 2x2 matrix
+            # https://en.wikipedia.org/wiki/Determinant#2_%C3%97_2_matrices
+            # |A| = |u||v|sin(t) where u, v are columns of A and t is the angle between them
 
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        markupsNode3.GetNthFiducialPosition(landmark3Index, coord3)
-        markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
-
-        vectLine1 = [coord2[0]-coord1[0], 0, coord2[2]-coord1[2] ]
-        normVectLine1 = np.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[2]*vectLine1[2] )
-        vectLine2 = [coord4[0]-coord3[0], 0, coord4[2]-coord3[2] ]
-        normVectLine2 = np.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[2]*vectLine2[2] )
-        rollNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
-                              self.numberOfDecimals)
-
-        if normVectLine1 != 0 and normVectLine2 != 0:
-            normalizedVectLine1 = [(1/normVectLine1)*vectLine1[0], 0, (1/normVectLine1)*vectLine1[2]]
-            normalizedVectLine2 = [(1/normVectLine2)*vectLine2[0], 0, (1/normVectLine2)*vectLine2[2]]
-            det2D = normalizedVectLine1[0]*normalizedVectLine2[2] - normalizedVectLine1[2]*normalizedVectLine2[0]
-            return math.copysign(rollNotSigned, det2D)
-        else:
-            logging.error(" ERROR, norm of your vector is 0! DEFINE A VECTOR!")
-            return None
-
-    def computeYaw(self, markupsNode1, landmark1Index,
-                   markupsNode2, landmark2Index,
-                   markupsNode3, landmark3Index,
-                   markupsNode4, landmark4Index):
-        # Yaw is computed by projection on the plan (x,y)
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        coord3 = [-1, -1, -1]
-        coord4 = [-1, -1, -1]
-
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        markupsNode3.GetNthFiducialPosition(landmark3Index, coord3)
-        markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
-
-        vectLine1 = [coord2[0]-coord1[0], coord2[1]-coord1[1], 0 ]
-        normVectLine1 = np.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[1]*vectLine1[1] )
-        vectLine2 = [coord4[0]-coord3[0],coord4[1]-coord3[1], 0]
-        normVectLine2 = np.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[1]*vectLine2[1] )
-        yawNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
-                             self.numberOfDecimals)
-
-        if normVectLine1 != 0 and normVectLine2 != 0:
-            normalizedVectLine1 = [(1/normVectLine1)*vectLine1[0], (1/normVectLine1)*vectLine1[1], 0]
-            normalizedVectLine2 = [(1/normVectLine2)*vectLine2[0], (1/normVectLine2)*vectLine2[1], 0]
-            det2D = normalizedVectLine1[0]*normalizedVectLine2[1] - normalizedVectLine1[1]*normalizedVectLine2[0]
-            return math.copysign(yawNotSigned, det2D)
-        else:
-            slicer.util.errorDisplay("ERROR, norm of your vector is 0! DEFINE A VECTOR!")
-            return None
+            matrix = np.array([line1, line2])
+            det = np.linalg.det(matrix)
+            radians = np.arcsin(det / norm1 / norm2)
+            degrees = round(np.degrees(radians), self.numberOfDecimals)
+            return degrees
+        except np.linalg.LinAlgError:
+            slicer.util.errorDisplay('ERROR: failed to project vectors. Only able to compute angles in one plane.')
 
     def addOnAngleList(self, angleList,
                        fidLabel1A, fidLabel1B, fidlist1A, fidlist1B,
@@ -1507,10 +1449,24 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         fidID1B = self.findIDFromLabel(fidlist1B,fidLabel1B)
         fidID2A = self.findIDFromLabel(fidlist2A,fidLabel2A)
         fidID2B = self.findIDFromLabel(fidlist2B,fidLabel2B)
+
         landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
         landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
         landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
         landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
+
+        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
+        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
+        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
+        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
+
+        line1 = coord2 - coord1
+        line2 = coord4 - coord3
+
+        pitch = self.computeAngle(line1, line2, axis=0)  # saggital (axis=R; x-y) for pitch
+        roll = self.computeAngle(line1, line2, axis=1)  # coronal (axis=A; x-z) for roll
+        yaw = self.computeAngle(line1, line2, axis=2)  # axial (axis=S; y-z) for yaw
+
         # if angles has already been computed before -> replace values
         elementToAdd = self.angleValuesStorage()
         for element in angleList:
@@ -1519,26 +1475,20 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                             element.landmarkALine2ID == fidID2A and\
                             element.landmarkBLine2ID == fidID2B:
                 element = self.removecomponentFromStorage('angles', element)
+
                 if PitchState:
-                    element.Pitch = self.computePitch(fidlist1A, landmark1Index,
-                                                      fidlist1B, landmark2Index,
-                                                      fidlist2A, landmark3Index,
-                                                      fidlist2B, landmark4Index)
+                    element.Pitch = pitch
                 if RollState:
-                    element.Roll = self.computeRoll(fidlist1A, landmark1Index,
-                                                    fidlist1B, landmark2Index,
-                                                    fidlist2A, landmark3Index,
-                                                    fidlist2B, landmark4Index)
+                    element.Roll = roll
                 if YawState:
-                    element.Yaw = self.computeYaw(fidlist1A, landmark1Index,
-                                                  fidlist1B, landmark2Index,
-                                                  fidlist2A, landmark3Index,
-                                                  fidlist2B, landmark4Index)
+                    element.Yaw = yaw
+
                 element.landmarkALine1Name = fidLabel1A
                 element.landmarkBLine1Name = fidLabel1B
                 element.landmarkALine2Name = fidLabel2A
                 element.landmarkBLine2Name = fidLabel2B
                 return angleList
+
         # create a new element depending on what the user wants
         elementToAdd.landmarkALine1ID = fidID1A
         elementToAdd.landmarkBLine1ID = fidID1B
@@ -1548,21 +1498,14 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         elementToAdd.landmarkBLine1Name = fidLabel1B
         elementToAdd.landmarkALine2Name = fidLabel2A
         elementToAdd.landmarkBLine2Name = fidLabel2B
+
         if PitchState:
-            elementToAdd.Pitch = self.computePitch(fidlist1A, landmark1Index,
-                                                   fidlist1B, landmark2Index,
-                                                   fidlist2A, landmark3Index,
-                                                   fidlist2B, landmark4Index)
+            elementToAdd.Pitch = pitch
         if RollState:
-            elementToAdd.Roll = self.computeRoll(fidlist1A, landmark1Index,
-                                                 fidlist1B, landmark2Index,
-                                                 fidlist2A, landmark3Index,
-                                                 fidlist2B, landmark4Index)
+            elementToAdd.Roll = roll
         if YawState:
-            elementToAdd.Yaw = self.computeYaw(fidlist1A, landmark1Index,
-                                               fidlist1B, landmark2Index,
-                                               fidlist2A, landmark3Index,
-                                               fidlist2B, landmark4Index)
+            elementToAdd.Yaw = yaw
+
         angleList.append(elementToAdd)
         return angleList
 
