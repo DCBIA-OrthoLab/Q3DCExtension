@@ -176,15 +176,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.ui.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
         # ----------------------- Save Angles ------------------------
-        self.angles_table = slicer.vtkMRMLTableNode()
-        self.angles_table.SetSaveWithScene(False)
-        self.angles_table.SetLocked(True)
+        self.angles_table = self.logic.createAnglesTable()
         slicer.mrmlScene.AddNode(self.angles_table)
         self.angles_table_view = slicer.qMRMLTableView()
         self.angles_table_view.setMRMLTableNode(self.angles_table)
         self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.filenameExportAngle = qt.QLineEdit('angle.csv')
         self.exportAngleButton = qt.QPushButton("Export")
+        self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
         self.exportAngleButton.enabled = True
         self.pathExportAngleLayout = qt.QVBoxLayout()
         self.pathExportAngleLayout.addWidget(self.directoryExportAngle)
@@ -264,8 +263,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.fidListComboBoxline2LB.setCurrentNode(None)
         self.ui.inputModelSelector.setCurrentNode(None)
         self.ui.inputLandmarksSelector.setCurrentNode(None)
-        self.computedAnglesList = []
-        self.computedLinePointList = []
         self.distance_table.RemoveAllColumns()
         self.angles_table.RemoveAllColumns()
         self.line_point_table.RemoveAllColumns()
@@ -553,22 +550,70 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         fidList.SetNthFiducialPositionFromArray(numOfMarkups - 1, coord)
 
     def getDistanceArgs(self):
-        """returns points A, B as numpy arrays"""
+        """ returns: key, (point1, point2) """
         fidListA = self.ui.fidListComboBoxA.currentNode()
-        fidLabelA = self.ui.landmarkComboBoxA.currentText
-        fidIDA = self.logic.findIDFromLabel(fidListA, fidLabelA)
-        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
-        A = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
-
         fidListB = self.ui.fidListComboBoxB.currentNode()
+
+        fidLabelA = self.ui.landmarkComboBoxA.currentText
         fidLabelB = self.ui.landmarkComboBoxB.currentText
+
+        fidIDA = self.logic.findIDFromLabel(fidListA, fidLabelA)
         fidIDB = self.logic.findIDFromLabel(fidListB, fidLabelB)
+
+        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
         fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
-        B = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
+
+        point1 = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
+        point2 = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
+
+        args = point1, point2
 
         key = f'{fidLabelA} - {fidLabelB}'
 
-        return key, A, B
+        return key, args
+
+    def getAnglesArgs(self):
+        """ returns: key, (line1, line2, states) """
+
+        fidlist1A = self.ui.fidListComboBoxline1LA.currentNode()
+        fidlist1B = self.ui.fidListComboBoxline1LB.currentNode()
+        fidlist2A = self.ui.fidListComboBoxline2LA.currentNode()
+        fidlist2B = self.ui.fidListComboBoxline2LB.currentNode()
+
+        fidLabel1A = self.ui.line1LAComboBox.currentText
+        fidLabel1B = self.ui.line1LBComboBox.currentText
+        fidLabel2A = self.ui.line2LAComboBox.currentText
+        fidLabel2B = self.ui.line2LBComboBox.currentText
+
+        fidID1A = self.logic.findIDFromLabel(fidlist1A, fidLabel1A)
+        fidID1B = self.logic.findIDFromLabel(fidlist1B, fidLabel1B)
+        fidID2A = self.logic.findIDFromLabel(fidlist2A, fidLabel2A)
+        fidID2B = self.logic.findIDFromLabel(fidlist2B, fidLabel2B)
+
+        landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
+        landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
+        landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
+        landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
+
+        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
+        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
+        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
+        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
+
+        line1 = coord2 - coord1
+        line2 = coord4 - coord3
+
+        states = (
+            self.ui.yawCheckBox.isChecked(),
+            self.ui.pitchCheckBox.isChecked(),
+            self.ui.rollCheckBox.isChecked(),
+        )
+
+        args = line1, line2, states
+
+        key = f'{fidLabel1A}-{fidLabel1B} / {fidLabel2A}-{fidLabel2B}'
+
+        return key, args
 
     def onComputeDistanceClicked(self):
         fidList = self.logic.selectedFidList
@@ -589,9 +634,10 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
 
-        key, A, B = self.getDistanceArgs()
+        key, args = self.getDistanceArgs()
+        data = self.logic.computeDistance(*args)
 
-        self.logic.updateDistanceTable(self.distance_table, key, A, B)
+        self.logic.updateTable(self.distance_table, key, args)
         self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
     def onExportButton(self):
@@ -620,26 +666,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                     f'{fidListIter} is not connected to a model. Please use "Add and Move '
                     'Landmarks" panel to connect the landmarks to a model.')
                 return
-        if self.computedAnglesList:
-            self.exportAngleButton.disconnect('clicked()', self.onExportAngleButton)
-        else:
-            self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
-        self.computedAnglesList = self.logic.addOnAngleList(self.computedAnglesList,
-                                                            self.ui.line1LAComboBox.currentText,
-                                                            self.ui.line1LBComboBox.currentText,
-                                                            self.ui.fidListComboBoxline1LA.currentNode(),
-                                                            self.ui.fidListComboBoxline1LB.currentNode(),
-                                                            self.ui.line2LAComboBox.currentText,
-                                                            self.ui.line2LBComboBox.currentText,
-                                                            self.ui.fidListComboBoxline2LA.currentNode(),
-                                                            self.ui.fidListComboBoxline2LB.currentNode(),
-                                                            self.ui.pitchCheckBox.isChecked(),
-                                                            self.ui.yawCheckBox.isChecked(),
-                                                            self.ui.rollCheckBox.isChecked()
-                                                            )
-        self.logic.defineAnglesTable(
-            self.angles_table, self.angles_table_view, self.computedAnglesList)
-        self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
+
+        self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
+
+        key, args = self.getAnglesArgs()
+        data = self.logic.computeAngles(*args)
+
+        self.logic.updateTable(self.angles_table, key, data)
+        self.logic.updateTableView(self.angles_table, self.angles_table_view)
 
     def onExportAngleButton(self):
         self.logic.exportationFunction(
@@ -1353,16 +1387,17 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             element.ThreeDComponent = None
         return element
 
-    def computeDistance(self, A, B):
-        delta = B - A
+    def round(self, value):
+        return round(value, self.numberOfDecimals)
+
+    def computeDistance(self, point1, point2):
+        delta = point2 - point1
         norm = np.linalg.norm(delta)
 
         result = [*delta, norm]
-        return [round(e, self.numberOfDecimals) for e in result]
+        return [self.round(value) for value in result]
 
-    def updateDistanceTable(self, table, key, A, B):
-        data = self.computeDistance(A, B)
-
+    def updateTable(self, table, key, data):
         empty = ' - '  # text to use if data is not present
 
         with NodeModify(table):
@@ -1373,16 +1408,20 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 row = table.AddEmptyRow()
                 table.SetCellText(row, 0, key)
 
-            for col, text in enumerate(map(str, data), start=1):
+            for col, value in enumerate(data, start=1):
+                if value is None:
+                    text = empty
+                else:
+                    text = str(value)
                 table.SetCellText(row, col, text or empty)
 
-    @staticmethod
-    def createDistanceTable():
+    @classmethod
+    def createTable(cls, col_names):
         table = slicer.vtkMRMLTableNode()
         table.SetSaveWithScene(False)
         table.SetLocked(True)
 
-        col_names = ('  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance ')
+        col_names = ['  '] + [f' {name} ' for name in col_names]
 
         with NodeModify(table):
             table.RemoveAllColumns()
@@ -1392,8 +1431,23 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         return table
 
-    @staticmethod
-    def updateTableView(table, table_view):
+    @classmethod
+    def createDistanceTable(cls):
+        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
+        return cls.createTable(names)
+
+    @classmethod
+    def createAnglesTable(cls):
+        names = 'YAW', 'PITCH', 'ROLL'
+        return cls.createTable(names)
+
+    @classmethod
+    def createLinePointTable(cls):
+        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
+        return cls.createTable(names)
+
+    @classmethod
+    def updateTableView(cls, table, table_view):
         table_view.resizeColumnsToContents()
         table_view.setMinimumHeight(50 * table.GetNumberOfRows())
 
@@ -1427,110 +1481,33 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             matrix = np.array([line1, line2])
             det = np.linalg.det(matrix)
             radians = np.arcsin(det / norm1 / norm2)
-            degrees = round(np.degrees(radians), self.numberOfDecimals)
-            return degrees
+            return np.degrees(radians)
         except np.linalg.LinAlgError:
             slicer.util.errorDisplay('ERROR: failed to project vectors. Only able to compute angles in one plane.')
 
-    def addOnAngleList(self, angleList,
-                       fidLabel1A, fidLabel1B, fidlist1A, fidlist1B,
-                       fidLabel2A, fidLabel2B, fidlist2A, fidlist2B,
-                       PitchState, YawState, RollState):
-        fidID1A = self.findIDFromLabel(fidlist1A,fidLabel1A)
-        fidID1B = self.findIDFromLabel(fidlist1B,fidLabel1B)
-        fidID2A = self.findIDFromLabel(fidlist2A,fidLabel2A)
-        fidID2B = self.findIDFromLabel(fidlist2B,fidLabel2B)
+    def computeAngles(self, line1, line2, states):
+        axes = [
+            2,  # axis=S; axial; for yaw
+            0,  # axis=R; saggital; for pitch
+            1,  # axis=A; coronal; for roll
+        ]
 
-        landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
-        landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
-        landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
-        landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
+        result = []
+        for axis, state in zip(axes, states):
+            if state:
+                value = self.computeAngle(line1, line2, axis)
+                value = self.round(value)
 
-        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
-        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
-        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
-        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
+                # we want to show the angle and the complementary angle, signed
+                sign = np.sign(value)
+                complement = sign * (180 - abs(value))
+                formatted = f'{value} / {complement}'
 
-        line1 = coord2 - coord1
-        line2 = coord4 - coord3
+                result.append(formatted)
+            else:
+                result.append(None)
 
-        pitch = self.computeAngle(line1, line2, axis=0)  # saggital (axis=R; x-y) for pitch
-        roll = self.computeAngle(line1, line2, axis=1)  # coronal (axis=A; x-z) for roll
-        yaw = self.computeAngle(line1, line2, axis=2)  # axial (axis=S; y-z) for yaw
-
-        # if angles has already been computed before -> replace values
-        elementToAdd = self.angleValuesStorage()
-        for element in angleList:
-            if element.landmarkALine1ID == fidID1A and\
-                            element.landmarkBLine1ID == fidID1B and\
-                            element.landmarkALine2ID == fidID2A and\
-                            element.landmarkBLine2ID == fidID2B:
-                element = self.removecomponentFromStorage('angles', element)
-
-                if PitchState:
-                    element.Pitch = pitch
-                if RollState:
-                    element.Roll = roll
-                if YawState:
-                    element.Yaw = yaw
-
-                element.landmarkALine1Name = fidLabel1A
-                element.landmarkBLine1Name = fidLabel1B
-                element.landmarkALine2Name = fidLabel2A
-                element.landmarkBLine2Name = fidLabel2B
-                return angleList
-
-        # create a new element depending on what the user wants
-        elementToAdd.landmarkALine1ID = fidID1A
-        elementToAdd.landmarkBLine1ID = fidID1B
-        elementToAdd.landmarkALine2ID = fidID2A
-        elementToAdd.landmarkBLine2ID = fidID2B
-        elementToAdd.landmarkALine1Name = fidLabel1A
-        elementToAdd.landmarkBLine1Name = fidLabel1B
-        elementToAdd.landmarkALine2Name = fidLabel2A
-        elementToAdd.landmarkBLine2Name = fidLabel2B
-
-        if PitchState:
-            elementToAdd.Pitch = pitch
-        if RollState:
-            elementToAdd.Roll = roll
-        if YawState:
-            elementToAdd.Yaw = yaw
-
-        angleList.append(elementToAdd)
-        return angleList
-
-    @staticmethod
-    def defineAnglesTable(table, table_view, angleList):
-        col_names = (' ', ' YAW ', ' PITCH ', ' ROLL ')
-        with NodeModify(table):
-            table.RemoveAllColumns()
-            for col_name in col_names:
-                table.AddColumn().SetName(col_name)
-            table.SetUseColumnNameAsColumnHeader(True)
-            for element in angleList:
-                new_row_index = table.AddEmptyRow()
-                landmarkALine1Name = element.landmarkALine1Name
-                landmarkBLine1Name = element.landmarkBLine1Name
-                landmarkALine2Name = element.landmarkALine2Name
-                landmarkBLine2Name = element.landmarkBLine2Name
-                table.SetCellText(new_row_index, 0,
-                    f' {landmarkALine1Name}-{landmarkBLine1Name} / {landmarkALine2Name}-{landmarkBLine2Name}')
-                col_contents = (
-                    element.Yaw,
-                    element.Pitch,
-                    element.Roll
-                )
-                for col_idx, content in enumerate(col_contents, start=1):
-                    if content is None:
-                        content_formatted = ' - '
-                    else:
-                        sign = np.sign(content)
-                        content_flipped = sign * (180 - abs(content))
-                        content_formatted = f'{content} / {content_flipped}'
-                    table.SetCellText(new_row_index, col_idx, content_formatted)
-        table_view.resizeColumnsToContents()
-        table_view.setMinimumHeight(50 * len(angleList))
+        return result
 
     def defineDistancesLinePoint(self, markupsNodeLine1, landmarkLine1Index,
                                  markupsNodeLine2, landmarkLine2Index,
