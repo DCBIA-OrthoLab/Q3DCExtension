@@ -665,14 +665,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.updateTable(self.distance_table, key, args)
         self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
-    def onExportButton(self):
-        self.logic.exportationFunction(
-            self.directoryExportDistance,
-            self.filenameExportDistance,
-            self.distance_table,
-            'distance'
-        )
-
     def onComputeAnglesClicked(self):
         fidList = self.logic.selectedFidList
         fidListline1LA = self.ui.fidListComboBoxline1LA.currentNode()
@@ -700,14 +692,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic.updateTable(self.angles_table, key, data)
         self.logic.updateTableView(self.angles_table, self.angles_table_view)
 
-    def onExportAngleButton(self):
-        self.logic.exportationFunction(
-            self.directoryExportAngle,
-            self.filenameExportAngle,
-            self.angles_table,
-            'angle'
-        )
-
     def onComputeLinePointClicked(self):
         fidList = self.logic.selectedFidList
         if not fidList:
@@ -733,6 +717,22 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.logic.updateTable(self.line_point_table, key, data)
         self.logic.updateTableView(self.line_point_table, self.line_point_table_view)
+
+    def onExportButton(self):
+        self.logic.exportationFunction(
+            self.directoryExportDistance,
+            self.filenameExportDistance,
+            self.distance_table,
+            'distance'
+        )
+
+    def onExportAngleButton(self):
+        self.logic.exportationFunction(
+            self.directoryExportAngle,
+            self.filenameExportAngle,
+            self.angles_table,
+            'angle'
+        )
 
     def onExportLinePointButton(self):
         self.logic.exportationFunction(
@@ -789,44 +789,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.comboboxdict[self.interface.lineLAComboBox] = None
         self.comboboxdict[self.interface.lineLBComboBox] = None
         self.comboboxdict[self.interface.linePointComboBox] = None
-
-    class distanceValuesStorage(object):
-        def __init__(self):
-            self.startLandmarkID = None
-            self.endLandmarkID = None
-            self.startLandmarkName = None
-            self.endLandmarkName = None
-            self.RLComponent = None
-            self.APComponent = None
-            self.SIComponent = None
-            self.ThreeDComponent = None
-
-    class angleValuesStorage(object):
-        def __init__(self):
-            self.landmarkALine1ID = None
-            self.landmarkBLine1ID = None
-            self.landmarkALine2ID = None
-            self.landmarkBLine2ID = None
-            self.landmarkALine1Name = None
-            self.landmarkBLine1Name = None
-            self.landmarkALine2Name = None
-            self.landmarkBLine2Name = None
-            self.Pitch = None
-            self.Roll = None
-            self.Yaw = None
-
-    class distanceLinePointStorage(object):
-        def __init__(self):
-            self.landmarkALineID = None
-            self.landmarkBLineID = None
-            self.landmarkPointID = None
-            self.landmarkALineName = None
-            self.landmarkBLineName = None
-            self.landmarkPointName = None
-            self.RLComponent = None
-            self.APComponent = None
-            self.SIComponent = None
-            self.ThreeDComponent = None
 
     def UpdateThreeDView(self, landmarkLabel):
         # Update the 3D view on Slicer
@@ -1415,60 +1377,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         result = [*delta, norm]
         return [self.round(value) for value in result]
 
-    def updateTable(self, table, key, data):
-        empty = ' - '  # text to use if data is not present
-
-        with NodeModify(table):
-            for row in range(table.GetNumberOfRows()):
-                if table.GetCellText(row, 0) == key:
-                    break
-            else:
-                row = table.AddEmptyRow()
-                table.SetCellText(row, 0, key)
-
-            for col, value in enumerate(data, start=1):
-                if value is None:
-                    text = empty
-                else:
-                    text = str(value)
-                table.SetCellText(row, col, text or empty)
-
-    @classmethod
-    def createTable(cls, col_names):
-        table = slicer.vtkMRMLTableNode()
-        table.SetSaveWithScene(False)
-        table.SetLocked(True)
-
-        col_names = ['  '] + [f' {name} ' for name in col_names]
-
-        with NodeModify(table):
-            table.RemoveAllColumns()
-            for col_name in col_names:
-                table.AddColumn().SetName(col_name)
-                table.SetUseColumnNameAsColumnHeader(True)
-
-        return table
-
-    @classmethod
-    def createDistanceTable(cls):
-        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
-        return cls.createTable(names)
-
-    @classmethod
-    def createAnglesTable(cls):
-        names = 'YAW', 'PITCH', 'ROLL'
-        return cls.createTable(names)
-
-    @classmethod
-    def createLinePointTable(cls):
-        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
-        return cls.createTable(names)
-
-    @classmethod
-    def updateTableView(cls, table, table_view):
-        table_view.resizeColumnsToContents()
-        table_view.setMinimumHeight(50 * table.GetNumberOfRows())
-
     def computeAngle(self, line1, line2, axis):
         """
         line1: np.array of the first line
@@ -1538,6 +1446,60 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         result = [*delta, norm]
         return [self.round(value) for value in result]
+
+    @classmethod
+    def createTable(cls, col_names):
+        table = slicer.vtkMRMLTableNode()
+        table.SetSaveWithScene(False)
+        table.SetLocked(True)
+
+        col_names = ['  '] + [f' {name} ' for name in col_names]
+
+        with NodeModify(table):
+            table.RemoveAllColumns()
+            for col_name in col_names:
+                table.AddColumn().SetName(col_name)
+                table.SetUseColumnNameAsColumnHeader(True)
+
+        return table
+
+    @classmethod
+    def createDistanceTable(cls):
+        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
+        return cls.createTable(names)
+
+    @classmethod
+    def createAnglesTable(cls):
+        names = 'YAW', 'PITCH', 'ROLL'
+        return cls.createTable(names)
+
+    @classmethod
+    def createLinePointTable(cls):
+        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
+        return cls.createTable(names)
+
+    def updateTable(self, table, key, data):
+        empty = ' - '  # text to use if data is not present
+
+        with NodeModify(table):
+            for row in range(table.GetNumberOfRows()):
+                if table.GetCellText(row, 0) == key:
+                    break
+            else:
+                row = table.AddEmptyRow()
+                table.SetCellText(row, 0, key)
+
+            for col, value in enumerate(data, start=1):
+                if value is None:
+                    text = empty
+                else:
+                    text = str(value)
+                table.SetCellText(row, col, text or empty)
+
+    @classmethod
+    def updateTableView(cls, table, table_view):
+        table_view.resizeColumnsToContents()
+        table_view.setMinimumHeight(50 * table.GetNumberOfRows())
 
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
