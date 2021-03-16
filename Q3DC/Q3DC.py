@@ -143,6 +143,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportDistanceButton = qt.QPushButton(" Export ")
         self.exportDistanceButton.connect('clicked()', self.onExportButton)
         self.exportDistanceButton.enabled = True
+        self.deleteDistanceRowButton = qt.QPushButton("Delete Selected Row")
+        self.deleteDistanceRowButton.connect('clicked()', self.distance_table_view.deleteRow)
         self.pathExportDistanceLayout = qt.QVBoxLayout()
         self.pathExportDistanceLayout.addWidget(self.directoryExportDistance)
         self.pathExportDistanceLayout.addWidget(self.filenameExportDistance)
@@ -151,6 +153,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportDistanceLayout.addWidget(self.exportDistanceButton)
         self.tableAndExportLayout = qt.QVBoxLayout()
         self.tableAndExportLayout.addWidget(self.distance_table_view)
+        self.tableAndExportLayout.addWidget(self.deleteDistanceRowButton)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
 
         # --------------------- Calculate Angles ---------------------
@@ -184,6 +187,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportAngleButton = qt.QPushButton("Export")
         self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
         self.exportAngleButton.enabled = True
+        self.deleteAngleRowButton = qt.QPushButton("Delete Selected Row")
+        self.deleteAngleRowButton.connect('clicked()', self.angles_table_view.deleteRow)
         self.pathExportAngleLayout = qt.QVBoxLayout()
         self.pathExportAngleLayout.addWidget(self.directoryExportAngle)
         self.pathExportAngleLayout.addWidget(self.filenameExportAngle)
@@ -192,6 +197,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportAngleLayout.addWidget(self.exportAngleButton)
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
         self.tableAndExportAngleLayout.addWidget(self.angles_table_view)
+        self.tableAndExportAngleLayout.addWidget(self.deleteAngleRowButton)
         self.tableAndExportAngleLayout.addLayout(self.exportAngleLayout)
 
         # -------------- Calculate Line-Point Distances --------------
@@ -217,6 +223,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportLinePointButton = qt.QPushButton("Export")
         self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
         self.exportLinePointButton.enabled = True
+        self.deleteLinePointRowButton = qt.QPushButton("Delete Selected Row")
+        self.deleteLinePointRowButton.connect('clicked()', self.line_point_table_view.deleteRow)
         self.pathExportLinePointLayout = qt.QVBoxLayout()
         self.pathExportLinePointLayout.addWidget(self.directoryExportLinePoint)
         self.pathExportLinePointLayout.addWidget(self.filenameExportLinePoint)
@@ -225,6 +233,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportLinePointLayout.addWidget(self.exportLinePointButton)
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
         self.tableAndExportLinePointLayout.addWidget(self.line_point_table_view)
+        self.tableAndExportLinePointLayout.addWidget(self.deleteLinePointRowButton)
         self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
 
         # INITIALISATION:
