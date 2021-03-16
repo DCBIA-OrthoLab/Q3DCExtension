@@ -60,9 +60,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         ScriptedLoadableModuleWidget.setup(self)
         # GLOBALS:
         self.interactionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLInteractionNodeSingleton")
-        self.computedDistanceList = list()
         self.computedAnglesList = list()
-        self.computedLinePointList = list()
         self.renderer1 = None
         self.actor1 = None
         self.renderer2 = None
@@ -78,14 +76,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.logic = Q3DCLogic(self.ui)
         self.logic.UpdateInterface = self.UpdateInterface
 
-        #--------------------------- Scene --------------------------#
+        # -------------------------- Scene ---------------------------
         self.SceneCollapsibleButton = self.ui.SceneCollapsibleButton # this attribute is usefull for Longitudinal quantification extension
         treeView = self.ui.treeView
         treeView.setMRMLScene(slicer.app.mrmlScene())
         treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
         treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode','vtkMRMLMarkupsFiducialNode']
         treeView.header().setVisible(False)
-        # --------------- landmark modification --------------
+
+        # ------------------ Landmark Modification -------------------
         self.inputModelLabel = self.ui.inputModelLabel  # this attribute is usefull for Longitudinal quantification extension
         self.inputLandmarksLabel = self.ui.inputLandmarksLabel  # this attribute is usefull for Longitudinal quantification extension
         self.ui.inputModelSelector.setMRMLScene(slicer.mrmlScene)
@@ -97,7 +96,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
         self.ui.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
 
-        # --------------- anatomical legend --------------
+        # --------------------- Anatomical Legend --------------------
         self.suggested_landmarks = self.logic.load_suggested_landmarks(
             self.resourcePath('Data/base_fiducial_legend.csv'))
         self.anatomical_legend_space = self.ui.landmarkModifLayout
@@ -119,11 +118,12 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
         self.ui.legendFileButton.connect('clicked()', self.on_select_legend_file_clicked)
 
-        #        ----------------- Compute Mid Point -------------
+        # -------------------- Compute Mid Point ---------------------
         self.ui.landmarkComboBox1.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.landmarkComboBox2.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.defineMiddlePointButton.connect('clicked()', self.onDefineMidPointClicked)
-#        ------------------- 1st OPTION -------------------
+
+        # ------------------- Calculate Distances --------------------
         self.ui.fidListComboBoxA.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxB.setMRMLScene(slicer.mrmlScene)
         self.ui.computeDistancesPushButton.connect('clicked()', self.onComputeDistanceClicked)
@@ -133,11 +133,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.ui.fidListComboBoxA, self.ui.landmarkComboBoxA))
         self.ui.fidListComboBoxB.connect('currentNodeChanged(vtkMRMLNode*)',
                                       lambda: self.logic.UpdateLandmarkComboboxA(self.ui.fidListComboBoxB, self.ui.landmarkComboBoxB))
-        # ---------------------------- Directory - Export Button -----------------------------
-        self.distanceTable = qt.QTableWidget()
+        # ---------------------- Save Distances ----------------------
+        self.distance_table = self.logic.createDistanceTable()
+        slicer.mrmlScene.AddNode(self.distance_table)
+        self.distance_table_view = slicer.qMRMLTableView()
+        self.distance_table_view.setMRMLTableNode(self.distance_table)
         self.directoryExportDistance = ctk.ctkDirectoryButton()
         self.filenameExportDistance = qt.QLineEdit('distance.csv')
         self.exportDistanceButton = qt.QPushButton(" Export ")
+        self.exportDistanceButton.connect('clicked()', self.onExportButton)
         self.exportDistanceButton.enabled = True
         self.pathExportDistanceLayout = qt.QVBoxLayout()
         self.pathExportDistanceLayout.addWidget(self.directoryExportDistance)
@@ -146,9 +150,10 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportDistanceLayout.addLayout(self.pathExportDistanceLayout)
         self.exportDistanceLayout.addWidget(self.exportDistanceButton)
         self.tableAndExportLayout = qt.QVBoxLayout()
-        self.tableAndExportLayout.addWidget(self.distanceTable)
+        self.tableAndExportLayout.addWidget(self.distance_table_view)
         self.tableAndExportLayout.addLayout(self.exportDistanceLayout)
-#       ------------------- 2nd OPTION -------------------
+
+        # --------------------- Calculate Angles ---------------------
         self.ui.fidListComboBoxline1LA.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxline1LB.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxline2LA.setMRMLScene(slicer.mrmlScene)
@@ -169,12 +174,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.pitchCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.ui.rollCheckBox.connect('clicked(bool)', self.UpdateInterface)
         self.ui.yawCheckBox.connect('clicked(bool)', self.UpdateInterface)
-
-        # ---------------------------- Directory - Export Button -----------------------------
-        self.anglesTable = qt.QTableWidget()
+        # ----------------------- Save Angles ------------------------
+        self.angles_table = self.logic.createAnglesTable()
+        slicer.mrmlScene.AddNode(self.angles_table)
+        self.angles_table_view = slicer.qMRMLTableView()
+        self.angles_table_view.setMRMLTableNode(self.angles_table)
         self.directoryExportAngle = ctk.ctkDirectoryButton()
         self.filenameExportAngle = qt.QLineEdit('angle.csv')
         self.exportAngleButton = qt.QPushButton("Export")
+        self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
         self.exportAngleButton.enabled = True
         self.pathExportAngleLayout = qt.QVBoxLayout()
         self.pathExportAngleLayout.addWidget(self.directoryExportAngle)
@@ -183,9 +191,10 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportAngleLayout.addLayout(self.pathExportAngleLayout)
         self.exportAngleLayout.addWidget(self.exportAngleButton)
         self.tableAndExportAngleLayout = qt.QVBoxLayout()
-        self.tableAndExportAngleLayout.addWidget(self.anglesTable)
+        self.tableAndExportAngleLayout.addWidget(self.angles_table_view)
         self.tableAndExportAngleLayout.addLayout(self.exportAngleLayout)
-#       ------------------- 3rd OPTION -------------------
+
+        # -------------- Calculate Line-Point Distances --------------
         self.ui.fidListComboBoxlineLA.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxlineLB.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxlinePoint.setMRMLScene(slicer.mrmlScene)
@@ -198,11 +207,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.computeLinePointPushButton.connect('clicked()', self.onComputeLinePointClicked)
         self.ui.lineLAComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
         self.ui.lineLBComboBox.connect('currentIndexChanged(int)', self.UpdateInterface)
-        # ---------------------------- Directory - Export Button -----------------------------
-        self.linePointTable = qt.QTableWidget()
+        # ---------------- Save Line-Point Distances -----------------
+        self.line_point_table = self.logic.createLinePointTable()
+        slicer.mrmlScene.AddNode(self.line_point_table)
+        self.line_point_table_view = slicer.qMRMLTableView()
+        self.line_point_table_view.setMRMLTableNode(self.line_point_table)
         self.directoryExportLinePoint = ctk.ctkDirectoryButton()
         self.filenameExportLinePoint = qt.QLineEdit('linePoint.csv')
         self.exportLinePointButton = qt.QPushButton("Export")
+        self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
         self.exportLinePointButton.enabled = True
         self.pathExportLinePointLayout = qt.QVBoxLayout()
         self.pathExportLinePointLayout.addWidget(self.directoryExportLinePoint)
@@ -211,8 +224,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.exportLinePointLayout.addLayout(self.pathExportLinePointLayout)
         self.exportLinePointLayout.addWidget(self.exportLinePointButton)
         self.tableAndExportLinePointLayout = qt.QVBoxLayout()
-        self.tableAndExportLinePointLayout.addWidget(self.linePointTable)
+        self.tableAndExportLinePointLayout.addWidget(self.line_point_table_view)
         self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
+
         # INITIALISATION:
         slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
         self.UpdateInterface()
@@ -247,18 +261,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.fidListComboBoxline2LB.setCurrentNode(None)
         self.ui.inputModelSelector.setCurrentNode(None)
         self.ui.inputLandmarksSelector.setCurrentNode(None)
-        self.computedDistanceList = []
-        self.computedAnglesList = []
-        self.computedLinePointList = []
-        self.linePointTable.clear()
-        self.linePointTable.setRowCount(0)
-        self.linePointTable.setColumnCount(0)
-        self.anglesTable.clear()
-        self.anglesTable.setRowCount(0)
-        self.anglesTable.setColumnCount(0)
-        self.distanceTable.clear()
-        self.distanceTable.setRowCount(0)
-        self.distanceTable.setColumnCount(0)
+        self.distance_table.RemoveAllColumns()
+        self.angles_table.RemoveAllColumns()
+        self.line_point_table.RemoveAllColumns()
 
     def enter(self):
         logging.debug("enter Q3DC")
@@ -554,28 +559,23 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
-                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
-                                                        'Landmarks" panel to connect the landmarks to a model.')
+                self.logic.warningMessage(
+                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                    'Landmarks" panel to connect the landmarks to a model.')
                 return
-        if self.computedDistanceList:
-            self.exportDistanceButton.disconnect('clicked()', self.onExportButton)
-            self.layout.removeWidget(self.distanceTable)
-            self.layout.removeItem(self.tableAndExportLayout)
-        self.computedDistanceList = self.logic.addOnDistanceList(self.computedDistanceList,
-                                                                 self.ui.landmarkComboBoxA.currentText,
-                                                                 self.ui.landmarkComboBoxB.currentText,
-                                                                 fidListA,fidListB)
-        self.distanceTable = self.logic.defineDistanceTable(self.distanceTable, self.computedDistanceList)
-        self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
-        self.exportDistanceButton.connect('clicked()', self.onExportButton)
 
-    def onExportButton(self):
-        self.logic.exportationFunction(
-            self.directoryExportDistance,
-            self.filenameExportDistance,
-            self.computedDistanceList,
-            'distance'
+        self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
+
+        key, args = self.logic.getDistanceArgs(
+            fidListA=self.ui.fidListComboBoxA.currentNode(),
+            fidListB=self.ui.fidListComboBoxB.currentNode(),
+            fidLabelA=self.ui.landmarkComboBoxA.currentText,
+            fidLabelB=self.ui.landmarkComboBoxB.currentText
         )
+        data = self.logic.computeDistance(*args)
+
+        self.logic.updateTable(self.distance_table, key, data)
+        self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
     def onComputeAnglesClicked(self):
         fidList = self.logic.selectedFidList
@@ -591,37 +591,30 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
-                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
-                                                        'Landmarks" panel to connect the landmarks to a model.')
+                self.logic.warningMessage(
+                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                    'Landmarks" panel to connect the landmarks to a model.')
                 return
-        if self.computedAnglesList:
-            self.exportAngleButton.disconnect('clicked()', self.onExportAngleButton)
-            self.layout.removeWidget(self.anglesTable)
-            self.layout.removeItem(self.tableAndExportAngleLayout)
-        self.computedAnglesList = self.logic.addOnAngleList(self.computedAnglesList,
-                                                            self.ui.line1LAComboBox.currentText,
-                                                            self.ui.line1LBComboBox.currentText,
-                                                            self.ui.fidListComboBoxline1LA.currentNode(),
-                                                            self.ui.fidListComboBoxline1LB.currentNode(),
-                                                            self.ui.line2LAComboBox.currentText,
-                                                            self.ui.line2LBComboBox.currentText,
-                                                            self.ui.fidListComboBoxline2LA.currentNode(),
-                                                            self.ui.fidListComboBoxline2LB.currentNode(),
-                                                            self.ui.pitchCheckBox.isChecked(),
-                                                            self.ui.yawCheckBox.isChecked(),
-                                                            self.ui.rollCheckBox.isChecked()
-                                                            )
-        self.anglesTable = self.logic.defineAnglesTable(self.anglesTable, self.computedAnglesList)
-        self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
-        self.exportAngleButton.connect('clicked()', self.onExportAngleButton)
 
-    def onExportAngleButton(self):
-        self.logic.exportationFunction(
-            self.directoryExportAngle,
-            self.filenameExportAngle,
-            self.computedAnglesList,
-            'angle'
+        self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
+
+        key, args = self.logic.getAnglesArgs(
+            fidlist1A=self.ui.fidListComboBoxline1LA.currentNode(),
+            fidlist1B=self.ui.fidListComboBoxline1LB.currentNode(),
+            fidlist2A=self.ui.fidListComboBoxline2LA.currentNode(),
+            fidlist2B=self.ui.fidListComboBoxline2LB.currentNode(),
+            fidLabel1A=self.ui.line1LAComboBox.currentText,
+            fidLabel1B=self.ui.line1LBComboBox.currentText,
+            fidLabel2A=self.ui.line2LAComboBox.currentText,
+            fidLabel2B=self.ui.line2LBComboBox.currentText,
+            yawState=self.ui.yawCheckBox.isChecked(),
+            pitchState=self.ui.pitchCheckBox.isChecked(),
+            rollState=self.ui.rollCheckBox.isChecked()
         )
+        data = self.logic.computeAngles(*args)
+
+        self.logic.updateTable(self.angles_table, key, data)
+        self.logic.updateTableView(self.angles_table, self.angles_table_view)
 
     def onComputeLinePointClicked(self):
         fidList = self.logic.selectedFidList
@@ -636,30 +629,47 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             landmarkDescription = slicer.mrmlScene.GetNodesByName(fidListIter).GetItemAsObject(0). \
                 GetAttribute("landmarkDescription")
             if not landmarkDescription:
-                self.logic.warningMessage(fidListIter + ' is not connected to a model. Please use "Add and Move '
-                                                        'Landmarks" panel to connect the landmarks to a model.')
+                self.logic.warningMessage(
+                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
+                    'Landmarks" panel to connect the landmarks to a model.')
                 return
-        if self.computedLinePointList:
-            self.exportLinePointButton.disconnect('clicked()', self.onExportLinePointButton)
-            self.layout.removeWidget(self.linePointTable)
-            self.layout.removeItem(self.tableAndExportLinePointLayout)
-        self.computedLinePointList = self.logic.addOnLinePointList(self.computedLinePointList,
-                                                           self.ui.lineLAComboBox.currentText,
-                                                           self.ui.lineLBComboBox.currentText,
-                                                                   fidListlineLA,
-                                                                   fidListlineLB,
-                                                           self.ui.linePointComboBox.currentText,
-                                                                   fidListPoint,
-                                                           )
-        self.linePointTable = self.logic.defineDistanceLinePointTable(self.linePointTable, self.computedLinePointList)
+
         self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
-        self.exportLinePointButton.connect('clicked()', self.onExportLinePointButton)
+
+        key, args = self.logic.getLinePointArgs(
+            fidListLineA=self.ui.fidListComboBoxlineLA.currentNode(),
+            fidListLineB=self.ui.fidListComboBoxlineLB.currentNode(),
+            fidListPoint=self.ui.fidListComboBoxlinePoint.currentNode(),
+            fidLabelLineA=self.ui.lineLAComboBox.currentText,
+            fidLabelLineB=self.ui.lineLBComboBox.currentText,
+            fidLabelPoint=self.ui.linePointComboBox.currentText
+        )
+        data = self.logic.computeLinePoint(*args)
+
+        self.logic.updateTable(self.line_point_table, key, data)
+        self.logic.updateTableView(self.line_point_table, self.line_point_table_view)
+
+    def onExportButton(self):
+        self.logic.exportationFunction(
+            self.directoryExportDistance,
+            self.filenameExportDistance,
+            self.distance_table,
+            'distance'
+        )
+
+    def onExportAngleButton(self):
+        self.logic.exportationFunction(
+            self.directoryExportAngle,
+            self.filenameExportAngle,
+            self.angles_table,
+            'angle'
+        )
 
     def onExportLinePointButton(self):
         self.logic.exportationFunction(
             self.directoryExportLinePoint,
             self.filenameExportLinePoint,
-            self.computedLinePointList,
+            self.line_point_table,
             'linePoint'
         )
 
@@ -710,44 +720,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.comboboxdict[self.interface.lineLAComboBox] = None
         self.comboboxdict[self.interface.lineLBComboBox] = None
         self.comboboxdict[self.interface.linePointComboBox] = None
-
-    class distanceValuesStorage(object):
-        def __init__(self):
-            self.startLandmarkID = None
-            self.endLandmarkID = None
-            self.startLandmarkName = None
-            self.endLandmarkName = None
-            self.RLComponent = None
-            self.APComponent = None
-            self.SIComponent = None
-            self.ThreeDComponent = None
-
-    class angleValuesStorage(object):
-        def __init__(self):
-            self.landmarkALine1ID = None
-            self.landmarkBLine1ID = None
-            self.landmarkALine2ID = None
-            self.landmarkBLine2ID = None
-            self.landmarkALine1Name = None
-            self.landmarkBLine1Name = None
-            self.landmarkALine2Name = None
-            self.landmarkBLine2Name = None
-            self.Pitch = None
-            self.Roll = None
-            self.Yaw = None
-
-    class distanceLinePointStorage(object):
-        def __init__(self):
-            self.landmarkALineID = None
-            self.landmarkBLineID = None
-            self.landmarkPointID = None
-            self.landmarkALineName = None
-            self.landmarkBLineName = None
-            self.landmarkPointName = None
-            self.RLComponent = None
-            self.APComponent = None
-            self.SIComponent = None
-            self.ThreeDComponent = None
 
     def UpdateThreeDView(self, landmarkLabel):
         # Update the 3D view on Slicer
@@ -1326,422 +1298,215 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             element.ThreeDComponent = None
         return element
 
-    def defineDistances(self, markupsNode1, landmark1Index, markupsNode2, landmark2Index):
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        diffRAxis = coord2[0] - coord1[0]
-        diffAAxis = coord2[1] - coord1[1]
-        diffSAxis = coord2[2] - coord1[2]
-        threeDDistance = math.sqrt(vtk.vtkMath().Distance2BetweenPoints(coord1, coord2))
-        return round(diffRAxis, self.numberOfDecimals),\
-               round(diffAAxis, self.numberOfDecimals),\
-               round(diffSAxis, self.numberOfDecimals),\
-               round(threeDDistance, self.numberOfDecimals)
+    def round(self, value):
+        return round(value, self.numberOfDecimals)
 
-    def addOnDistanceList(self, distanceList, fidLabel1, fidLabel2, fidlist1, fidlist2):
-        fidID1 = self.findIDFromLabel(fidlist1,fidLabel1)
-        fidID2 = self.findIDFromLabel(fidlist2,fidLabel2)
-        landmark1Index = fidlist1.GetNthControlPointIndexByID(fidID1)
-        landmark2Index = fidlist2.GetNthControlPointIndexByID(fidID2)
-        elementToAdd = self.distanceValuesStorage()
-        # if this distance has already been computed before -> replace values
-        for element in distanceList:
-            if element.startLandmarkID == fidID1 and element.endLandmarkID == fidID2:
-                element = self.removecomponentFromStorage('distance', element)
-                element.startLandmarkName = fidLabel1
-                element.endLandmarkName = fidLabel2
-                element.RLComponent, element.APComponent, element.SIComponent, element.ThreeDComponent = \
-                    self.defineDistances(fidlist1, landmark1Index, fidlist2, landmark2Index)
-                return distanceList
-        elementToAdd.startLandmarkID = fidID1
-        elementToAdd.endLandmarkID = fidID2
-        elementToAdd.startLandmarkName = fidLabel1
-        elementToAdd.endLandmarkName = fidLabel2
-        elementToAdd.RLComponent, elementToAdd.APComponent, elementToAdd.SIComponent, elementToAdd.ThreeDComponent = \
-            self.defineDistances(fidlist1, landmark1Index, fidlist2, landmark2Index)
-        distanceList.append(elementToAdd)
-        return distanceList
+    def computeDistance(self, point1, point2):
+        delta = point2 - point1
+        norm = np.linalg.norm(delta)
 
-    def defineDistanceTable(self, table, distanceList):
-        table.clear()
-        table.setRowCount(distanceList.__len__())
-        table.setColumnCount(5)
-        table.setMinimumHeight(50*distanceList.__len__())
-        table.setHorizontalHeaderLabels(['  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
-        i = 0
-        for element in distanceList:
-            startLandName = element.startLandmarkName
-            endLandName = element.endLandmarkName
-            label = qt.QLabel(' ' + startLandName + ' - ' + endLandName + ' ')
-            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-            table.setCellWidget(i, 0,label)
-            if element.RLComponent != None:
-                label = qt.QLabel(element.RLComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
+        result = [*delta, norm]
+        return [self.round(value) for value in result]
 
-            if element.APComponent != None:
-                label = qt.QLabel(element.APComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
+    def computeAngle(self, line1, line2, axis):
+        """
+        line1: np.array of the first line
+        line2: np.array of the second line
 
-            if element.SIComponent != None:
-                label = qt.QLabel(element.SIComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
+        axis: project the lines onto the plane defined by this axis.
+        ex. axis=3 (z) would project lines to the 0-1 (x-y) plane
+        """
 
-            if element.ThreeDComponent != None:
-                label = qt.QLabel(element.ThreeDComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
+        # create a mask which removes the coordinate on axis. this performs the projection
+        mask = [True] * 3
+        mask[axis] = False
+        line1 = line1[mask]
+        line2 = line2[mask]
 
-            i += 1
-        return table
+        norm1 = np.linalg.norm(line1)
+        norm2 = np.linalg.norm(line2)
 
-    def computePitch(self, markupsNode1, landmark1Index,
-                     markupsNode2, landmark2Index,
-                     markupsNode3, landmark3Index,
-                     markupsNode4, landmark4Index):
-        # Pitch is computed by projection on the plan (y,z)
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        coord3 = [-1, -1, -1]
-        coord4 = [-1, -1, -1]
-
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        markupsNode3.GetNthFiducialPosition(landmark3Index, coord3)
-        markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
-
-        vectLine1 = [0, coord2[1]-coord1[1], coord2[2]-coord1[2] ]
-        normVectLine1 = np.sqrt( vectLine1[1]*vectLine1[1] + vectLine1[2]*vectLine1[2] )
-        vectLine2 = [0, coord4[1]-coord3[1], coord4[2]-coord3[2] ]
-        normVectLine2 = np.sqrt( vectLine2[1]*vectLine2[1] + vectLine2[2]*vectLine2[2] )
-        pitchNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
-                               self.numberOfDecimals)
-
-        if normVectLine1 != 0 and normVectLine2 != 0:
-            normalizedVectLine1 = [0, (1/normVectLine1)*vectLine1[1], (1/normVectLine1)*vectLine1[2]]
-            normalizedVectLine2 = [0, (1/normVectLine2)*vectLine2[1], (1/normVectLine2)*vectLine2[2]]
-            det2D = normalizedVectLine1[1]*normalizedVectLine2[2] - normalizedVectLine1[2]*normalizedVectLine2[1]
-            return math.copysign(pitchNotSigned, det2D)
-        else:
+        if norm1 == 0 or norm2 == 0:
             slicer.util.errorDisplay("ERROR, norm of your vector is 0! DEFINE A VECTOR!")
             return None
 
-    def computeRoll(self, markupsNode1, landmark1Index,
-                    markupsNode2, landmark2Index,
-                    markupsNode3, landmark3Index,
-                    markupsNode4, landmark4Index):
-        # Roll is computed by projection on the plan (x,z)
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        coord3 = [-1, -1, -1]
-        coord4 = [-1, -1, -1]
+        try:
+            # find the _signed_ angle using the determinant of a 2x2 matrix
+            # https://en.wikipedia.org/wiki/Determinant#2_%C3%97_2_matrices
+            # |A| = |u||v|sin(t) where u, v are columns of A and t is the angle between them
 
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        markupsNode3.GetNthFiducialPosition(landmark3Index, coord3)
-        markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
+            matrix = np.array([line1, line2])
+            det = np.linalg.det(matrix)
+            radians = np.arcsin(det / norm1 / norm2)
+            return np.degrees(radians)
+        except np.linalg.LinAlgError:
+            slicer.util.errorDisplay('ERROR: failed to project vectors. Only able to compute angles in one plane.')
 
-        vectLine1 = [coord2[0]-coord1[0], 0, coord2[2]-coord1[2] ]
-        normVectLine1 = np.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[2]*vectLine1[2] )
-        vectLine2 = [coord4[0]-coord3[0], 0, coord4[2]-coord3[2] ]
-        normVectLine2 = np.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[2]*vectLine2[2] )
-        rollNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
-                              self.numberOfDecimals)
+    def computeAngles(self, line1, line2, states):
+        axes = [
+            2,  # axis=S; axial; for yaw
+            0,  # axis=R; saggital; for pitch
+            1,  # axis=A; coronal; for roll
+        ]
 
-        if normVectLine1 != 0 and normVectLine2 != 0:
-            normalizedVectLine1 = [(1/normVectLine1)*vectLine1[0], 0, (1/normVectLine1)*vectLine1[2]]
-            normalizedVectLine2 = [(1/normVectLine2)*vectLine2[0], 0, (1/normVectLine2)*vectLine2[2]]
-            det2D = normalizedVectLine1[0]*normalizedVectLine2[2] - normalizedVectLine1[2]*normalizedVectLine2[0]
-            return math.copysign(rollNotSigned, det2D)
-        else:
-            logging.error(" ERROR, norm of your vector is 0! DEFINE A VECTOR!")
-            return None
+        result = []
+        for axis, state in zip(axes, states):
+            if state:
+                value = self.computeAngle(line1, line2, axis)
+                value = self.round(value)
 
-    def computeYaw(self, markupsNode1, landmark1Index,
-                   markupsNode2, landmark2Index,
-                   markupsNode3, landmark3Index,
-                   markupsNode4, landmark4Index):
-        # Yaw is computed by projection on the plan (x,y)
-        coord1 = [-1, -1, -1]
-        coord2 = [-1, -1, -1]
-        coord3 = [-1, -1, -1]
-        coord4 = [-1, -1, -1]
+                # we want to show the angle and the complementary angle, signed
+                sign = np.sign(value)
+                complement = sign * (180 - abs(value))
+                formatted = f'{value} / {complement}'
 
-        markupsNode1.GetNthFiducialPosition(landmark1Index, coord1)
-        markupsNode2.GetNthFiducialPosition(landmark2Index, coord2)
-        markupsNode3.GetNthFiducialPosition(landmark3Index, coord3)
-        markupsNode4.GetNthFiducialPosition(landmark4Index, coord4)
+                result.append(formatted)
+            else:
+                result.append(None)
 
-        vectLine1 = [coord2[0]-coord1[0], coord2[1]-coord1[1], 0 ]
-        normVectLine1 = np.sqrt( vectLine1[0]*vectLine1[0] + vectLine1[1]*vectLine1[1] )
-        vectLine2 = [coord4[0]-coord3[0],coord4[1]-coord3[1], 0]
-        normVectLine2 = np.sqrt( vectLine2[0]*vectLine2[0] + vectLine2[1]*vectLine2[1] )
-        yawNotSigned = round(vtk.vtkMath().DegreesFromRadians(vtk.vtkMath().AngleBetweenVectors(vectLine1, vectLine2)),
-                             self.numberOfDecimals)
+        return result
 
-        if normVectLine1 != 0 and normVectLine2 != 0:
-            normalizedVectLine1 = [(1/normVectLine1)*vectLine1[0], (1/normVectLine1)*vectLine1[1], 0]
-            normalizedVectLine2 = [(1/normVectLine2)*vectLine2[0], (1/normVectLine2)*vectLine2[1], 0]
-            det2D = normalizedVectLine1[0]*normalizedVectLine2[1] - normalizedVectLine1[1]*normalizedVectLine2[0]
-            return math.copysign(yawNotSigned, det2D)
-        else:
-            slicer.util.errorDisplay("ERROR, norm of your vector is 0! DEFINE A VECTOR!")
-            return None
+    def computeLinePoint(self, lineA, lineB, point):
+        closestPoint = np.zeros(3)
+        t = vtk.reference(0)
+        squared = vtk.vtkLine.DistanceToLine(point, lineA, lineB, t, closestPoint)
+        norm = np.sqrt(squared)
 
-    def addOnAngleList(self, angleList,
-                       fidLabel1A, fidLabel1B, fidlist1A, fidlist1B,
-                       fidLabel2A, fidLabel2B, fidlist2A, fidlist2B,
-                       PitchState, YawState, RollState):
-        fidID1A = self.findIDFromLabel(fidlist1A,fidLabel1A)
-        fidID1B = self.findIDFromLabel(fidlist1B,fidLabel1B)
-        fidID2A = self.findIDFromLabel(fidlist2A,fidLabel2A)
-        fidID2B = self.findIDFromLabel(fidlist2B,fidLabel2B)
+        delta = point - closestPoint
+        norm = np.linalg.norm(delta)
+
+        result = [*delta, norm]
+        return [self.round(value) for value in result]
+
+    def getDistanceArgs(self,
+                        fidListA, fidListB,
+                        fidLabelA, fidLabelB):
+        """ returns: key, (point1, point2) """
+        fidIDA = self.findIDFromLabel(fidListA, fidLabelA)
+        fidIDB = self.findIDFromLabel(fidListB, fidLabelB)
+
+        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
+        fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
+
+        point1 = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
+        point2 = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
+
+        args = point1, point2
+
+        key = f'{fidLabelA} - {fidLabelB}'
+
+        return key, args
+
+    def getAnglesArgs(self,
+                      fidlist1A, fidlist1B, fidlist2A, fidlist2B,
+                      fidLabel1A, fidLabel1B, fidLabel2A, fidLabel2B,
+                      yawState, pitchState, rollState
+                      ):
+        """ returns: key, (line1, line2, states) """
+        fidID1A = self.findIDFromLabel(fidlist1A, fidLabel1A)
+        fidID1B = self.findIDFromLabel(fidlist1B, fidLabel1B)
+        fidID2A = self.findIDFromLabel(fidlist2A, fidLabel2A)
+        fidID2B = self.findIDFromLabel(fidlist2B, fidLabel2B)
+
         landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
         landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
         landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
         landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
-        # if angles has already been computed before -> replace values
-        elementToAdd = self.angleValuesStorage()
-        for element in angleList:
-            if element.landmarkALine1ID == fidID1A and\
-                            element.landmarkBLine1ID == fidID1B and\
-                            element.landmarkALine2ID == fidID2A and\
-                            element.landmarkBLine2ID == fidID2B:
-                element = self.removecomponentFromStorage('angles', element)
-                if PitchState:
-                    element.Pitch = self.computePitch(fidlist1A, landmark1Index,
-                                                      fidlist1B, landmark2Index,
-                                                      fidlist2A, landmark3Index,
-                                                      fidlist2B, landmark4Index)
-                if RollState:
-                    element.Roll = self.computeRoll(fidlist1A, landmark1Index,
-                                                    fidlist1B, landmark2Index,
-                                                    fidlist2A, landmark3Index,
-                                                    fidlist2B, landmark4Index)
-                if YawState:
-                    element.Yaw = self.computeYaw(fidlist1A, landmark1Index,
-                                                  fidlist1B, landmark2Index,
-                                                  fidlist2A, landmark3Index,
-                                                  fidlist2B, landmark4Index)
-                element.landmarkALine1Name = fidLabel1A
-                element.landmarkBLine1Name = fidLabel1B
-                element.landmarkALine2Name = fidLabel2A
-                element.landmarkBLine2Name = fidLabel2B
-                return angleList
-        # create a new element depending on what the user wants
-        elementToAdd.landmarkALine1ID = fidID1A
-        elementToAdd.landmarkBLine1ID = fidID1B
-        elementToAdd.landmarkALine2ID = fidID2A
-        elementToAdd.landmarkBLine2ID = fidID2B
-        elementToAdd.landmarkALine1Name = fidLabel1A
-        elementToAdd.landmarkBLine1Name = fidLabel1B
-        elementToAdd.landmarkALine2Name = fidLabel2A
-        elementToAdd.landmarkBLine2Name = fidLabel2B
-        if PitchState:
-            elementToAdd.Pitch = self.computePitch(fidlist1A, landmark1Index,
-                                                   fidlist1B, landmark2Index,
-                                                   fidlist2A, landmark3Index,
-                                                   fidlist2B, landmark4Index)
-        if RollState:
-            elementToAdd.Roll = self.computeRoll(fidlist1A, landmark1Index,
-                                                 fidlist1B, landmark2Index,
-                                                 fidlist2A, landmark3Index,
-                                                 fidlist2B, landmark4Index)
-        if YawState:
-            elementToAdd.Yaw = self.computeYaw(fidlist1A, landmark1Index,
-                                               fidlist1B, landmark2Index,
-                                               fidlist2A, landmark3Index,
-                                               fidlist2B, landmark4Index)
-        angleList.append(elementToAdd)
-        return angleList
 
-    def defineAnglesTable(self, table, angleList):
+        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
+        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
+        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
+        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
 
-        table.clear()
-        table.setRowCount(angleList.__len__())
-        table.setColumnCount(4)
-        table.setMinimumHeight(50*angleList.__len__())
-        table.setHorizontalHeaderLabels([' ', ' YAW ', ' PITCH ', ' ROLL '])
-        i = 0
+        line1 = coord2 - coord1
+        line2 = coord4 - coord3
 
-        for element in angleList:
-            landmarkALine1Name = element.landmarkALine1Name
-            landmarkBLine1Name = element.landmarkBLine1Name
-            landmarkALine2Name = element.landmarkALine2Name
-            landmarkBLine2Name = element.landmarkBLine2Name
+        states = (
+            yawState,
+            pitchState,
+            rollState,
+        )
 
-            label = qt.QLabel(' ' + landmarkALine1Name + '-' + landmarkBLine1Name + ' / ' + landmarkALine2Name + '-' + landmarkBLine2Name)
-            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-            table.setCellWidget(i, 0, label)
-            if element.Yaw != None:
-                sign = np.sign(element.Yaw)
-                label = qt.QLabel(str(element.Yaw)+' / '+str(sign*(180-abs(element.Yaw))))
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
+        args = line1, line2, states
 
-            if element.Pitch != None:
-                sign = np.sign(element.Pitch)
-                label = qt.QLabel(str(element.Pitch) + ' / ' + str(sign*(180 - abs(element.Pitch))))
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
+        key = f'{fidLabel1A}-{fidLabel1B} / {fidLabel2A}-{fidLabel2B}'
 
-            if element.Roll != None:
-                sign = np.sign(element.Roll)
-                label = qt.QLabel(str(element.Roll) + ' / ' + str(sign * (180 - abs(element.Roll))))
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
+        return key, args
 
-            i += 1
+    def getLinePointArgs(self,
+                         fidListLineA, fidListLineB, fidListPoint,
+                         fidLabelLineA, fidLabelLineB, fidLabelPoint):
+        fidIDLineA = self.findIDFromLabel(fidListLineA, fidLabelLineA)
+        fidIDLineB = self.findIDFromLabel(fidListLineB, fidLabelLineB)
+        fidIDPoint = self.findIDFromLabel(fidListPoint, fidLabelPoint)
+
+        landmarkLineAIndex = fidListLineA.GetNthControlPointIndexByID(fidIDLineA)
+        landmarkLineBIndex = fidListLineB.GetNthControlPointIndexByID(fidIDLineB)
+        landmarkPointIndex = fidListPoint.GetNthControlPointIndexByID(fidIDPoint)
+
+        lineA = np.array(fidListLineA.GetMarkupPointVector(landmarkLineAIndex, 0))
+        lineB = np.array(fidListLineB.GetMarkupPointVector(landmarkLineBIndex, 0))
+        point = np.array(fidListPoint.GetMarkupPointVector(landmarkPointIndex, 0))
+
+        args = lineA, lineB, point
+
+        key = f'{fidLabelLineA}-{fidLabelLineB} / {fidLabelPoint}'
+
+        return key, args
+
+    @classmethod
+    def createTable(cls, col_names):
+        table = slicer.vtkMRMLTableNode()
+        table.SetSaveWithScene(False)
+        table.SetLocked(True)
+
+        col_names = ['  '] + [f' {name} ' for name in col_names]
+
+        with NodeModify(table):
+            table.RemoveAllColumns()
+            for col_name in col_names:
+                table.AddColumn().SetName(col_name)
+                table.SetUseColumnNameAsColumnHeader(True)
+
         return table
 
-    def defineDistancesLinePoint(self, markupsNodeLine1, landmarkLine1Index,
-                                 markupsNodeLine2, landmarkLine2Index,
-                                 markupsNodepoint, landmarkpointIndex):
-        line = vtk.vtkLine()
-        coordLine1 = [-1, -1, -1]
-        coordLine2 = [-1, -1, -1]
-        coordPoint = [-1, -1, -1]
-        markupsNodeLine1.GetNthFiducialPosition(landmarkLine1Index, coordLine1)
-        markupsNodeLine2.GetNthFiducialPosition(landmarkLine2Index, coordLine2)
-        markupsNodepoint.GetNthFiducialPosition(landmarkpointIndex, coordPoint)
-        parametric = vtk.mutable(0)
-        projectCoord = [0, 0, 0]
-        distance = line.DistanceToLine(coordPoint, coordLine1, coordLine2, parametric, projectCoord)
-        diffRAxis = coordPoint[0] - projectCoord[0]
-        diffAAxis = coordPoint[1] - projectCoord[1]
-        diffSAxis = coordPoint[2] - projectCoord[2]
-        return round(diffRAxis, self.numberOfDecimals), \
-               round(diffAAxis, self.numberOfDecimals), \
-               round(diffSAxis, self.numberOfDecimals), \
-               round(math.sqrt(distance), self.numberOfDecimals)
+    @classmethod
+    def createDistanceTable(cls):
+        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
+        return cls.createTable(names)
 
-    def addOnLinePointList(self, linePointList,
-                           fidLabelLineA, fidLabelLineB,
-                           fidListLineLA, fidListLineLB,
-                           fidLabelPoint, fidListPoint):
-        lineLAID = self.findIDFromLabel(fidListLineLA, fidLabelLineA)
-        lineLAIndex = fidListLineLA.GetNthControlPointIndexByID(lineLAID)
-        lineLBID = self.findIDFromLabel(fidListLineLB, fidLabelLineB)
-        lineLBIndex = fidListLineLB.GetNthControlPointIndexByID(lineLBID)
-        PointID = self.findIDFromLabel(fidListPoint, fidLabelPoint)
-        PointIndex = fidListPoint.GetNthControlPointIndexByID(PointID)
-        elementToAdd = self.distanceLinePointStorage()
-        # if this distance has already been computed before -> replace values
-        for element in linePointList:
-            if element.landmarkALineID == lineLAID and \
-                            element.landmarkBLineID == lineLBID and\
-                            element.landmarkPointID == PointID:
-                element = self.removecomponentFromStorage('distance', element)
-                element.landmarkALineID = lineLAID
-                element.landmarkBLineID = lineLBID
-                element.landmarkPointID = PointID
-                element.landmarkALineName = fidLabelLineA
-                element.landmarkBLineName = fidLabelLineB
-                element.landmarkPointName = fidLabelPoint
-                element.RLComponent, element.APComponent, element.SIComponent, element.ThreeDComponent = \
-                    self.defineDistancesLinePoint(fidListLineLA, lineLAIndex,
-                                                  fidListLineLB, lineLBIndex,
-                                                  fidListPoint, PointIndex)
-                return linePointList
-        elementToAdd.landmarkALineID = lineLAID
-        elementToAdd.landmarkBLineID = lineLBID
-        elementToAdd.landmarkPointID = PointID
-        elementToAdd.landmarkALineName = fidLabelLineA
-        elementToAdd.landmarkBLineName = fidLabelLineB
-        elementToAdd.landmarkPointName = fidLabelPoint
-        elementToAdd.RLComponent, elementToAdd.APComponent, elementToAdd.SIComponent, elementToAdd.ThreeDComponent = \
-            self.defineDistancesLinePoint(fidListLineLA, lineLAIndex,
-                                          fidListLineLB, lineLBIndex,
-                                          fidListPoint, PointIndex)
-        linePointList.append(elementToAdd)
-        return linePointList
+    @classmethod
+    def createAnglesTable(cls):
+        names = 'YAW', 'PITCH', 'ROLL'
+        return cls.createTable(names)
 
-    def defineDistanceLinePointTable(self, table, distanceList):
-        table.clear()
-        table.setRowCount(distanceList.__len__())
-        table.setColumnCount(5)
-        table.setMinimumHeight(50*distanceList.__len__())
-        table.setHorizontalHeaderLabels(['  ', ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
-        i = 0
-        for element in distanceList:
-            landmarkALineName = element.landmarkALineName
-            landmarkBLineName = element.landmarkBLineName
-            landmarkPoint = element.landmarkPointName
+    @classmethod
+    def createLinePointTable(cls):
+        names = 'R-L Component', 'A-P Component', 'S-I Component', '3D Distance'
+        return cls.createTable(names)
 
-            label = qt.QLabel(' ' + str(landmarkALineName) + ' - ' + str(landmarkBLineName) + ' / ' + str(landmarkPoint) + ' ')
-            label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-            table.setCellWidget(i, 0,label)
-            if element.RLComponent != None:
-                label = qt.QLabel(element.RLComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
+    def updateTable(self, table, key, data):
+        empty = ' - '  # text to use if data is not present
+
+        with NodeModify(table):
+            for row in range(table.GetNumberOfRows()):
+                if table.GetCellText(row, 0) == key:
+                    break
             else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 1, label)
+                row = table.AddEmptyRow()
+                table.SetCellText(row, 0, key)
 
-            if element.APComponent != None:
-                label = qt.QLabel(element.APComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 2, label)
+            for col, value in enumerate(data, start=1):
+                if value is None:
+                    text = empty
+                else:
+                    text = str(value)
+                table.SetCellText(row, col, text or empty)
 
-            if element.SIComponent != None:
-                label = qt.QLabel(element.SIComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 3, label)
-
-            if element.ThreeDComponent != None:
-                label = qt.QLabel(element.ThreeDComponent)
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-            else:
-                label = qt.QLabel(' - ')
-                label.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
-                table.setCellWidget(i, 4, label)
-
-            i += 1
-        return table
+    @classmethod
+    def updateTableView(cls, table, table_view):
+        table_view.resizeColumnsToContents()
+        table_view.setMinimumHeight(50 * table.GetNumberOfRows())
 
     def drawLineBetween2Landmark(self, landmark1label, landmark2label, fidList1, fidList2):
         if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
@@ -1782,7 +1547,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         return renderer, actor
 
-    def exportationFunction(self, directoryExport, filenameExport, listToExport, typeCalculation):
+    def exportationFunction(self, directoryExport, filenameExport, tableToExport, typeCalculation):
         messageBox = ctk.ctkMessageBox()
         messageBox.setWindowTitle(' /!\ WARNING /!\ ')
         messageBox.setIcon(messageBox.Warning)
@@ -1795,95 +1560,9 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             choice = messageBox.exec_()
             if choice == messageBox.No:
                 return
-        self.exportAsCSV(fileName, listToExport, typeCalculation)
+
+        slicer.util.saveNode(tableToExport, fileName)
         slicer.util.delayDisplay(f'Saved to {fileName}')
-
-
-    def exportAsCSV(self,filename, listToExport, typeCalculation):
-        #  Export fields on different csv files
-        file = open(filename, 'w')
-        cw = csv.writer(file, delimiter=',')
-        logging.debug('exportAsCSV typeCalculation: %s', typeCalculation)
-        if typeCalculation == 'distance':
-            cw.writerow([' Landmark A - Landmark B',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
-            self.writeDistance(cw, listToExport)
-        elif typeCalculation == 'linePoint':
-            cw.writerow([' Landmark A - Landmark B / Landmark X',  ' R-L Component', ' A-P Component', ' S-I Component', ' 3D Distance '])
-            self.writeLinePoint(cw, listToExport)
-        else:
-            cw.writerow([' Line 1 (Landmark A - Landmark B) |  Line 2 (Landmark A - Landmark B)',  ' YAW ', ' PITCH ', ' ROLL '])
-            self.writeAngle(cw, listToExport)
-        file.close()
-        if self.decimalPoint != '.':
-            self.replaceCharac(filename, ',', ';') # change the Delimiter and put a semicolon instead of a comma
-            self.replaceCharac(filename, '.', self.decimalPoint) # change the decimal separator '.' for a comma
-
-    def writeDistance(self, fileWriter, listToExport):
-        for element in listToExport:
-            startLandName = element.startLandmarkName
-            endLandName = element.endLandmarkName
-            label = startLandName + ' - ' + endLandName
-            fileWriter.writerow([label,
-                                 element.RLComponent,
-                                 element.APComponent,
-                                 element.SIComponent,
-                                 element.ThreeDComponent])
-
-    def writeLinePoint(self, fileWriter, listToExport):
-        for element in listToExport:
-            landmarkALineName = element.landmarkALineName
-            landmarkBLineName = element.landmarkBLineName
-            landmarkPoint = element.landmarkPointName
-            label = landmarkALineName + ' - ' + landmarkBLineName + ' / ' + landmarkPoint
-            fileWriter.writerow([label,
-                                 element.RLComponent,
-                                 element.APComponent,
-                                 element.SIComponent,
-                                 element.ThreeDComponent])
-
-    def writeAngle(self, fileWriter, listToExport):
-        for element in listToExport:
-            logging.info('element %s', element)
-            landmarkALine1Name = element.landmarkALine1Name
-            landmarkBLine1Name = element.landmarkBLine1Name
-            landmarkALine2Name = element.landmarkALine2Name
-            landmarkBLine2Name = element.landmarkBLine2Name
-
-            label = landmarkALine1Name + '-' + landmarkBLine1Name + ' | ' + landmarkALine2Name + '-' + landmarkBLine2Name
-
-            if element.Yaw:
-                signY = np.sign(element.Yaw)
-                YawLabel = str(element.Yaw) +' | '+str(signY*(180-abs(element.Yaw)))
-            else:
-                YawLabel = '-'
-
-            if element.Pitch:
-                signP = np.sign(element.Pitch)
-                PitchLabel = str(element.Pitch)+' | '+str(signP*(180-abs(element.Pitch)))
-            else:
-                PitchLabel = '-'
-
-            if element.Roll:
-                signR = np.sign(element.Roll)
-                RollLabel = str(element.Roll)+' | '+str(signR*(180-abs(element.Roll)))
-            else:
-                RollLabel = '-'
-
-            fileWriter.writerow([label,
-                                 YawLabel,
-                                 PitchLabel,
-                                 RollLabel])
-
-    def replaceCharac(self, filename, oldCharac, newCharac):
-        #  Function to replace a charactere (oldCharac) in a file (filename) by a new one (newCharac)
-        file = open(filename,'r')
-        lines = file.readlines()
-        with open(filename, 'r') as file:
-            lines = [line.replace(oldCharac, newCharac) for line in file.readlines()]
-        file.close()
-        file = open(filename, 'w')
-        file.writelines(lines)
-        file.close()
 
     def GetConnectedVertices(self, connectedVerticesIDList, polyData, pointID):
         # Return IDs of all the vertices that compose the first neighbor.
@@ -1953,7 +1632,14 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
         markupsNode1.AddFiducial(-5.331, 51.955, 4.831)
         markupsNode1.AddFiducial(-8.018, 41.429, -52.621)
-        diffXAxis, diffYAxis, diffZAxis, threeDDistance = logic.defineDistances(markupsNode1, 0, markupsNode1, 1)
+
+        key, args = logic.getDistanceArgs(
+            markupsNode1, markupsNode1,
+            markupsNode1.GetNthControlPointLabel(0),
+            markupsNode1.GetNthControlPointLabel(1)
+        )
+
+        diffXAxis, diffYAxis, diffZAxis, threeDDistance = logic.computeDistance(*args)
         if diffXAxis != -2.687 or diffYAxis != -10.526 or diffZAxis != -57.452 or threeDDistance != 58.47:
             return False
         return True
@@ -1967,18 +1653,40 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         markupsNode1.AddFiducial(62.21,-45.31,7.41)
         markupsNode1.AddFiducial(41.97,-61.24,11.30)
 
-        yaw = logic.computeYaw(markupsNode1, 0, markupsNode1, 1, markupsNode1, 2, markupsNode1, 3)
-        roll = logic.computeRoll(markupsNode1, 0, markupsNode1, 1, markupsNode1, 2, markupsNode1, 3)
-        if yaw != 4.964 or roll != 3.565:
-            return False
+        key, args = logic.getAnglesArgs(
+            markupsNode1,markupsNode1,markupsNode1,markupsNode1,
+            markupsNode1.GetNthControlPointLabel(0),
+            markupsNode1.GetNthControlPointLabel(1),
+            markupsNode1.GetNthControlPointLabel(2),
+            markupsNode1.GetNthControlPointLabel(3),
+            True, False, True
+        )
+
+        yaw, pitch, roll = logic.computeAngles(*args)
+
+        assert yaw == '4.964 / 175.036'
+        assert pitch is None
+        assert roll == '3.565 / 176.435'
 
         markupsNode1.AddFiducial(53.80,-53.57,9.47)
         markupsNode1.AddFiducial(53.98,-52.13,9.13)
         markupsNode1.AddFiducial(52.09,-53.27,9.36)
         markupsNode1.AddFiducial(51.77,-50.10,9.80)
-        pitch = logic.computePitch(markupsNode1, 4, markupsNode1, 5, markupsNode1, 6, markupsNode1, 7)
-        if pitch != 21.187:
-            return False
+
+        key, args = logic.getAnglesArgs(
+            markupsNode1,markupsNode1,markupsNode1,markupsNode1,
+            markupsNode1.GetNthControlPointLabel(4),
+            markupsNode1.GetNthControlPointLabel(5),
+            markupsNode1.GetNthControlPointLabel(6),
+            markupsNode1.GetNthControlPointLabel(7),
+            False, True, False
+        )
+
+        yaw, pitch, roll = logic.computeAngles(*args)
+
+        assert yaw is None
+        assert pitch == '21.187 / 158.813'
+        assert roll is None
 
         return True
 
