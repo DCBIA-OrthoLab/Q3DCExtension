@@ -492,6 +492,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         # If no input model selected, the addition of fiducial shouldn't be possible.
         selectionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLSelectionNodeSingleton")
         selectionNode.SetReferenceActivePlaceNodeClassName("vtkMRMLMarkupsFiducialNode")
+        self.logic.enable_legend_labels = self.ui.enableLegendLabels.isChecked()
         if self.logic.selectedModel:
             if self.logic.selectedFidList:
                 selectionNode.SetActivePlaceNodeID(self.logic.selectedFidList.GetID())
@@ -689,6 +690,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.selectedModel = None
         self.selectedFidList = None
         self.current_suggested_landmarks = None
+        self.enable_legend_labels = True
         self.numberOfDecimals = 3
         system = qt.QLocale().system()
         self.decimalPoint = chr(system.decimalPoint())
@@ -1080,15 +1082,16 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
     def onPointAddedEvent(self, obj, event):
         logging.debug("markup adding")
 
-        try:
-            # Find the index of the last-placed landmark and get the landmark label at that position.
-            # Ex. if the last-placed landmark was at the 3rd position, we want to use the 3rd landmark label.
-            n = obj.GetNumberOfMarkups()
-            label, description = self.current_suggested_landmarks[n - 1]
-            obj.SetNthMarkupLabel(n - 1, label)
-        except IndexError:
-            # If there are more landmarks than suggested labels then fetching the label would fail.
-            logging.error('Not changing label; wrong number of markups.')
+        if self.enable_legend_labels:
+            try:
+                # Find the index of the last-placed landmark and get the landmark label at that position.
+                # Ex. if the last-placed landmark was at the 3rd position, we want to use the 3rd landmark label.
+                n = obj.GetNumberOfMarkups()
+                label, description = self.current_suggested_landmarks[n - 1]
+                obj.SetNthMarkupLabel(n - 1, label)
+            except IndexError:
+                # If there are more landmarks than suggested labels then fetching the label would fail.
+                logging.error('Not changing label; wrong number of markups.')
 
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         numOfMarkups = obj.GetNumberOfMarkups()

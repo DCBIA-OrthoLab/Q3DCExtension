@@ -147,11 +147,25 @@
        </layout>
       </item>
       <item>
-       <widget class="QPushButton" name="addLandmarkButton">
-        <property name="text">
-         <string>Add</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="addLandmarksLayout">
+        <item>
+         <widget class="QPushButton" name="addLandmarkButton">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="enableLegendLabels">
+           <property name="text">
+            <string>Use Legend Labels</string>
+           </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
