@@ -692,6 +692,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.current_suggested_landmarks = None
         self.enable_legend_labels = True
         self.numberOfDecimals = 3
+        self.tolerance = 1e-5
         system = qt.QLocale().system()
         self.decimalPoint = chr(system.decimalPoint())
         self.comboboxdict = dict()
@@ -1379,13 +1380,22 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         return result
 
     def computeLinePoint(self, lineA, lineB, point):
-        closestPoint = np.zeros(3)
-        t = vtk.reference(0)
-        squared = vtk.vtkLine.DistanceToLine(point, lineA, lineB, t, closestPoint)
-        norm = np.sqrt(squared)
+        if np.allclose(lineA, lineB, atol=self.tolerance):
+            # if lineA and lineB overlap, then just compute the distance to that overlapping point
+            delta = point - lineA
+            norm = np.linalg.norm(delta)
 
-        delta = point - closestPoint
-        norm = np.linalg.norm(delta)
+        else:
+            # make vectors relative to lineB
+            line = lineA - lineB
+            offset = point - lineB
+
+            # project relative point onto line
+            proj = np.dot(line, offset) / np.dot(line, line) * line
+
+            # get distance from relative point to projection
+            delta = offset - proj
+            norm = np.linalg.norm(delta)
 
         result = [*delta, norm]
         return [self.round(value) for value in result]
@@ -1628,18 +1638,26 @@ class Q3DCTest(ScriptedLoadableModuleTest):
             """
         self.setUp()
         self.delayDisplay(' Starting tests ', 200)
-        self.delayDisplay(' Test 3Dcomponents ')
-        self.assertTrue(self.test_CalculateDisplacement1())
-        self.delayDisplay(' Test Angles Components')
-        self.assertTrue(self.test_CalculateDisplacement2())
 
-        self.test_CalculateDisplacement1()
-        self.test_CalculateDisplacement2()
+        try:
+            self.delayDisplay(' Test Calculate Distance')
+            self.test_CalculateDistance()
 
-        self.test_SimulateTutorial()
-        self.delayDisplay(' Tests Passed! ')
+            self.delayDisplay(' Test Calculate Angles')
+            self.test_CalculateAngles()
 
-    def test_CalculateDisplacement1(self):
+            self.delayDisplay(' Test Calculate Line Point')
+            self.test_CalculateLinePoint()
+
+            self.delayDisplay(' Test Tutorial Simulation')
+            self.test_SimulateTutorial()
+        except AssertionError:
+            self.delayDisplay(' Test Failed')
+            return
+
+        self.delayDisplay(' Tests Passed')
+
+    def test_CalculateDistance(self):
         logic = Q3DCLogic(slicer.modules.Q3DCWidget)
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
         markupsNode1.AddFiducial(-5.331, 51.955, 4.831)
@@ -1651,22 +1669,20 @@ class Q3DCTest(ScriptedLoadableModuleTest):
             markupsNode1.GetNthControlPointLabel(1)
         )
 
-        diffXAxis, diffYAxis, diffZAxis, threeDDistance = logic.computeDistance(*args)
-        if diffXAxis != -2.687 or diffYAxis != -10.526 or diffZAxis != -57.452 or threeDDistance != 58.47:
-            return False
-        return True
+        dx, dy, dz, dist = logic.computeDistance(*args)
+        assert (dx, dy, dz, dist) == (-2.687, -10.526, -57.452, 58.47)
 
-    def test_CalculateDisplacement2(self):
+    def test_CalculateAngles(self):
         logic = Q3DCLogic(slicer.modules.Q3DCWidget)
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
 
-        markupsNode1.AddFiducial(63.90,-46.98, 6.98)
-        markupsNode1.AddFiducial(43.79,-60.16,12.16)
-        markupsNode1.AddFiducial(62.21,-45.31,7.41)
-        markupsNode1.AddFiducial(41.97,-61.24,11.30)
+        markupsNode1.AddFiducial(63.90, -46.98, 6.98)
+        markupsNode1.AddFiducial(43.79, -60.16, 12.16)
+        markupsNode1.AddFiducial(62.21, -45.31, 7.41)
+        markupsNode1.AddFiducial(41.97, -61.24, 11.30)
 
         key, args = logic.getAnglesArgs(
-            markupsNode1,markupsNode1,markupsNode1,markupsNode1,
+            markupsNode1, markupsNode1, markupsNode1, markupsNode1,
             markupsNode1.GetNthControlPointLabel(0),
             markupsNode1.GetNthControlPointLabel(1),
             markupsNode1.GetNthControlPointLabel(2),
@@ -1700,10 +1716,81 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         assert pitch == '21.187 / 158.813'
         assert roll is None
 
-        return True
+    def test_CalculateLinePoint(self):
+        logic = Q3DCLogic(slicer.modules.Q3DCWidget)
+
+        markups = slicer.vtkMRMLMarkupsFiducialNode()
+
+        # simple geometric case
+        markups.RemoveAllMarkups()
+        markups.AddFiducial(0, 1, -1)
+        markups.AddFiducial(0, -1, 1)
+        markups.AddFiducial(-1, 0, 0)
+
+        key, args = logic.getLinePointArgs(
+            markups, markups, markups,
+            markups.GetNthControlPointLabel(0),
+            markups.GetNthControlPointLabel(1),
+            markups.GetNthControlPointLabel(2),
+        )
+
+        dx, dy, dz, norm = logic.computeLinePoint(*args)
+        print(dx, dy, dz, norm)
+        assert (dx, dy, dz, norm) == (-1, 0, 0, 1)
+
+        # simple geometric case where solution is outside the line segment
+        markups.RemoveAllMarkups()
+        markups.AddFiducial(0, 0, 1)
+        markups.AddFiducial(0, 1, 1)
+        markups.AddFiducial(0, -1, 0)
+
+        key, args = logic.getLinePointArgs(
+            markups, markups, markups,
+            markups.GetNthControlPointLabel(0),
+            markups.GetNthControlPointLabel(1),
+            markups.GetNthControlPointLabel(2),
+        )
+
+        dx, dy, dz, norm = logic.computeLinePoint(*args)
+        print(dx, dy, dz, norm)
+        assert (dx, dy, dz, norm) == (0, 0, -1, 1)
+
+        # Random values; Answer is validated with Wolfram
+        markups.RemoveAllMarkups()
+        markups.AddFiducial(12.93, 13.17, 8.26)
+        markups.AddFiducial(14.45, 11.94, 9.36)
+        markups.AddFiducial(16.67, 6.96, 4.87)
+
+        key, args = logic.getLinePointArgs(
+            markups, markups, markups,
+            markups.GetNthControlPointLabel(0),
+            markups.GetNthControlPointLabel(1),
+            markups.GetNthControlPointLabel(2),
+        )
+
+        dx, dy, dz, norm = logic.computeLinePoint(*args)
+        print(dx, dy, dz, norm)
+        assert (dx, dy, dz, norm) == (0.843, -3.865, -5.487, 6.764)
+
+        # Degenerate case, when lineA and lineB are the same.
+        # computeLinePoint should instead just compute distance to the overlapping point
+        markups.RemoveAllMarkups()
+        markups.AddFiducial(1, 0, 0)
+        markups.AddFiducial(1, 0, 0)
+        markups.AddFiducial(0, 0, 0)
+
+        key, args = logic.getLinePointArgs(
+            markups, markups, markups,
+            markups.GetNthControlPointLabel(0),
+            markups.GetNthControlPointLabel(1),
+            markups.GetNthControlPointLabel(2),
+        )
+
+        dx, dy, dz, norm = logic.computeLinePoint(*args)
+        print(dx, dy, dz, norm)
+        assert (dx, dy, dz, norm) == (-1, 0, 0, 1)
 
     def test_SimulateTutorial(self):
-
         #
         # first, get the data - a zip file of example data
         #
