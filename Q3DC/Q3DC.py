@@ -1379,14 +1379,21 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         return result
 
     def computeLinePoint(self, lineA, lineB, point):
-        closestPoint = np.zeros(3)
-        t = vtk.reference(0)
-        squared = vtk.vtkLine.DistanceToLine(point, lineA, lineB, t, closestPoint)
-        norm = np.sqrt(squared)
+        # Adapted from vtkLine::DistanceToLine(const double x[3], const double p1[3], const double p2[3])
+        pointLineA = point - lineA
+        lineALineB = lineA - lineB
 
-        delta = point - closestPoint
-        norm = np.linalg.norm(delta)
+        den = np.linalg.norm(lineALineB)
+        if den != 0.0:
+          lineALineB = lineALineB / den
+        else:
+          return [0., 0., 0., np.sqrt(np.dot(pointLineA, pointLineA))]
 
+        proj = np.dot(pointLineA, lineALineB)
+
+        norm = np.sqrt(np.dot(pointLineA, pointLineA) - proj * proj)
+
+        delta = point - proj
         result = [*delta, norm]
         return [self.round(value) for value in result]
 
