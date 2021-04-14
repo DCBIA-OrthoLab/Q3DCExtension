@@ -305,20 +305,24 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                                                self.ui.landmarkComboBox1.currentText != self.ui.landmarkComboBox2.currentText
         self.ui.computeDistancesPushButton.enabled = self.ui.landmarkComboBoxA.currentText != '' and\
                                                   self.ui.landmarkComboBoxB.currentText != '' and\
-                                                  self.ui.landmarkComboBoxA.currentText != self.ui.landmarkComboBoxB.currentText
+                                                  (self.ui.fidListComboBoxA.currentNodeID, self.ui.landmarkComboBoxA.currentText) != \
+                                                  (self.ui.fidListComboBoxB.currentNodeID, self.ui.landmarkComboBoxB.currentText)
         self.ui.computeAnglesPushButton.enabled = self.ui.line1LAComboBox.currentText != '' and\
                                                self.ui.line1LBComboBox.currentText != '' and\
                                                self.ui.line2LAComboBox.currentText != '' and\
                                                self.ui.line2LBComboBox.currentText != '' and\
-                                               self.ui.line1LAComboBox.currentText != self.ui.line1LBComboBox.currentText and\
-                                               self.ui.line2LAComboBox.currentText != self.ui.line2LBComboBox.currentText and\
+                                               (self.ui.fidListComboBoxline1LA.currentNodeID, self.ui.line1LAComboBox.currentText) != \
+                                               (self.ui.fidListComboBoxline1LB.currentNodeID, self.ui.line1LBComboBox.currentText) and\
+                                               (self.ui.fidListComboBoxline2LA.currentNodeID, self.ui.line2LAComboBox.currentText) != \
+                                               (self.ui.fidListComboBoxline2LB.currentNodeID, self.ui.line2LBComboBox.currentText) and\
                                                (self.ui.pitchCheckBox.isChecked() or
                                                 self.ui.rollCheckBox.isChecked() or
                                                 self.ui.yawCheckBox.isChecked() )
         self.ui.computeLinePointPushButton.enabled = self.ui.lineLAComboBox.currentText != '' and\
                                                   self.ui.lineLBComboBox.currentText != '' and\
                                                   self.ui.linePointComboBox.currentText != '' and\
-                                                  self.ui.lineLAComboBox.currentText != self.ui.lineLBComboBox.currentText
+                                                  (self.ui.fidListComboBoxlineLA.currentNodeID, self.ui.lineLAComboBox.currentText) != \
+                                                  (self.ui.fidListComboBoxlineLB.currentNodeID, self.ui.lineLBComboBox.currentText)
 
         # Clear Lines:
         if self.renderer1 :
