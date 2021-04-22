@@ -1665,12 +1665,14 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         logic = Q3DCLogic(slicer.modules.Q3DCWidget)
         markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
         markupsNode1.AddFiducial(-5.331, 51.955, 4.831)
-        markupsNode1.AddFiducial(-8.018, 41.429, -52.621)
+        markupsNode2 = slicer.vtkMRMLMarkupsFiducialNode()
+        markupsNode2.AddFiducial(999, 999, 999)
+        markupsNode2.AddFiducial(-8.018, 41.429, -52.621)
 
         key, args = logic.getDistanceArgs(
-            markupsNode1, markupsNode1,
+            markupsNode1, markupsNode2,
             markupsNode1.GetNthControlPointLabel(0),
-            markupsNode1.GetNthControlPointLabel(1)
+            markupsNode2.GetNthControlPointLabel(1)
         )
 
         dx, dy, dz, dist = logic.computeDistance(*args)
@@ -1678,19 +1680,32 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
     def test_CalculateAngles(self):
         logic = Q3DCLogic(slicer.modules.Q3DCWidget)
-        markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
 
-        markupsNode1.AddFiducial(63.90, -46.98, 6.98)
-        markupsNode1.AddFiducial(43.79, -60.16, 12.16)
-        markupsNode1.AddFiducial(62.21, -45.31, 7.41)
-        markupsNode1.AddFiducial(41.97, -61.24, 11.30)
+        markupsNode1 = slicer.vtkMRMLMarkupsFiducialNode()
+        markupsNode2 = slicer.vtkMRMLMarkupsFiducialNode()
+        markupsNode3 = slicer.vtkMRMLMarkupsFiducialNode()
+        markupsNode4 = slicer.vtkMRMLMarkupsFiducialNode()
+
+        markupsNode1.AddFiducial(999, 999, 999)
+        markupsNode1.AddFiducial(63.90, -46.98, 6.98) # index 1
+
+        markupsNode2.AddFiducial(999, 999, 999)
+        markupsNode2.AddFiducial(999, 999, 999)
+        markupsNode2.AddFiducial(43.79, -60.16, 12.16) # index 2
+
+        markupsNode3.AddFiducial(62.21, -45.31, 7.41) # index 0
+
+        markupsNode4.AddFiducial(999, 999, 999)
+        markupsNode4.AddFiducial(999, 999, 999)
+        markupsNode4.AddFiducial(999, 999, 999)
+        markupsNode4.AddFiducial(41.97, -61.24, 11.30)  # index 3
 
         key, args = logic.getAnglesArgs(
-            markupsNode1, markupsNode1, markupsNode1, markupsNode1,
-            markupsNode1.GetNthControlPointLabel(0),
+            markupsNode1, markupsNode2, markupsNode3, markupsNode4,
             markupsNode1.GetNthControlPointLabel(1),
-            markupsNode1.GetNthControlPointLabel(2),
-            markupsNode1.GetNthControlPointLabel(3),
+            markupsNode2.GetNthControlPointLabel(2),
+            markupsNode3.GetNthControlPointLabel(0),
+            markupsNode4.GetNthControlPointLabel(3),
             True, False, True
         )
 
@@ -1700,6 +1715,7 @@ class Q3DCTest(ScriptedLoadableModuleTest):
         assert pitch is None
         assert roll == '3.565 / 176.435'
 
+        markupsNode1.RemoveAllMarkups()
         markupsNode1.AddFiducial(53.80,-53.57,9.47)
         markupsNode1.AddFiducial(53.98,-52.13,9.13)
         markupsNode1.AddFiducial(52.09,-53.27,9.36)
@@ -1707,10 +1723,10 @@ class Q3DCTest(ScriptedLoadableModuleTest):
 
         key, args = logic.getAnglesArgs(
             markupsNode1,markupsNode1,markupsNode1,markupsNode1,
-            markupsNode1.GetNthControlPointLabel(4),
-            markupsNode1.GetNthControlPointLabel(5),
-            markupsNode1.GetNthControlPointLabel(6),
-            markupsNode1.GetNthControlPointLabel(7),
+            markupsNode1.GetNthControlPointLabel(0),
+            markupsNode1.GetNthControlPointLabel(1),
+            markupsNode1.GetNthControlPointLabel(2),
+            markupsNode1.GetNthControlPointLabel(3),
             False, True, False
         )
 
@@ -1723,24 +1739,32 @@ class Q3DCTest(ScriptedLoadableModuleTest):
     def test_CalculateLinePoint(self):
         logic = Q3DCLogic(slicer.modules.Q3DCWidget)
 
-        markups = slicer.vtkMRMLMarkupsFiducialNode()
+        markups1 = slicer.vtkMRMLMarkupsFiducialNode()
+        markups2 = slicer.vtkMRMLMarkupsFiducialNode()
+        markups3 = slicer.vtkMRMLMarkupsFiducialNode()
 
         # simple geometric case
-        markups.RemoveAllMarkups()
-        markups.AddFiducial(0, 1, -1)
-        markups.AddFiducial(0, -1, 1)
-        markups.AddFiducial(-1, 0, 0)
+        markups1.RemoveAllMarkups()
+        markups1.AddFiducial(0, 1, -1) # index 0
+
+        markups2.AddFiducial(999,999,999)
+        markups2.AddFiducial(999,999,999)
+        markups2.AddFiducial(0, -1, 1) # index 2
+
+        markups3.AddFiducial(-1, 0, 0) # index 0
 
         key, args = logic.getLinePointArgs(
-            markups, markups, markups,
-            markups.GetNthControlPointLabel(0),
-            markups.GetNthControlPointLabel(1),
-            markups.GetNthControlPointLabel(2),
+            markups1, markups2, markups3,
+            markups1.GetNthControlPointLabel(0),
+            markups2.GetNthControlPointLabel(2),
+            markups3.GetNthControlPointLabel(0),
         )
 
         dx, dy, dz, norm = logic.computeLinePoint(*args)
         print(dx, dy, dz, norm)
         assert (dx, dy, dz, norm) == (-1, 0, 0, 1)
+
+        markups = slicer.vtkMRMLMarkupsFiducialNode()
 
         # simple geometric case where solution is outside the line segment
         markups.RemoveAllMarkups()
