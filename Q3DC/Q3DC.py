@@ -1415,7 +1415,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
 
         point1 = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
-        point2 = np.array(fidListA.GetMarkupPointVector(fidIndexB, 0))
+        point2 = np.array(fidListB.GetMarkupPointVector(fidIndexB, 0))
 
         args = point1, point2
 
