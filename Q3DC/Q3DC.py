@@ -95,6 +95,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         self.ui.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
         self.ui.landmarkComboBox.connect('currentIndexChanged(QString)', self.UpdateInterface)
         self.ui.surfaceDeplacementCheckBox.connect('stateChanged(int)', self.onSurfaceDeplacementStateChanged)
+        self.ui.loadLandmarksOnSurfaceCheckBox.connect('stateChanged(int)', self.onLoadLandmarksOnSurfaceStateChanged)
 
         # --------------------- Anatomical Legend --------------------
         self.suggested_landmarks = self.logic.load_suggested_landmarks(
@@ -484,7 +485,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.logic.selectedFidList = self.ui.inputLandmarksSelector.currentNode()
             self.logic.selectedModel = self.ui.inputModelSelector.currentNode()
             if self.ui.inputLandmarksSelector.currentNode():
-                onSurface = self.ui.loadLandmarksOnSurfacCheckBox.isChecked()
+                onSurface = self.ui.loadLandmarksOnSurfaceCheckBox.isChecked()
                 self.logic.connectLandmarks(self.ui.inputModelSelector,
                                       self.ui.inputLandmarksSelector,
                                       onSurface)
@@ -505,6 +506,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
                 self.logic.warningMessage("Please select a fiducial list")
         else:
             self.logic.warningMessage("Please select a model")
+
+    def onLoadLandmarksOnSurfaceStateChanged(self):
+        self.logic.projectNewPoints = self.ui.loadLandmarksOnSurfaceCheckBox.isChecked()
 
     def onSurfaceDeplacementStateChanged(self):
         activeInput = self.logic.selectedModel
@@ -695,6 +699,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.selectedFidList = None
         self.current_suggested_landmarks = None
         self.enable_legend_labels = True
+        self.projectNewPoints = True
         self.numberOfDecimals = 3
         self.tolerance = 1e-5
         system = qt.QLocale().system()
@@ -1105,7 +1110,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarkLabel = obj.GetNthMarkupLabel(numOfMarkups - 1)
         landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
         landmarkDescription[markupID]["projection"] = dict()
-        landmarkDescription[markupID]["projection"]["isProjected"] = True
+        landmarkDescription[markupID]["projection"]["isProjected"] = self.projectNewPoints
         # The landmark will be projected by onPointModifiedEvent
         landmarkDescription[markupID]["midPoint"] = dict()
         landmarkDescription[markupID]["midPoint"]["definedByThisMarkup"] = list()
