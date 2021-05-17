@@ -135,12 +135,15 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="loadLandmarksOnSurfacCheckBox">
+         <widget class="QCheckBox" name="loadLandmarksOnSurfaceCheckBox">
           <property name="text">
            <string>On Surface</string>
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>If checked, newly placed and loaded landmarks will snap to the surface.</string>
           </property>
          </widget>
         </item>
@@ -198,6 +201,9 @@
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>If checked, this landmark will snap to the surface.</string>
           </property>
          </widget>
         </item>
@@ -300,6 +306,9 @@
           </property>
           <property name="text">
            <string>On Surface</string>
+          </property>
+          <property name="toolTip">
+           <string>If checked, this midpoint will snap to the surface.</string>
           </property>
          </widget>
         </item>
