@@ -1623,7 +1623,15 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def decodeJSON(self, input):
         if input:
-            return json.loads(input)
+            try:
+                # if parsing fails, then the json was saved using the old single-quoted replacement
+                return json.loads(input)
+            except json.JSONDecodeError:
+                # if parsing fails after the replacement, then the input would contain something like
+                # ... 'landmarkName': 'UR1'', ... which cannot be automatically recovered.
+                input = input.replace("'", '"')
+                return json.loads(input)
+
         return None
 
     def UpdateLandmarkComboboxA(self, fidListCombobox, landmarkCombobox):
