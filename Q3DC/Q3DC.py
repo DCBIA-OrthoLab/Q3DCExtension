@@ -1619,13 +1619,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         messageBox.exec_()
 
     def encodeJSON(self, input):
-        encodedString = json.dumps(input)
-        encodedString = encodedString.replace('\"', '\'')
-        return encodedString
+        return json.dumps(input)
 
     def decodeJSON(self, input):
         if input:
-            input = input.replace('\'','\"')
             return json.loads(input)
         return None
 
