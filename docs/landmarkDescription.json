@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DCBIA-OrthoLab/Q3DCExtension/master/docs/landmarkDescription.schema.json",
+  "1": {
+    "landmarkLabel": "A",
+    "projection": {
+      "isProjected": true,
+      "closestPointIndex": 29659
+    },
+    "midPoint": {
+      "definedByThisMarkup": [
+        "3"
+      ],
+      "isMidPoint": false,
+      "Point1": null,
+      "Point2": null
+    }
+  },
+  "2": {
+    "landmarkLabel": "B",
+    "projection": {
+      "isProjected": true,
+      "closestPointIndex": 27760
+    },
+    "midPoint": {
+      "definedByThisMarkup": [
+        "3"
+      ],
+      "isMidPoint": false,
+      "Point1": null,
+      "Point2": null
+    }
+  },
+  "3": {
+    "landmarkLabel": "A_B",
+    "projection": {
+      "isProjected": false,
+      "closestPointIndex": null
+    },
+    "midPoint": {
+      "definedByThisMarkup": [],
+      "isMidPoint": true,
+      "Point1": "1",
+      "Point2": "2"
+    }
+  }
+}
