@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Landmark Description",
+  "description": "vtkMRMLFiducialNode Attribute \"landmarkDescription\" used by Q3DC and related SlicerCMF modules.",
+  "type": "object",
+  "patternProperties": {
+    "^\\d+$": {
+      "type": "object",
+      "properties": {
+        "landmarkLabel": {
+          "type": "string",
+          "description": "Label of this landmark. Overrides vtkMRMLMarkupsNode::MarkupLabelFormat."
+        },
+        "projection": {
+          "type": "object",
+          "description": "Metadata to project the landmark to a hardened model.",
+          "properties": {
+            "isProjected": {
+              "type": "boolean",
+              "description": "If true, project this point onto the hardened model."
+            },
+            "closestPointIndex": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "description": "Index of the closest point in the hardened model, or null if not projected."
+            }
+          },
+          "required": [
+            "isProjected",
+            "closestPointIndex"
+          ]
+        },
+        "midPoint": {
+          "type": "object",
+          "description": "Metadata to update the midpoint between landmarks.",
+          "properties": {
+            "definedByThisMarkup": {
+              "type": "array",
+              "description": "Midpoint landmarks IDs that depend on this landmark's position. Used to update midpoint positions when this landmark is moved.",
+              "items": [
+                {
+                  "type": "string",
+                  "description": "A Landmark ID."
+                }
+              ]
+            },
+            "isMidPoint": {
+              "type": "boolean",
+              "description": "If true, constrain this landmark's position to the midpoint of Point1 and Point2."
+            },
+            "Point1": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A landmark ID, or null if this landmark is not a midpoint."
+            },
+            "Point2": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A landmark ID, or null if this landmark is not a midpoint."
+            }
+          },
+          "required": [
+            "definedByThisMarkup",
+            "isMidPoint",
+            "Point1",
+            "Point2"
+          ]
+        }
+      },
+      "required": [
+        "landmarkLabel",
+        "projection",
+        "midPoint"
+      ]
+    }
+  }
+}
