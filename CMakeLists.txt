@@ -19,8 +19,10 @@ include(${Slicer_USE_FILE})
 
 #-----------------------------------------------------------------------------
 # Extension modules
+add_subdirectory(AnglePlanes)
+add_subdirectory(DependantMarkups)
+add_subdirectory(PickAndPaint)
 add_subdirectory(Q3DC)
-## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
 include(${Slicer_EXTENSION_GENERATE_CONFIG})

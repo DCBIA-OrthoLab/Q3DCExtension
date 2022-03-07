@@ -34,7 +34,7 @@ class Q3DC(ScriptedLoadableModule):
         ScriptedLoadableModule.__init__(self, parent)
         parent.title = "Q3DC "
         parent.categories = ["Quantification"]
-        parent.dependencies = []
+        parent.dependencies = ["DependantMarkups"]
         parent.contributors = [
             'Lucie Macron (University of Michigan)',
             'Jean-Baptiste VIMORT (University of Michigan)',
