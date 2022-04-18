@@ -400,43 +400,43 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
 
     def UpdateInterface(self):
         self.ui.defineMiddlePointButton.enabled = (
-            self.ui.landmarkComboBox1.currentText != ""
-            and self.ui.landmarkComboBox2.currentText != ""
-            and self.ui.landmarkComboBox1.currentText
-            != self.ui.landmarkComboBox2.currentText
+            self.ui.landmarkComboBox1.currentData != ""
+            and self.ui.landmarkComboBox2.currentData != ""
+            and self.ui.landmarkComboBox1.currentData
+            != self.ui.landmarkComboBox2.currentData
         )
         self.ui.computeDistancesPushButton.enabled = (
-            self.ui.landmarkComboBoxA.currentText != ""
-            and self.ui.landmarkComboBoxB.currentText != ""
+            self.ui.landmarkComboBoxA.currentData != ""
+            and self.ui.landmarkComboBoxB.currentData != ""
             and (
                 self.ui.fidListComboBoxA.currentNodeID,
-                self.ui.landmarkComboBoxA.currentText,
+                self.ui.landmarkComboBoxA.currentData,
             )
             != (
                 self.ui.fidListComboBoxB.currentNodeID,
-                self.ui.landmarkComboBoxB.currentText,
+                self.ui.landmarkComboBoxB.currentData,
             )
         )
         self.ui.computeAnglesPushButton.enabled = (
-            self.ui.line1LAComboBox.currentText != ""
-            and self.ui.line1LBComboBox.currentText != ""
-            and self.ui.line2LAComboBox.currentText != ""
-            and self.ui.line2LBComboBox.currentText != ""
+            self.ui.line1LAComboBox.currentData != ""
+            and self.ui.line1LBComboBox.currentData != ""
+            and self.ui.line2LAComboBox.currentData != ""
+            and self.ui.line2LBComboBox.currentData != ""
             and (
                 self.ui.fidListComboBoxline1LA.currentNodeID,
-                self.ui.line1LAComboBox.currentText,
+                self.ui.line1LAComboBox.currentData,
             )
             != (
                 self.ui.fidListComboBoxline1LB.currentNodeID,
-                self.ui.line1LBComboBox.currentText,
+                self.ui.line1LBComboBox.currentData,
             )
             and (
                 self.ui.fidListComboBoxline2LA.currentNodeID,
-                self.ui.line2LAComboBox.currentText,
+                self.ui.line2LAComboBox.currentData,
             )
             != (
                 self.ui.fidListComboBoxline2LB.currentNodeID,
-                self.ui.line2LBComboBox.currentText,
+                self.ui.line2LBComboBox.currentData,
             )
             and (
                 self.ui.pitchCheckBox.isChecked()
@@ -445,16 +445,16 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             )
         )
         self.ui.computeLinePointPushButton.enabled = (
-            self.ui.lineLAComboBox.currentText != ""
-            and self.ui.lineLBComboBox.currentText != ""
-            and self.ui.linePointComboBox.currentText != ""
+            self.ui.lineLAComboBox.currentData != ""
+            and self.ui.lineLBComboBox.currentData != ""
+            and self.ui.linePointComboBox.currentData != ""
             and (
                 self.ui.fidListComboBoxlineLA.currentNodeID,
-                self.ui.lineLAComboBox.currentText,
+                self.ui.lineLAComboBox.currentData,
             )
             != (
                 self.ui.fidListComboBoxlineLB.currentNodeID,
-                self.ui.lineLBComboBox.currentText,
+                self.ui.lineLBComboBox.currentData,
             )
         )
 
@@ -469,41 +469,41 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.renderer3.RemoveActor(self.actor3)
             self.renderer3 = None
         if (
-            self.ui.line1LAComboBox.currentText != ""
-            and self.ui.line1LBComboBox.currentText != ""
-            and self.ui.line1LAComboBox.currentText
-            != self.ui.line1LBComboBox.currentText
+            self.ui.line1LAComboBox.currentData != ""
+            and self.ui.line1LBComboBox.currentData != ""
+            and self.ui.line1LAComboBox.currentData
+            != self.ui.line1LBComboBox.currentData
         ):
             self.renderer1, self.actor1 = self.logic.drawLineBetween2Landmark(
-                self.ui.line1LAComboBox.currentText,
-                self.ui.line1LBComboBox.currentText,
+                self.ui.line1LAComboBox.currentData,
+                self.ui.line1LBComboBox.currentData,
                 self.ui.fidListComboBoxline1LA.currentNode(),
                 self.ui.fidListComboBoxline1LB.currentNode(),
             )
         if (
-            self.ui.line2LAComboBox.currentText != ""
-            and self.ui.line2LBComboBox.currentText != ""
-            and self.ui.line2LAComboBox.currentText
-            != self.ui.line2LBComboBox.currentText
+            self.ui.line2LAComboBox.currentData != ""
+            and self.ui.line2LBComboBox.currentData != ""
+            and self.ui.line2LAComboBox.currentData
+            != self.ui.line2LBComboBox.currentData
         ):
             self.renderer2, self.actor2 = self.logic.drawLineBetween2Landmark(
-                self.ui.line2LAComboBox.currentText,
-                self.ui.line2LBComboBox.currentText,
+                self.ui.line2LAComboBox.currentData,
+                self.ui.line2LBComboBox.currentData,
                 self.ui.fidListComboBoxline2LA.currentNode(),
                 self.ui.fidListComboBoxline2LB.currentNode(),
             )
         if (
-            self.ui.lineLAComboBox.currentText != ""
-            and self.ui.lineLBComboBox.currentText != ""
-            and self.ui.lineLAComboBox.currentText != self.ui.lineLBComboBox.currentText
+            self.ui.lineLAComboBox.currentData != ""
+            and self.ui.lineLBComboBox.currentData != ""
+            and self.ui.lineLAComboBox.currentData != self.ui.lineLBComboBox.currentData
         ):
             self.renderer3, self.actor3 = self.logic.drawLineBetween2Landmark(
-                self.ui.lineLAComboBox.currentText,
-                self.ui.lineLBComboBox.currentText,
+                self.ui.lineLAComboBox.currentData,
+                self.ui.lineLBComboBox.currentData,
                 self.ui.fidListComboBoxlineLA.currentNode(),
                 self.ui.fidListComboBoxlineLB.currentNode(),
             )
-        self.logic.UpdateThreeDView(self.ui.landmarkComboBox.currentText)
+        self.logic.UpdateThreeDView(self.ui.landmarkComboBox.currentData)
 
     def init_anatomical_legend(self):
         if self.anatomical_legend is None:
@@ -560,9 +560,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         fidList = self.logic.selectedFidList
         if not fidList:
             return
-        selectedFidReflID = self.logic.findIDFromLabel(
-            fidList, self.ui.landmarkComboBox.currentText
-        )
+        selectedFidReflID = self.ui.landmarkComboBox.currentData
         if selectedFidReflID is None:
             # code would run correctly if we continued but wouldn't do anything
             return
@@ -670,9 +668,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         fidList = self.logic.selectedFidList
         if not fidList:
             return
-        selectedFidReflID = self.logic.findIDFromLabel(
-            fidList, self.ui.landmarkComboBox.currentText
-        )
+        selectedFidReflID = self.ui.landmarkComboBox.currentData
         isOnSurface = self.ui.surfaceDeplacementCheckBox.isChecked()
         landmarkDescription = self.logic.decodeJSON(
             fidList.GetAttribute("landmarkDescription")
@@ -700,12 +696,17 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             self.logic.warningMessage(
                 "Please select a model of reference and a fiducial List."
             )
-        label1 = self.ui.landmarkComboBox1.currentText
-        label2 = self.ui.landmarkComboBox2.currentText
-        landmark1ID = self.logic.findIDFromLabel(fidList, label1)
-        landmark2ID = self.logic.findIDFromLabel(fidList, label2)
+
+        landmark1ID = self.ui.landmarkComboBox1.currentData
+        landmark2ID = self.ui.landmarkComboBox2.currentData
+
+        key = '{}_{}'.format(
+            fidList.GetNthControlPointLabel(fidList.GetNthControlPointIndexByID(landmark1ID)),
+            fidList.GetNthControlPointLabel(fidList.GetNthControlPointIndexByID(landmark2ID)),
+        )
+
         coord = self.logic.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
-        fidList.AddFiducial(coord[0], coord[1], coord[2], f"{label1}_{label2}")
+        fidList.AddFiducial(coord[0], coord[1], coord[2], key)
         fidList.SetNthFiducialSelected(fidList.GetNumberOfMarkups() - 1, False)
         # update of the data structure
         landmarkDescription = self.logic.decodeJSON(
@@ -768,8 +769,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
         key, args = self.logic.getDistanceArgs(
             fidListA=self.ui.fidListComboBoxA.currentNode(),
             fidListB=self.ui.fidListComboBoxB.currentNode(),
-            fidLabelA=self.ui.landmarkComboBoxA.currentText,
-            fidLabelB=self.ui.landmarkComboBoxB.currentText,
+            fidIDA=self.ui.landmarkComboBoxA.currentData,
+            fidIDB=self.ui.landmarkComboBoxB.currentData,
         )
         data = self.logic.computeDistance(*args)
 
@@ -811,10 +812,10 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             fidlist1B=self.ui.fidListComboBoxline1LB.currentNode(),
             fidlist2A=self.ui.fidListComboBoxline2LA.currentNode(),
             fidlist2B=self.ui.fidListComboBoxline2LB.currentNode(),
-            fidLabel1A=self.ui.line1LAComboBox.currentText,
-            fidLabel1B=self.ui.line1LBComboBox.currentText,
-            fidLabel2A=self.ui.line2LAComboBox.currentText,
-            fidLabel2B=self.ui.line2LBComboBox.currentText,
+            fidID1A=self.ui.line1LAComboBox.currentData,
+            fidID1B=self.ui.line1LBComboBox.currentData,
+            fidID2A=self.ui.line2LAComboBox.currentData,
+            fidID2B=self.ui.line2LBComboBox.currentData,
             yawState=self.ui.yawCheckBox.isChecked(),
             pitchState=self.ui.pitchCheckBox.isChecked(),
             rollState=self.ui.rollCheckBox.isChecked(),
@@ -856,9 +857,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget):
             fidListLineA=self.ui.fidListComboBoxlineLA.currentNode(),
             fidListLineB=self.ui.fidListComboBoxlineLB.currentNode(),
             fidListPoint=self.ui.fidListComboBoxlinePoint.currentNode(),
-            fidLabelLineA=self.ui.lineLAComboBox.currentText,
-            fidLabelLineB=self.ui.lineLBComboBox.currentText,
-            fidLabelPoint=self.ui.linePointComboBox.currentText,
+            fidIDLineA=self.ui.lineLAComboBox.currentData,
+            fidIDLineB=self.ui.lineLBComboBox.currentData,
+            fidIDPoint=self.ui.linePointComboBox.currentData,
         )
         data = self.logic.computeLinePoint(*args)
 
@@ -942,7 +943,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         self.comboboxdict[self.interface.lineLBComboBox] = None
         self.comboboxdict[self.interface.linePointComboBox] = None
 
-    def UpdateThreeDView(self, landmarkLabel):
+    def UpdateThreeDView(self, selectedFidReflID):
         # Update the 3D view on Slicer
         if not self.selectedFidList:
             return
@@ -953,7 +954,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         # deactivate all landmarks
         list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
         end = list.GetNumberOfItems()
-        selectedFidReflID = self.findIDFromLabel(active, landmarkLabel)
         for i in range(0, end):
             fidList = list.GetItemAsObject(i)
             logging.info("fidList ID: %s", fidList.GetID())
@@ -1407,10 +1407,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def updateLinesEvent(self, obj, event):
         if (
-            self.interface.line1LAComboBox.currentText != ""
-            and self.interface.line1LBComboBox.currentText != ""
-            and self.interface.line1LAComboBox.currentText
-            != self.interface.line1LBComboBox.currentText
+            self.interface.line1LAComboBox.currentData != ""
+            and self.interface.line1LBComboBox.currentData != ""
+            and self.interface.line1LAComboBox.currentData
+            != self.interface.line1LBComboBox.currentData
         ):
             # Clear Lines, then define new ones
             if self.interface.renderer1:
@@ -1419,16 +1419,16 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 self.interface.renderer1,
                 self.interface.actor1,
             ) = self.drawLineBetween2Landmark(
-                self.interface.line1LAComboBox.currentText,
-                self.interface.line1LBComboBox.currentText,
+                self.interface.line1LAComboBox.currentData,
+                self.interface.line1LBComboBox.currentData,
                 self.interface.fidListComboBoxline1LA.currentNode(),
                 self.interface.fidListComboBoxline1LB.currentNode(),
             )
         if (
-            self.interface.line2LAComboBox.currentText != ""
-            and self.interface.line2LBComboBox.currentText != ""
-            and self.interface.line2LAComboBox.currentText
-            != self.interface.line2LBComboBox.currentText
+            self.interface.line2LAComboBox.currentData != ""
+            and self.interface.line2LBComboBox.currentData != ""
+            and self.interface.line2LAComboBox.currentData
+            != self.interface.line2LBComboBox.currentData
         ):
             if self.interface.renderer2:
                 self.interface.renderer2.RemoveActor(self.interface.actor2)
@@ -1436,16 +1436,16 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 self.interface.renderer2,
                 self.interface.actor2,
             ) = self.drawLineBetween2Landmark(
-                self.interface.line2LAComboBox.currentText,
-                self.interface.line2LBComboBox.currentText,
+                self.interface.line2LAComboBox.currentData,
+                self.interface.line2LBComboBox.currentData,
                 self.interface.fidListComboBoxline2LA.currentNode(),
                 self.interface.fidListComboBoxline2LB.currentNode(),
             )
         if (
-            self.interface.lineLAComboBox.currentText != ""
-            and self.interface.lineLBComboBox.currentText != ""
-            and self.interface.lineLAComboBox.currentText
-            != self.interface.lineLBComboBox.currentText
+            self.interface.lineLAComboBox.currentData != ""
+            and self.interface.lineLBComboBox.currentData != ""
+            and self.interface.lineLAComboBox.currentData
+            != self.interface.lineLBComboBox.currentData
         ):
             if self.interface.renderer3:
                 self.interface.renderer3.RemoveActor(self.interface.actor3)
@@ -1453,8 +1453,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                 self.interface.renderer3,
                 self.interface.actor3,
             ) = self.drawLineBetween2Landmark(
-                self.interface.lineLAComboBox.currentText,
-                self.interface.lineLBComboBox.currentText,
+                self.interface.lineLAComboBox.currentData,
+                self.interface.lineLBComboBox.currentData,
                 self.interface.fidListComboBoxlineLA.currentNode(),
                 self.interface.fidListComboBoxlineLB.currentNode(),
             )
@@ -1492,9 +1492,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         if not landmarkDescription:
             return
-        selectedLandmarkID = self.findIDFromLabel(
-            obj, self.interface.landmarkComboBox.currentText
-        )
+        selectedLandmarkID = self.interface.landmarkComboBox.currentData
         # remove observer to make sure, the callback function won't work..
         tag = self.decodeJSON(obj.GetAttribute("PointModifiedEventTag"))
         obj.RemoveObserver(tag["PointModifiedEventTag"])
@@ -1551,7 +1549,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         landmarkDescription = self.decodeJSON(
             fidList.GetAttribute("landmarkDescription")
         )
-        combobox.addItem(landmarkDescription[markupID]["landmarkLabel"])
+        combobox.addItem(landmarkDescription[markupID]["landmarkLabel"], markupID)
 
     def updateAllLandmarkComboBox(self, fidList, markupID):
         # update of the Combobox that are always updated
@@ -1580,10 +1578,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                     ID = fidList.GetNthMarkupID(i)
                     if not landmarkDescription[ID]["midPoint"]["isMidPoint"]:
                         landmarkLabel = fidList.GetNthMarkupLabel(i)
-                        combobox.addItem(landmarkLabel)
+                        combobox.addItem(landmarkLabel, ID)
                 else:
                     landmarkLabel = fidList.GetNthMarkupLabel(i)
-                    combobox.addItem(landmarkLabel)
+                    combobox.addItem(landmarkLabel, ID)
         combobox.setCurrentIndex(combobox.count - 1)
         combobox.blockSignals(False)
 
@@ -1601,14 +1599,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         for key, value in self.comboboxdict.items():
             if value is fidList:
                 key.removeItem(key.findText(label))
-
-    @staticmethod
-    def findIDFromLabel(fidList, landmarkLabel):
-        # find the ID of the markupsNode from the label of a landmark!
-        for i in range(fidList.GetNumberOfFiducials()):
-            if landmarkLabel == fidList.GetNthFiducialLabel(i):
-                return fidList.GetNthMarkupID(i)
-        return None
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
         landmarkCoord = np.zeros(3)
@@ -1761,11 +1751,8 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         result = [*delta, norm]
         return [self.round(value) for value in result]
 
-    def getDistanceArgs(self, fidListA, fidListB, fidLabelA, fidLabelB):
+    def getDistanceArgs(self, fidListA, fidListB, fidIDA, fidIDB):
         """returns: key, (point1, point2)"""
-        fidIDA = self.findIDFromLabel(fidListA, fidLabelA)
-        fidIDB = self.findIDFromLabel(fidListB, fidLabelB)
-
         fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
         fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
 
@@ -1774,7 +1761,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         args = point1, point2
 
-        key = f"{fidLabelA} - {fidLabelB}"
+        key = '{} - {}'.format(
+            fidListA.GetNthControlPointLabel(fidIndexA),
+            fidListB.GetNthControlPointLabel(fidIndexB),
+        )
 
         return key, args
 
@@ -1784,20 +1774,15 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         fidlist1B,
         fidlist2A,
         fidlist2B,
-        fidLabel1A,
-        fidLabel1B,
-        fidLabel2A,
-        fidLabel2B,
+        fidID1A,
+        fidID1B,
+        fidID2A,
+        fidID2B,
         yawState,
         pitchState,
         rollState,
     ):
         """returns: key, (line1, line2, states)"""
-        fidID1A = self.findIDFromLabel(fidlist1A, fidLabel1A)
-        fidID1B = self.findIDFromLabel(fidlist1B, fidLabel1B)
-        fidID2A = self.findIDFromLabel(fidlist2A, fidLabel2A)
-        fidID2B = self.findIDFromLabel(fidlist2B, fidLabel2B)
-
         landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
         landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
         landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
@@ -1819,7 +1804,12 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         args = line1, line2, states
 
-        key = f"{fidLabel1A}-{fidLabel1B} / {fidLabel2A}-{fidLabel2B}"
+        key = '{}-{} / {}-{}'.format(
+            fidlist1A.GetNthControlPointLabel(landmark1Index),
+            fidlist1B.GetNthControlPointLabel(landmark2Index),
+            fidlist2A.GetNthControlPointLabel(landmark3Index),
+            fidlist2B.GetNthControlPointLabel(landmark4Index),
+        )
 
         return key, args
 
@@ -1828,14 +1818,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         fidListLineA,
         fidListLineB,
         fidListPoint,
-        fidLabelLineA,
-        fidLabelLineB,
-        fidLabelPoint,
+        fidIDLineA,
+        fidIDLineB,
+        fidIDPoint,
     ):
-        fidIDLineA = self.findIDFromLabel(fidListLineA, fidLabelLineA)
-        fidIDLineB = self.findIDFromLabel(fidListLineB, fidLabelLineB)
-        fidIDPoint = self.findIDFromLabel(fidListPoint, fidLabelPoint)
-
         landmarkLineAIndex = fidListLineA.GetNthControlPointIndexByID(fidIDLineA)
         landmarkLineBIndex = fidListLineB.GetNthControlPointIndexByID(fidIDLineB)
         landmarkPointIndex = fidListPoint.GetNthControlPointIndexByID(fidIDPoint)
@@ -1846,7 +1832,11 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         args = lineA, lineB, point
 
-        key = f"{fidLabelLineA}-{fidLabelLineB} / {fidLabelPoint}"
+        key = '{}-{} / {}'.format(
+            fidListLineA.GetNthControlPointLabel(landmarkLineAIndex),
+            fidListLineB.GetNthControlPointLabel(landmarkLineBIndex),
+            fidListPoint.GetNthControlPointLabel(landmarkPointIndex),
+        )
 
         return key, args
 
@@ -1905,12 +1895,10 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
         table_view.setMinimumHeight(50 * table.GetNumberOfRows())
 
     def drawLineBetween2Landmark(
-        self, landmark1label, landmark2label, fidList1, fidList2
+        self, landmark1ID, landmark2ID, fidList1, fidList2
     ):
-        if not fidList1 or not fidList2 or not landmark1label or not landmark2label:
+        if not fidList1 or not fidList2 or not landmark1ID or not landmark2ID:
             return
-        landmark1ID = self.findIDFromLabel(fidList1, landmark1label)
-        landmark2ID = self.findIDFromLabel(fidList2, landmark2label)
 
         if not fidList1 or not fidList2:
             return None, None
