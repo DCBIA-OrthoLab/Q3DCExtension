@@ -297,7 +297,7 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             markups.AddObserver(markups.PointModifiedEvent, self.onPointModified)
             markups.AddObserver(markups.PointRemovedEvent, self.onPointRemoved)
 
-            self.updateLandmarkComboBox(markups, self.landmarkComboBox, False)
+            self.deps.updateLandmarkComboBox(markups, self.landmarkComboBox, False)
             self.addPlaneButton.setEnabled(True)
             self.UpdateInterface()
         else:
@@ -319,37 +319,16 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def updateAllLandmarkComboBox(self, fidList):
         # update of the Combobox that are always updated
-        self.updateLandmarkComboBox(fidList, self.landmarkComboBox, False)
+        self.deps.updateLandmarkComboBox(fidList, self.landmarkComboBox, False)
 
         for control in self.planeControlsDictionary.values():
-            self.updateLandmarkComboBox(control.fidlist, control.landmark1ComboBox)
-            self.updateLandmarkComboBox(control.fidlist, control.landmark2ComboBox)
-            self.updateLandmarkComboBox(control.fidlist, control.landmark3ComboBox)
+            self.deps.updateLandmarkComboBox(control.fidlist, control.landmark1ComboBox)
+            self.deps.updateLandmarkComboBox(control.fidlist, control.landmark2ComboBox)
+            self.deps.updateLandmarkComboBox(control.fidlist, control.landmark3ComboBox)
 
         control = self.selectPlaneForMidPoint.currentData
-        self.updateLandmarkComboBox(control.fidlist, self.landmarkComboBox1MidPoint)
-        self.updateLandmarkComboBox(control.fidlist, self.landmarkComboBox2MidPoint)
-
-    def updateLandmarkComboBox(self, fidList, combobox, displayMidPoint=True):
-        selected = combobox.currentData
-
-        data = self.deps.getData(fidList)
-
-        combobox.blockSignals(True)
-        combobox.clear()
-
-        for idx in range(fidList.GetNumberOfControlPoints()):
-            ID = fidList.GetNthControlPointID(idx)
-            label = fidList.GetNthControlPointLabel(idx)
-            if data[ID]["midPoint"]["isMidPoint"] and not displayMidPoint:
-                continue
-            combobox.addItem(label, ID)
-
-        idx = combobox.findData(selected)
-        if idx >= 0:
-            combobox.setCurrentIndex(idx)
-
-        combobox.blockSignals(False)
+        self.deps.updateLandmarkComboBox(control.fidlist, self.landmarkComboBox1MidPoint)
+        self.deps.updateLandmarkComboBox(control.fidlist, self.landmarkComboBox2MidPoint)
 
     def onSurfaceDeplacementStateChanged(self):
         self.deps.default_projected = self.surfaceDeplacementCheckBox.isChecked()
@@ -360,8 +339,8 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             return
         plane = self.planeControlsDictionary[key]
         fidList = plane.fidlist
-        self.updateLandmarkComboBox(fidList, self.landmarkComboBox1MidPoint)
-        self.updateLandmarkComboBox(fidList, self.landmarkComboBox2MidPoint)
+        self.deps.updateLandmarkComboBox(fidList, self.landmarkComboBox1MidPoint)
+        self.deps.updateLandmarkComboBox(fidList, self.landmarkComboBox2MidPoint)
 
     def onChangeModelDisplay(self, obj, event):
         self.updateOnSurfaceCheckBoxes()
@@ -586,7 +565,7 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.deps.setMidPoint(fidList, ID, ID1, ID2)
 
         self.UpdateInterface()
-        self.updateLandmarkComboBox(fidList, self.landmarkComboBox, False)
+        self.deps.updateLandmarkComboBox(fidList, self.landmarkComboBox, False)
 
     def onCloseScene(self, obj, event):
         self.colorSliceVolumes = dict()

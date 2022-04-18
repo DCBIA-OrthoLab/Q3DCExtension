@@ -226,6 +226,26 @@ class DependantMarkupsLogic(
 
             self.setData(node, data)
 
+    def updateLandmarkComboBox(self, node, comboBox, displayMidPoints=True):
+        current = comboBox.currentData
+
+        data = self.getData(node)
+
+        comboBox.blockSignals(True)
+        comboBox.clear()
+
+        for idx in range(node.GetNumberOfControlPoints()):
+            ID = node.GetNthControlPointID(idx)
+            label = node.GetNthControlPointLabel(idx)
+            if data[ID]["midPoint"]["isMidPoint"] and not displayMidPoints:
+                continue
+            comboBox.addItem(label, ID)
+
+        idx = comboBox.findData(current)
+        if idx >= 0:
+            comboBox.setCurrentIndex(idx)
+
+        comboBox.blockSignals(False)
 
 class DependantMarkupsTest(ScriptedLoadableModuleTest):
     def setUp(self):
