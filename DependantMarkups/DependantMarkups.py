@@ -21,7 +21,7 @@ class DependantMarkups(ScriptedLoadableModule):
         parent.categories = ["Developer Tools"]
         parent.dependencies = []
         parent.contributors = [
-            'David Allemang (Kitware Inc.)',
+            "David Allemang (Kitware Inc.)",
         ]
         parent.helpText = """
         Dependent Markups is a collection of utilities to manage markups that 
@@ -40,9 +40,12 @@ class VTKSuppressibleObservationMixin(VTKObservationMixin):
     def suppress(self, obj=..., event=..., method=...):
         suppressed = []
         for o, e, m, g, t, p in self.Observations:
-            if obj is not ... and obj != o: continue
-            if event is not ... and event != e: continue
-            if method is not ... and method != m: continue
+            if obj is not ... and obj != o:
+                continue
+            if event is not ... and event != e:
+                continue
+            if method is not ... and method != m:
+                continue
 
             o.RemoveObserver(t)
             self.Observations.remove([o, e, m, g, t, p])
@@ -56,8 +59,7 @@ class VTKSuppressibleObservationMixin(VTKObservationMixin):
 
 
 class DependantMarkupsLogic(
-    ScriptedLoadableModuleLogic,
-    VTKSuppressibleObservationMixin
+    ScriptedLoadableModuleLogic, VTKSuppressibleObservationMixin
 ):
     def __init__(self):
         ScriptedLoadableModuleLogic.__init__(self)
@@ -67,15 +69,15 @@ class DependantMarkupsLogic(
 
     def default(self):
         return {
-            'midPoint': {
-                'definedByThisMarkup': [],
-                'isMidPoint': False,
-                'Point1': None,
-                'Point2': None,
+            "midPoint": {
+                "definedByThisMarkup": [],
+                "isMidPoint": False,
+                "Point1": None,
+                "Point2": None,
             },
-            'projection': {
-                'isProjected': self.default_projected,
-                'closestPointIndex': None
+            "projection": {
+                "isProjected": self.default_projected,
+                "closestPointIndex": None,
             },
         }
 
@@ -98,60 +100,70 @@ class DependantMarkupsLogic(
         indexClosestPoint = pointLocator.FindClosestPoint(landmarkCoord)
         return indexClosestPoint
 
-    def replaceLandmark(self, inputModelPolyData, fidNode, landmarkID,
-                        indexClosestPoint):
+    def replaceLandmark(
+        self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint
+    ):
         landmarkCoord = [-1, -1, -1]
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
         fidNode.SetNthControlPointPositionFromArray(
-            landmarkID, landmarkCoord,
+            landmarkID,
+            landmarkCoord,
             slicer.vtkMRMLMarkupsNode.PositionPreview,
         )
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
             markupsIndex = fidNode.GetNthControlPointIndexByID(selectedFidReflID)
-            indexClosestPoint = self.getClosestPointIndex(fidNode,
-                                                          modelOnProject.GetPolyData(),
-                                                          markupsIndex)
-            self.replaceLandmark(modelOnProject.GetPolyData(), fidNode, markupsIndex,
-                                 indexClosestPoint)
+            indexClosestPoint = self.getClosestPointIndex(
+                fidNode, modelOnProject.GetPolyData(), markupsIndex
+            )
+            self.replaceLandmark(
+                modelOnProject.GetPolyData(), fidNode, markupsIndex, indexClosestPoint
+            )
             return indexClosestPoint
 
     def getModel(self, node):
-        return node.GetNodeReference('MODEL')
+        return node.GetNodeReference("MODEL")
 
     def computeProjection(self, node, ID):
         model = self.getModel(node)
-        if not model: return
+        if not model:
+            return
 
         self.projectOnSurface(model, node, ID)
 
     def connect(self, node, model):
-        self.addObserver(node, node.PointAddedEvent, self.onPointsChanged, priority=100.0)
-        self.addObserver(node, node.PointModifiedEvent, self.onPointsChanged, priority=100.0)
-        self.addObserver(node, node.PointRemovedEvent, self.onPointsChanged, priority=100.0)
+        self.addObserver(
+            node, node.PointAddedEvent, self.onPointsChanged, priority=100.0
+        )
+        self.addObserver(
+            node, node.PointModifiedEvent, self.onPointsChanged, priority=100.0
+        )
+        self.addObserver(
+            node, node.PointRemovedEvent, self.onPointsChanged, priority=100.0
+        )
 
-        node.AddNodeReferenceID('MODEL', model.GetID())
+        node.AddNodeReferenceID("MODEL", model.GetID())
 
     def getData(self, node):
-        text = node.GetAttribute('descriptions')
+        text = node.GetAttribute("descriptions")
         if not text:
             return {}
         return json.loads(text)
 
     def setData(self, node, data):
         text = json.dumps(data)
-        node.SetAttribute('descriptions', text)
+        node.SetAttribute("descriptions", text)
 
     def setMidPoint(self, node, ID, ID1, ID2):
         data = self.getData(node)
 
-        data[ID]['midPoint']['isMidPoint'] = True
-        data[ID]['midPoint']['Point1'] = ID1
-        data[ID]['midPoint']['Point2'] = ID2
+        data[ID]["midPoint"]["isMidPoint"] = True
+        data[ID]["midPoint"]["Point1"] = ID1
+        data[ID]["midPoint"]["Point2"] = ID2
 
-        data[ID1]['midPoint']['definedByThisMarkup'].append(ID)
-        data[ID2]['midPoint']['definedByThisMarkup'].append(ID)
+        data[ID1]["midPoint"]["definedByThisMarkup"].append(ID)
+        data[ID2]["midPoint"]["definedByThisMarkup"].append(ID)
 
         self.setData(node, data)
 
@@ -160,8 +172,8 @@ class DependantMarkupsLogic(
     def setProjected(self, node, ID, isProjected):
         data = self.getData(node)
 
-        data[ID]['projection']['isProjected'] = isProjected
-        data[ID]['projection']['closestPointIndex'] = None
+        data[ID]["projection"]["isProjected"] = isProjected
+        data[ID]["projection"]["closestPointIndex"] = None
 
         self.setData(node, data)
 
@@ -175,7 +187,9 @@ class DependantMarkupsLogic(
 
         mp = (p1 + p2) / 2
 
-        node.SetNthControlPointPositionFromArray(node.GetNthControlPointIndexByID(ID), mp)
+        node.SetNthControlPointPositionFromArray(
+            node.GetNthControlPointIndexByID(ID), mp
+        )
 
     def onPointsChanged(self, node, e):
         with self.suppress(node, method=self.onPointsChanged):
@@ -193,24 +207,22 @@ class DependantMarkupsLogic(
             for ID in previous - current:
                 del data[ID]
                 for sub in data.values():
-                    if sub['midPoint']['isMidPoint']:
-                        if ID in (sub['midPoint']['Point1'], sub['midPoint']['Point2']):
-                            sub['midPoint']['isMidPoint'] = False
-                            sub['midPoint']['Point1'] = None
-                            sub['midPoint']['Point2'] = None
+                    if sub["midPoint"]["isMidPoint"]:
+                        if ID in (sub["midPoint"]["Point1"], sub["midPoint"]["Point2"]):
+                            sub["midPoint"]["isMidPoint"] = False
+                            sub["midPoint"]["Point1"] = None
+                            sub["midPoint"]["Point2"] = None
 
             for ID, desc in data.items():
-                if desc['midPoint']['isMidPoint']:
+                if desc["midPoint"]["isMidPoint"]:
                     self.computeMidPoint(
                         node,
                         ID,
-                        desc['midPoint']['Point1'],
-                        desc['midPoint']['Point2'],
+                        desc["midPoint"]["Point1"],
+                        desc["midPoint"]["Point2"],
                     )
-                if desc['projection']['isProjected']:
-                    self.computeProjection(
-                        node, ID
-                    )
+                if desc["projection"]["isProjected"]:
+                    self.computeProjection(node, ID)
 
             self.setData(node, data)
 
@@ -221,4 +233,4 @@ class DependantMarkupsTest(ScriptedLoadableModuleTest):
 
     def runTest(self):
         self.setUp()
-        self.delayDisplay('Tests not yet implemented.')
+        self.delayDisplay("Tests not yet implemented.")

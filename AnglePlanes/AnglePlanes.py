@@ -20,8 +20,12 @@ class AnglePlanes(ScriptedLoadableModule):
         parent.title = "Angle Planes"
         parent.categories = ["Quantification"]
         parent.dependencies = ["DependantMarkups"]
-        parent.contributors = ["Julia Lopinto", "Juan Carlos Prieto", "Francois Budin",
-                               "Jean-Baptiste Vimort"]
+        parent.contributors = [
+            "Julia Lopinto",
+            "Juan Carlos Prieto",
+            "Francois Budin",
+            "Jean-Baptiste Vimort",
+        ]
         parent.helpText = """
             This Module is used to calculate the angle between two planes by using the normals.
             The user gets the choice to use two planes which are already implemented on Slicer
@@ -64,20 +68,24 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.planeControlsDictionary = {}
         self.planeCollection = vtk.vtkPlaneCollection()
         self.ignoredNodeNames = (
-            'Red Volume Slice', 'Yellow Volume Slice', 'Green Volume Slice')
+            "Red Volume Slice",
+            "Yellow Volume Slice",
+            "Green Volume Slice",
+        )
         self.colorSliceVolumes = dict()
         self.interactionNode = slicer.mrmlScene.GetNodeByID(
-            "vtkMRMLInteractionNodeSingleton")
+            "vtkMRMLInteractionNodeSingleton"
+        )
 
         # Load widget from .ui file (created by Qt Designer)
-        uiWidget = slicer.util.loadUI(self.resourcePath('UI/AnglePlanes.ui'))
+        uiWidget = slicer.util.loadUI(self.resourcePath("UI/AnglePlanes.ui"))
         self.layout.addWidget(uiWidget)
         self.ui = slicer.util.childWidgetVariables(uiWidget)
 
         # --------------------------- Scene --------------------------#
         self.ui.treeView.setMRMLScene(slicer.app.mrmlScene())
         self.ui.treeView.sceneModel().setHorizontalHeaderLabels(["Models"])
-        self.ui.treeView.sortFilterProxyModel().nodeTypes = ['vtkMRMLModelNode']
+        self.ui.treeView.sortFilterProxyModel().nodeTypes = ["vtkMRMLModelNode"]
         self.ui.treeView.header().setVisible(False)
         self.autoChangeLayout = self.ui.autoChangeLayout
         self.computeBox = self.ui.computeBox
@@ -89,7 +97,8 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.inputLandmarksSelector = self.ui.inputLandmarksSelector
         self.inputLandmarksSelector.setMRMLScene(slicer.mrmlScene)
         self.inputLandmarksSelector.setEnabled(
-            False)  # The "enable" property seems to not be imported from the .ui
+            False
+        )  # The "enable" property seems to not be imported from the .ui
         self.addPlaneButton = self.ui.addPlaneButton
         self.landmarkComboBox = self.ui.landmarkComboBox
         self.surfaceDeplacementCheckBox = self.ui.surfaceDeplacementCheckBox
@@ -109,17 +118,17 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.results = self.ui.results
         self.tableResult = self.ui.tableResult
         self.getAngle_RL = qt.QLabel("0")
-        self.getAngle_RL.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+        self.getAngle_RL.setStyleSheet("QLabel{qproperty-alignment:AlignCenter;}")
         self.getAngle_SI = qt.QLabel("0")
-        self.getAngle_SI.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+        self.getAngle_SI.setStyleSheet("QLabel{qproperty-alignment:AlignCenter;}")
         self.getAngle_AP = qt.QLabel("0")
-        self.getAngle_AP.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+        self.getAngle_AP.setStyleSheet("QLabel{qproperty-alignment:AlignCenter;}")
         self.getAngle_RL_comp = qt.QLabel("0")
-        self.getAngle_RL_comp.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+        self.getAngle_RL_comp.setStyleSheet("QLabel{qproperty-alignment:AlignCenter;}")
         self.getAngle_SI_comp = qt.QLabel("0")
-        self.getAngle_SI_comp.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+        self.getAngle_SI_comp.setStyleSheet("QLabel{qproperty-alignment:AlignCenter;}")
         self.getAngle_AP_comp = qt.QLabel("0")
-        self.getAngle_AP_comp.setStyleSheet('QLabel{qproperty-alignment:AlignCenter;}')
+        self.getAngle_AP_comp.setStyleSheet("QLabel{qproperty-alignment:AlignCenter;}")
         self.tableResult.setColumnWidth(1, 180)
         self.tableResult.setCellWidget(0, 0, self.getAngle_RL)
         self.tableResult.setCellWidget(0, 1, self.getAngle_RL_comp)
@@ -132,36 +141,46 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.save = self.ui.save
         self.read = self.ui.read
         # -------------------------------- CONNECTIONS --------------------------------#
-        self.computeBox.connect('clicked()', self.onComputeBox)
-        self.inputModelSelector.connect('currentNodeChanged(vtkMRMLNode*)',
-                                        self.onModelChanged)
-        self.inputLandmarksSelector.connect('currentNodeChanged(vtkMRMLNode*)',
-                                            self.onLandmarksChanged)
-        self.planeComboBox1.connect('currentIndexChanged(QString)', self.valueComboBox)
-        self.planeComboBox2.connect('currentIndexChanged(QString)', self.valueComboBox)
-        self.addPlaneButton.connect('clicked()', self.addNewPlane)
-        self.landmarkComboBox.connect('currentIndexChanged(QString)',
-                                      self.UpdateInterface)
-        self.surfaceDeplacementCheckBox.connect('stateChanged(int)',
-                                                self.onSurfaceDeplacementStateChanged)
-        self.selectPlaneForMidPoint.connect('currentIndexChanged(int)',
-                                            self.onChangeMiddlePointFiducialNode)
-        self.defineMiddlePointButton.connect('clicked()', self.onAddMidPoint)
-        self.results.connect('clicked()', self.angleValue)
-        self.save.connect('clicked(bool)', self.onSavePlanes)
-        self.read.connect('clicked(bool)', self.onReadPlanes)
+        self.computeBox.connect("clicked()", self.onComputeBox)
+        self.inputModelSelector.connect(
+            "currentNodeChanged(vtkMRMLNode*)", self.onModelChanged
+        )
+        self.inputLandmarksSelector.connect(
+            "currentNodeChanged(vtkMRMLNode*)", self.onLandmarksChanged
+        )
+        self.planeComboBox1.connect("currentIndexChanged(QString)", self.valueComboBox)
+        self.planeComboBox2.connect("currentIndexChanged(QString)", self.valueComboBox)
+        self.addPlaneButton.connect("clicked()", self.addNewPlane)
+        self.landmarkComboBox.connect(
+            "currentIndexChanged(QString)", self.UpdateInterface
+        )
+        self.surfaceDeplacementCheckBox.connect(
+            "stateChanged(int)", self.onSurfaceDeplacementStateChanged
+        )
+        self.selectPlaneForMidPoint.connect(
+            "currentIndexChanged(int)", self.onChangeMiddlePointFiducialNode
+        )
+        self.defineMiddlePointButton.connect("clicked()", self.onAddMidPoint)
+        self.results.connect("clicked()", self.angleValue)
+        self.save.connect("clicked(bool)", self.onSavePlanes)
+        self.read.connect("clicked(bool)", self.onReadPlanes)
 
         slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
 
         for i in self.getPositionOfModelNodes(False):
             modelnode = slicer.mrmlScene.GetNthNodeByClass(i, "vtkMRMLModelNode")
-            modelnode.AddObserver(modelnode.DisplayModifiedEvent,
-                                  self.onChangeModelDisplay)
+            modelnode.AddObserver(
+                modelnode.DisplayModifiedEvent, self.onChangeModelDisplay
+            )
 
-        self.addObserver(slicer.mrmlScene, slicer.vtkMRMLScene.NodeAddedEvent,
-                         self.nodeAddedCallback)
-        self.addObserver(slicer.mrmlScene, slicer.vtkMRMLScene.NodeRemovedEvent,
-                         self.nodeRemovedCallback)
+        self.addObserver(
+            slicer.mrmlScene, slicer.vtkMRMLScene.NodeAddedEvent, self.nodeAddedCallback
+        )
+        self.addObserver(
+            slicer.mrmlScene,
+            slicer.vtkMRMLScene.NodeRemovedEvent,
+            self.nodeRemovedCallback,
+        )
 
         # ------------------------------ INITIALISATION ---------------------------------
         self.fillColorsComboBox(self.planeComboBox1)
@@ -198,38 +217,47 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for i in range(0, end):
             fidList = list.GetItemAsObject(i)
             landmarkDescription = self.logic.decodeJSON(
-                fidList.GetAttribute("landmarkDescription"))
+                fidList.GetAttribute("landmarkDescription")
+            )
             if landmarkDescription:
                 for n in range(fidList.GetNumberOfMarkups()):
                     markupID = fidList.GetNthMarkupID(n)
                     markupLabel = fidList.GetNthMarkupLabel(n)
                     landmarkDescription[markupID]["landmarkLabel"] = markupLabel
-                fidList.SetAttribute("landmarkDescription",
-                                     self.logic.encodeJSON(landmarkDescription))
+                fidList.SetAttribute(
+                    "landmarkDescription", self.logic.encodeJSON(landmarkDescription)
+                )
 
     def UpdateInterface(self):
-        print('--- UpdateInterface ---')
+        print("--- UpdateInterface ---")
         self.logic.UpdateThreeDView(self.landmarkComboBox.currentData)
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def nodeAddedCallback(self, caller, eventId, callData):
         if isinstance(callData, slicer.vtkMRMLModelNode):
-            callData.AddObserver(callData.DisplayModifiedEvent,
-                                 self.onChangeModelDisplay)
-            self.addObserver(callData, callData.PolyDataModifiedEvent,
-                             self.onModelNodePolyDataModified)
+            callData.AddObserver(
+                callData.DisplayModifiedEvent, self.onChangeModelDisplay
+            )
+            self.addObserver(
+                callData,
+                callData.PolyDataModifiedEvent,
+                self.onModelNodePolyDataModified,
+            )
             self.updateOnSurfaceCheckBoxes()
 
     @vtk.calldata_type(vtk.VTK_OBJECT)
     def nodeRemovedCallback(self, caller, eventId, callData):
         if isinstance(callData, slicer.vtkMRMLModelNode):
-            self.removeObserver(callData, callData.PolyDataModifiedEvent,
-                                self.onModelNodePolyDataModified)
+            self.removeObserver(
+                callData,
+                callData.PolyDataModifiedEvent,
+                self.onModelNodePolyDataModified,
+            )
             callData.RemoveObservers(callData.DisplayModifiedEvent)
             self.updateOnSurfaceCheckBoxes()
         if isinstance(callData, slicer.vtkMRMLMarkupsFiducialNode):
             name = callData.GetName()
-            planeid = name[len('P'):]
+            planeid = name[len("P") :]
             name = "Plane " + planeid
             if name in self.planeControlsDictionary.keys():
                 self.RemoveManualPlane(planeid)
@@ -242,8 +270,11 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self.logic.selectedModel:
             Model = self.logic.selectedModel
             try:
-                Model.RemoveObserver(self.logic.decodeJSON(
-                    self.logic.selectedModel.GetAttribute("modelModifieTagEvent")))
+                Model.RemoveObserver(
+                    self.logic.decodeJSON(
+                        self.logic.selectedModel.GetAttribute("modelModifieTagEvent")
+                    )
+                )
             except:
                 pass
         self.logic.selectedModel = self.inputModelSelector.currentNode()
@@ -310,7 +341,7 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for idx in range(fidList.GetNumberOfControlPoints()):
             ID = fidList.GetNthControlPointID(idx)
             label = fidList.GetNthControlPointLabel(idx)
-            if data[ID]['midPoint']['isMidPoint'] and not displayMidPoint:
+            if data[ID]["midPoint"]["isMidPoint"] and not displayMidPoint:
                 continue
             combobox.addItem(label, ID)
 
@@ -373,10 +404,12 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.planeControlsId = keyLoad
         else:
             self.planeControlsId += 1
-        planeControls = AnglePlanesWidgetPlaneControl(self,
-                                                      self.planeControlsId,
-                                                      self.planeCollection,
-                                                      self.inputLandmarksSelector.currentNode())
+        planeControls = AnglePlanesWidgetPlaneControl(
+            self,
+            self.planeControlsId,
+            self.planeCollection,
+            self.inputLandmarksSelector.currentNode(),
+        )
         self.managePlanesFormLayout.addWidget(planeControls.widget)
         key = "Plane " + str(self.planeControlsId)
         self.planeControlsDictionary[key] = planeControls
@@ -411,7 +444,8 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.valueComboBox()
         if self.selectPlaneForMidPoint.findText(key) > -1:
             self.selectPlaneForMidPoint.removeItem(
-                self.selectPlaneForMidPoint.findText(key))
+                self.selectPlaneForMidPoint.findText(key)
+            )
 
     def onComputeBox(self):
         positionOfVisibleNodes = self.getPositionOfModelNodes(True)
@@ -470,10 +504,10 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.planeZmax.SetNormal(0, 0, -1)
         self.planeCollection.AddItem(self.planeZmax)
         # print self.planeCollection
-        dictColors = {'Red': 32, 'Yellow': 15, 'Green': 1}
+        dictColors = {"Red": 32, "Yellow": 15, "Green": 1}
         for x in dictColors.keys():
             sampleVolumeNode = self.CreateNewNode(x, dictColors[x], dim, origin)
-            compNode = slicer.util.getNode('vtkMRMLSliceCompositeNode' + x)
+            compNode = slicer.util.getNode("vtkMRMLSliceCompositeNode" + x)
             compNode.SetLinkedControl(False)
             compNode.SetBackgroundVolumeID(sampleVolumeNode.GetID())
             # print "set background" + x
@@ -496,8 +530,12 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # we add a pseudo-random number to the name of our empty volume to avoid the risk of having a volume called
         #  exactly the same by the user which could be confusing. We could also have used slicer.app.sessionId()
         if colorName not in self.colorSliceVolumes.keys():
-            VolumeName = "AnglePlanes_EmptyVolume_" + str(
-                slicer.app.applicationPid()) + "_" + colorName
+            VolumeName = (
+                "AnglePlanes_EmptyVolume_"
+                + str(slicer.app.applicationPid())
+                + "_"
+                + colorName
+            )
             # Do NOT set the spacing and the origin of imageData (vtkImageData)
             # The spacing and the origin should only be set in the vtkMRMLScalarVolumeNode!!!!!!
             # We only create an image of 1 voxel (as we only use it to color the planes
@@ -505,7 +543,7 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             imageData.SetDimensions(1, 1, 1)
             imageData.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
             imageData.SetScalarComponentFromDouble(0, 0, 0, 0, color)
-            if hasattr(slicer, 'vtkMRMLLabelMapVolumeNode'):
+            if hasattr(slicer, "vtkMRMLLabelMapVolumeNode"):
                 sampleVolumeNode = slicer.vtkMRMLLabelMapVolumeNode()
             else:
                 sampleVolumeNode = slicer.vtkMRMLScalarVolumeNode()
@@ -513,19 +551,21 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             sampleVolumeNode.SetName(VolumeName)
             labelmapVolumeDisplayNode = slicer.vtkMRMLLabelMapVolumeDisplayNode()
             slicer.mrmlScene.AddNode(labelmapVolumeDisplayNode)
-            colorNode = slicer.util.getNode('GenericAnatomyColors')
+            colorNode = slicer.util.getNode("GenericAnatomyColors")
             labelmapVolumeDisplayNode.SetAndObserveColorNodeID(colorNode.GetID())
             sampleVolumeNode.SetAndObserveImageData(imageData)
             sampleVolumeNode.SetAndObserveDisplayNodeID(
-                labelmapVolumeDisplayNode.GetID())
+                labelmapVolumeDisplayNode.GetID()
+            )
             labelmapVolumeDisplayNode.VisibilityOn()
             self.colorSliceVolumes[colorName] = sampleVolumeNode.GetID()
         sampleVolumeNode = slicer.mrmlScene.GetNodeByID(
-            self.colorSliceVolumes[colorName])
+            self.colorSliceVolumes[colorName]
+        )
         sampleVolumeNode.HideFromEditorsOn()
         sampleVolumeNode.SetOrigin(origin[0], origin[1], origin[2])
         sampleVolumeNode.SetSpacing(dim[0], dim[1], dim[2])
-        if not hasattr(slicer, 'vtkMRMLLabelMapVolumeNode'):
+        if not hasattr(slicer, "vtkMRMLLabelMapVolumeNode"):
             sampleVolumeNode.SetLabelMap(1)
         sampleVolumeNode.SetHideFromEditors(True)
         sampleVolumeNode.SetSaveWithScene(False)
@@ -556,11 +596,12 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for i in range(0, end):
             model = models.GetItemAsObject(i)
             hardenModel = slicer.mrmlScene.GetNodesByName(
-                model.GetName()).GetItemAsObject(0)
+                model.GetName()
+            ).GetItemAsObject(0)
             slicer.mrmlScene.RemoveNode(hardenModel)
         keys = list(self.planeControlsDictionary.keys())
         for x in keys:
-            self.RemoveManualPlane(x[len('Plane '):])
+            self.RemoveManualPlane(x[len("Plane ") :])
         self.planeControlsDictionary = dict()
         self.addPlaneButton.setDisabled(True)
         self.getAngle_RL.setText("0")
@@ -599,10 +640,12 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.planeComboBox2.removeItem(self.planeComboBox2.findText(colorPlane1))
         if colorPlane2 != "None":
             self.planeComboBox1.removeItem(self.planeComboBox1.findText(colorPlane2))
-        self.setFirstItemInComboBoxNotGivenString(self.planeComboBox1, colorPlane1,
-                                                  colorPlane2)
-        self.setFirstItemInComboBoxNotGivenString(self.planeComboBox2, colorPlane2,
-                                                  colorPlane1)
+        self.setFirstItemInComboBoxNotGivenString(
+            self.planeComboBox1, colorPlane1, colorPlane2
+        )
+        self.setFirstItemInComboBoxNotGivenString(
+            self.planeComboBox2, colorPlane2, colorPlane1
+        )
         self.planeComboBox1.blockSignals(False)
         self.planeComboBox2.blockSignals(False)
 
@@ -610,7 +653,7 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.updatePlanesComboBoxes()
         # Hide everything before showing what is necessary
         for x in self.logic.ColorNodeCorrespondence.keys():
-            compNode = slicer.util.getNode('vtkMRMLSliceCompositeNode' + x)
+            compNode = slicer.util.getNode("vtkMRMLSliceCompositeNode" + x)
             compNode.SetLinkedControl(False)
             slice = slicer.mrmlScene.GetNodeByID(self.logic.ColorNodeCorrespondence[x])
             slice.SetWidgetVisible(False)
@@ -625,7 +668,8 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if colorPlane1 != "None":
             if colorPlane1 in self.logic.ColorNodeCorrespondence:
                 slice1 = slicer.util.getNode(
-                    self.logic.ColorNodeCorrespondence[colorPlane1])
+                    self.logic.ColorNodeCorrespondence[colorPlane1]
+                )
                 self.logic.getMatrix(slice1)
                 slice1.SetWidgetVisible(True)
                 slice1.SetSliceVisible(True)
@@ -639,7 +683,8 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if colorPlane2 != "None":
             if colorPlane2 in self.logic.ColorNodeCorrespondence:
                 slice2 = slicer.util.getNode(
-                    self.logic.ColorNodeCorrespondence[colorPlane2])
+                    self.logic.ColorNodeCorrespondence[colorPlane2]
+                )
                 self.logic.getMatrix(slice2)
                 slice2.SetWidgetVisible(True)
                 slice2.SetSliceVisible(True)
@@ -687,14 +732,14 @@ class AnglePlanesWidgetPlaneControl(qt.QFrame):
         qt.QFrame.__init__(self)
         # UI setup
         scriptedModulesPath = os.path.dirname(slicer.util.modulePath("AnglePlanes"))
-        uiFile = os.path.join(scriptedModulesPath, 'Resources', 'UI/PlaneControl.ui')
+        uiFile = os.path.join(scriptedModulesPath, "Resources", "UI/PlaneControl.ui")
         uiWidget = slicer.util.loadUI(uiFile)
         self.widget = uiWidget
         self.ui = slicer.util.childWidgetVariables(uiWidget)
         # self.anglePlanes.layout.addWidget(widget)
 
         self.planeLabel = self.ui.planeLabel
-        self.planeLabel.setText('Plane ' + str(id) + ":")
+        self.planeLabel.setText("Plane " + str(id) + ":")
         self.addFiducialButton = self.ui.addFiducialButton
         self.landmark1ComboBox = self.ui.landmark1ComboBox
         self.landmark2ComboBox = self.ui.landmark2ComboBox
@@ -704,19 +749,23 @@ class AnglePlanesWidgetPlaneControl(qt.QFrame):
         self.HidePlaneCheckBox = self.ui.HidePlaneCheckBox
         self.removePlaneButton = self.ui.removePlaneButton
         # connections
-        self.addFiducialButton.connect('clicked()', self.addLandMarkClicked)
-        self.landmark1ComboBox.connect('currentIndexChanged(QString)',
-                                       self.placePlaneClicked)
-        self.landmark2ComboBox.connect('currentIndexChanged(QString)',
-                                       self.placePlaneClicked)
-        self.landmark3ComboBox.connect('currentIndexChanged(QString)',
-                                       self.placePlaneClicked)
-        self.slideOpacity.connect('valueChanged(double)', self.placePlaneClicked)
-        self.AdaptToBoundingBoxCheckBox.connect('stateChanged(int)', self.onBBox)
-        self.AdaptToBoundingBoxCheckBox.connect('stateChanged(int)',
-                                                self.placePlaneClicked)
-        self.HidePlaneCheckBox.connect('stateChanged(int)', self.update)
-        self.removePlaneButton.connect('clicked(bool)', self.onRemove)
+        self.addFiducialButton.connect("clicked()", self.addLandMarkClicked)
+        self.landmark1ComboBox.connect(
+            "currentIndexChanged(QString)", self.placePlaneClicked
+        )
+        self.landmark2ComboBox.connect(
+            "currentIndexChanged(QString)", self.placePlaneClicked
+        )
+        self.landmark3ComboBox.connect(
+            "currentIndexChanged(QString)", self.placePlaneClicked
+        )
+        self.slideOpacity.connect("valueChanged(double)", self.placePlaneClicked)
+        self.AdaptToBoundingBoxCheckBox.connect("stateChanged(int)", self.onBBox)
+        self.AdaptToBoundingBoxCheckBox.connect(
+            "stateChanged(int)", self.placePlaneClicked
+        )
+        self.HidePlaneCheckBox.connect("stateChanged(int)", self.update)
+        self.removePlaneButton.connect("clicked(bool)", self.onRemove)
         # fiducial list for the plane
         self.anglePlanes.updateLandmarkComboBox(self.fidlist, self.landmark1ComboBox)
         self.anglePlanes.updateLandmarkComboBox(self.fidlist, self.landmark2ComboBox)
@@ -745,15 +794,18 @@ class AnglePlanesWidgetPlaneControl(qt.QFrame):
 
         coord = numpy.zeros(3)
         self.fidlist.GetNthFiducialPosition(
-            int(self.landmark1ComboBox.currentIndex) - 1, coord)
+            int(self.landmark1ComboBox.currentIndex) - 1, coord
+        )
         listCoord.append(coord)
 
         self.fidlist.GetNthFiducialPosition(
-            int(self.landmark2ComboBox.currentIndex) - 1, coord)
+            int(self.landmark2ComboBox.currentIndex) - 1, coord
+        )
         listCoord.append(coord)
 
         self.fidlist.GetNthFiducialPosition(
-            int(self.landmark3ComboBox.currentIndex) - 1, coord)
+            int(self.landmark3ComboBox.currentIndex) - 1, coord
+        )
         listCoord.append(coord)
 
         return listCoord
@@ -770,24 +822,29 @@ class AnglePlanesWidgetPlaneControl(qt.QFrame):
         self.planeCollection = self.anglePlanes.planeCollection
         if self.PlaneIsDefined():
             if self.HidePlaneCheckBox.isChecked():
-                self.normal = self.logic.planeLandmarks(self.fidlist,
-                                                        self.landmark1ComboBox.currentData,
-                                                        self.landmark2ComboBox.currentData,
-                                                        self.landmark3ComboBox.currentData,
-                                                        self.normal,
-                                                        self.AdaptToBoundingBoxCheckBox,
-                                                        0, self.planeCollection,
-                                                        self.actor)
+                self.normal = self.logic.planeLandmarks(
+                    self.fidlist,
+                    self.landmark1ComboBox.currentData,
+                    self.landmark2ComboBox.currentData,
+                    self.landmark3ComboBox.currentData,
+                    self.normal,
+                    self.AdaptToBoundingBoxCheckBox,
+                    0,
+                    self.planeCollection,
+                    self.actor,
+                )
             else:
-                self.normal = self.logic.planeLandmarks(self.fidlist,
-                                                        self.landmark1ComboBox.currentData,
-                                                        self.landmark2ComboBox.currentData,
-                                                        self.landmark3ComboBox.currentData,
-                                                        self.normal,
-                                                        self.AdaptToBoundingBoxCheckBox,
-                                                        self.slideOpacity.value,
-                                                        self.planeCollection,
-                                                        self.actor)
+                self.normal = self.logic.planeLandmarks(
+                    self.fidlist,
+                    self.landmark1ComboBox.currentData,
+                    self.landmark2ComboBox.currentData,
+                    self.landmark3ComboBox.currentData,
+                    self.normal,
+                    self.AdaptToBoundingBoxCheckBox,
+                    self.slideOpacity.value,
+                    self.planeCollection,
+                    self.actor,
+                )
 
     def addLandMarkClicked(self):
         print("Add landmarks")
@@ -800,7 +857,8 @@ class AnglePlanesWidgetPlaneControl(qt.QFrame):
         selectionNode.SetActivePlaceNodeID(self.fidlist.GetID())
         # print selectionNode
         interactionNode = slicer.mrmlScene.GetNodeByID(
-            "vtkMRMLInteractionNodeSingleton")
+            "vtkMRMLInteractionNodeSingleton"
+        )
         interactionNode.SetCurrentInteractionMode(1)
         # To select multiple points in the 3D view, we want to have to click
         # on the "place fiducial" button multiple times
@@ -834,15 +892,15 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
         super().__init__()
 
         self.ColorNodeCorrespondence = {
-            'Red': 'vtkMRMLSliceNodeRed',
-            'Yellow': 'vtkMRMLSliceNodeYellow',
-            'Green': 'vtkMRMLSliceNodeGreen'
+            "Red": "vtkMRMLSliceNodeRed",
+            "Yellow": "vtkMRMLSliceNodeYellow",
+            "Green": "vtkMRMLSliceNodeGreen",
         }
         self.selectedFidList = None
         self.selectedModel = None
 
     def UpdateThreeDView(self, selectedFidReflID):
-        print('--- UpdateThreeDView ---')
+        print("--- UpdateThreeDView ---")
 
         if not self.selectedFidList:
             return
@@ -850,7 +908,7 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
             return
 
         # activate all landmarks
-        for fidList in slicer.mrmlScene.GetNodesByClass('vtkMRMLMarkupsFiducialNode'):
+        for fidList in slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode"):
             for idx in range(fidList.GetNumberOfControlPoints()):
                 fidList.SetNthControlPointLocked(idx, False)
 
@@ -869,19 +927,26 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
 
     def createIntermediateHardenModel(self, model):
         hardenModel = slicer.mrmlScene.GetNodesByName(
-            "SurfaceRegistration_" + model.GetName() + "_hardenCopy_" + str(
-                slicer.app.applicationPid())).GetItemAsObject(0)
+            "SurfaceRegistration_"
+            + model.GetName()
+            + "_hardenCopy_"
+            + str(slicer.app.applicationPid())
+        ).GetItemAsObject(0)
         if hardenModel is None:
             hardenModel = slicer.vtkMRMLModelNode()
         hardenPolyData = vtk.vtkPolyData()
         hardenPolyData.DeepCopy(model.GetPolyData())
         hardenModel.SetAndObservePolyData(hardenPolyData)
         hardenModel.SetName(
-            "SurfaceRegistration_" + model.GetName() + "_hardenCopy_" + str(
-                slicer.app.applicationPid()))
+            "SurfaceRegistration_"
+            + model.GetName()
+            + "_hardenCopy_"
+            + str(slicer.app.applicationPid())
+        )
         if model.GetParentTransformNode():
             hardenModel.SetAndObserveTransformNodeID(
-                model.GetParentTransformNode().GetID())
+                model.GetParentTransformNode().GetID()
+            )
         hardenModel.HideFromEditorsOn()
         slicer.mrmlScene.AddNode(hardenModel)
         logic = slicer.vtkSlicerTransformLogic()
@@ -903,19 +968,27 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
                 fidList.SetNodeReferenceID("hardenModel", hardenModel.GetID())
                 # reproject the fiducials on the new model
                 landmarkDescription = self.decodeJSON(
-                    fidList.GetAttribute("landmarkDescription"))
+                    fidList.GetAttribute("landmarkDescription")
+                )
                 for n in range(fidList.GetNumberOfMarkups()):
                     markupID = fidList.GetNthMarkupID(n)
-                    if landmarkDescription[markupID]["projection"][
-                        "isProjected"] == True:
+                    if (
+                        landmarkDescription[markupID]["projection"]["isProjected"]
+                        == True
+                    ):
                         hardenModel = fidList.GetNodeReference("hardenModel")
                         markupsIndex = fidList.GetNthControlPointIndexByID(markupID)
-                        self.replaceLandmark(hardenModel.GetPolyData(), fidList,
-                                             markupsIndex,
-                                             landmarkDescription[markupID][
-                                                 "projection"]["closestPointIndex"])
-                    fidList.SetAttribute("landmarkDescription",
-                                         self.encodeJSON(landmarkDescription))
+                        self.replaceLandmark(
+                            hardenModel.GetPolyData(),
+                            fidList,
+                            markupsIndex,
+                            landmarkDescription[markupID]["projection"][
+                                "closestPointIndex"
+                            ],
+                        )
+                    fidList.SetAttribute(
+                        "landmarkDescription", self.encodeJSON(landmarkDescription)
+                    )
 
     def ModelChanged(self, inputModelSelector, inputLandmarksSelector):
         inputModel = inputModelSelector.currentNode()
@@ -925,9 +998,12 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
             hardenModel = self.createIntermediateHardenModel(inputModel)
             inputModel.SetNodeReferenceID("hardenModel", hardenModel.GetID())
             modelModifieTagEvent = inputModel.AddObserver(
-                inputModel.TransformModifiedEvent, self.onModelModified)
-            inputModel.SetAttribute("modelModifieTagEvent", self.encodeJSON(
-                {'modelModifieTagEvent': modelModifieTagEvent}))
+                inputModel.TransformModifiedEvent, self.onModelModified
+            )
+            inputModel.SetAttribute(
+                "modelModifieTagEvent",
+                self.encodeJSON({"modelModifieTagEvent": modelModifieTagEvent}),
+            )
             inputLandmarksSelector.setEnabled(True)
         # if no model is selected
         else:
@@ -943,7 +1019,8 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
             messageBox.setText(
                 "Your Markup Fiducial Node is currently modified by a transform,"
                 "if you choose to continue the program will apply the transform"
-                "before doing anything else!")
+                "before doing anything else!"
+            )
             messageBox.setInformativeText("Do you want to continue?")
             messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
             choice = messageBox.exec_()
@@ -967,7 +1044,8 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
         messageBox.setText(
             "The Markup Fiducial Node selected is curently projected on an"
             "other model, if you chose to continue the fiducials will be  "
-            "reprojected, and this could impact the functioning of other modules")
+            "reprojected, and this could impact the functioning of other modules"
+        )
         messageBox.setInformativeText("Do you want to continue?")
         messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
         choice = messageBox.exec_()
@@ -982,22 +1060,26 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
 
     def changementOfConnectedModel(self, landmarks, model, onSurface):
         landmarks.SetNodeReferenceID("connectedModel", model.GetID())
-        landmarks.SetNodeReferenceID("hardenModel",
-                                     model.GetNodeReferenceID("hardenModel"))
+        landmarks.SetNodeReferenceID(
+            "hardenModel", model.GetNodeReferenceID("hardenModel")
+        )
         landmarkDescription = self.decodeJSON(
-            landmarks.GetAttribute("landmarkDescription"))
+            landmarks.GetAttribute("landmarkDescription")
+        )
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
             if onSurface:
                 if landmarkDescription[markupID]["projection"]["isProjected"] == True:
                     hardenModel = landmarks.GetNodeReferenceID("hardenModel")
-                    landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
-                        self.projectOnSurface(hardenModel, landmarks, markupID)
+                    landmarkDescription[markupID]["projection"][
+                        "closestPointIndex"
+                    ] = self.projectOnSurface(hardenModel, landmarks, markupID)
             else:
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
-            landmarks.SetAttribute("landmarkDescription",
-                                   self.encodeJSON(landmarkDescription))
+            landmarks.SetAttribute(
+                "landmarkDescription", self.encodeJSON(landmarkDescription)
+            )
         landmarks.SetAttribute("isClean", self.encodeJSON({"isClean": False}))
 
     # Called when a landmark is added on a model
@@ -1026,14 +1108,34 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
         self.mat = slice.GetSliceToRAS()
         # print self.mat
         # Matrix with the elements of SliceToRAS
-        m = numpy.matrix([[self.mat.GetElement(0, 0), self.mat.GetElement(0, 1),
-                           self.mat.GetElement(0, 2), self.mat.GetElement(0, 3)],
-                          [self.mat.GetElement(1, 0), self.mat.GetElement(1, 1),
-                           self.mat.GetElement(1, 2), self.mat.GetElement(1, 3)],
-                          [self.mat.GetElement(2, 0), self.mat.GetElement(2, 1),
-                           self.mat.GetElement(2, 2), self.mat.GetElement(2, 3)],
-                          [self.mat.GetElement(3, 0), self.mat.GetElement(3, 1),
-                           self.mat.GetElement(3, 2), self.mat.GetElement(3, 3)]])
+        m = numpy.matrix(
+            [
+                [
+                    self.mat.GetElement(0, 0),
+                    self.mat.GetElement(0, 1),
+                    self.mat.GetElement(0, 2),
+                    self.mat.GetElement(0, 3),
+                ],
+                [
+                    self.mat.GetElement(1, 0),
+                    self.mat.GetElement(1, 1),
+                    self.mat.GetElement(1, 2),
+                    self.mat.GetElement(1, 3),
+                ],
+                [
+                    self.mat.GetElement(2, 0),
+                    self.mat.GetElement(2, 1),
+                    self.mat.GetElement(2, 2),
+                    self.mat.GetElement(2, 3),
+                ],
+                [
+                    self.mat.GetElement(3, 0),
+                    self.mat.GetElement(3, 1),
+                    self.mat.GetElement(3, 2),
+                    self.mat.GetElement(3, 3),
+                ],
+            ]
+        )
         # print m
         return m
 
@@ -1062,17 +1164,23 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
     def getAngle(self, normalVect1, normalVect2):
         # print "--- getAngle ---"
         norm1 = sqrt(
-            normalVect1[0] * normalVect1[0] + normalVect1[1] * normalVect1[1] +
-            normalVect1[2] * normalVect1[2])
+            normalVect1[0] * normalVect1[0]
+            + normalVect1[1] * normalVect1[1]
+            + normalVect1[2] * normalVect1[2]
+        )
         # print "norme 1: \n", norm1
         norm2 = sqrt(
-            normalVect2[0] * normalVect2[0] + normalVect2[1] * normalVect2[1] +
-            normalVect2[2] * normalVect2[2])
+            normalVect2[0] * normalVect2[0]
+            + normalVect2[1] * normalVect2[1]
+            + normalVect2[2] * normalVect2[2]
+        )
         # print "norme 2: \n", norm2
 
         scalar_product = (
-            normalVect1[0] * normalVect2[0] + normalVect1[1] * normalVect2[1] +
-            normalVect1[2] * normalVect2[2])
+            normalVect1[0] * normalVect2[0]
+            + normalVect1[1] * normalVect2[1]
+            + normalVect1[2] * normalVect2[2]
+        )
         # print "scalar product : \n", scalar_product
 
         angle = acos(scalar_product / (norm1 * norm2))
@@ -1083,18 +1191,21 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
         # print "Angle in degree", angle_degree
 
         norm1_RL = sqrt(
-            normalVect1[1] * normalVect1[1] + normalVect1[2] * normalVect1[2])
+            normalVect1[1] * normalVect1[1] + normalVect1[2] * normalVect1[2]
+        )
         # print "norme RL: \n", norm1_RL
         norm2_RL = sqrt(
-            normalVect2[1] * normalVect2[1] + normalVect2[2] * normalVect2[2])
+            normalVect2[1] * normalVect2[1] + normalVect2[2] * normalVect2[2]
+        )
         # print "norme RL: \n", norm2_RL
 
-        if (norm1_RL == 0 or norm2_RL == 0):
+        if norm1_RL == 0 or norm2_RL == 0:
             self.angle_degre_RL = 0
             self.angle_degre_RL_comp = 0
         else:
             scalar_product_RL = (
-                normalVect1[1] * normalVect2[1] + normalVect1[2] * normalVect2[2])
+                normalVect1[1] * normalVect2[1] + normalVect1[2] * normalVect2[2]
+            )
             # print "scalar product : \n", scalar_product_RL
             inter = scalar_product_RL / (norm1_RL * norm2_RL)
             if inter >= [[0.99999]]:
@@ -1109,18 +1220,21 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
             self.angle_degre_RL_comp = 180 - self.angle_degre_RL
 
         norm1_SI = sqrt(
-            normalVect1[0] * normalVect1[0] + normalVect1[1] * normalVect1[1])
+            normalVect1[0] * normalVect1[0] + normalVect1[1] * normalVect1[1]
+        )
         # print "norme1_SI : \n", norm1_SI
         norm2_SI = sqrt(
-            normalVect2[0] * normalVect2[0] + normalVect2[1] * normalVect2[1])
+            normalVect2[0] * normalVect2[0] + normalVect2[1] * normalVect2[1]
+        )
         # print "norme2_SI : \n", norm2_SI
 
-        if (norm1_SI == 0 or norm2_SI == 0):
+        if norm1_SI == 0 or norm2_SI == 0:
             self.angle_degre_SI = 0
             self.angle_degre_SI_comp = 0
         else:
             scalar_product_SI = (
-                normalVect1[0] * normalVect2[0] + normalVect1[1] * normalVect2[1])
+                normalVect1[0] * normalVect2[0] + normalVect1[1] * normalVect2[1]
+            )
             # print "scalar product_SI : \n", scalar_product_SI
 
             inter = scalar_product_SI / (norm1_SI * norm2_SI)
@@ -1137,18 +1251,21 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
             # print self.angle_degre_SI_comp
 
         norm1_AP = sqrt(
-            normalVect1[0] * normalVect1[0] + normalVect1[2] * normalVect1[2])
+            normalVect1[0] * normalVect1[0] + normalVect1[2] * normalVect1[2]
+        )
         # print "norme1_SI : \n", norm1_AP
         norm2_AP = sqrt(
-            normalVect2[0] * normalVect2[0] + normalVect2[2] * normalVect2[2])
+            normalVect2[0] * normalVect2[0] + normalVect2[2] * normalVect2[2]
+        )
         # print "norme2_SI : \n", norm2_AP
 
-        if (norm1_AP == 0 or norm2_AP == 0):
+        if norm1_AP == 0 or norm2_AP == 0:
             self.angle_degre_AP = 0
             self.angle_degre_AP_comp = 0
         else:
             scalar_product_AP = (
-                normalVect1[0] * normalVect2[0] + normalVect1[2] * normalVect2[2])
+                normalVect1[0] * normalVect2[0] + normalVect1[2] * normalVect2[2]
+            )
             # print "scalar product_SI : \n", scalar_product_AP
 
             # print "VALUE :", scalar_product_AP/(norm1_AP*norm2_AP)
@@ -1184,10 +1301,18 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
 
         return Normal
 
-    def planeLandmarks(self, fidList, landmark1ID, landmark2ID, landmark3ID,
-                       Normal,
-                       AdaptToBoundingBoxCheckBox, sliderOpacity, planeCollection,
-                       actor):
+    def planeLandmarks(
+        self,
+        fidList,
+        landmark1ID,
+        landmark2ID,
+        landmark3ID,
+        Normal,
+        AdaptToBoundingBoxCheckBox,
+        sliderOpacity,
+        planeCollection,
+        actor,
+    ):
         # Limit the number of 3 landmarks to define a plane
         # Keep the coordinates of the landmarks
 
@@ -1442,12 +1567,12 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
 
     def encodeJSON(self, input):
         encodedString = json.dumps(input)
-        encodedString = encodedString.replace('\"', '\'')
+        encodedString = encodedString.replace('"', "'")
         return encodedString
 
     def decodeJSON(self, input):
         if input:
-            input = input.replace('\'', '\"')
+            input = input.replace("'", '"')
             return json.loads(input)
         return None
 
@@ -1465,24 +1590,31 @@ class AnglePlanesTest(ScriptedLoadableModuleTest):
         self.downloaddata()
         self.delayDisplay("Starting the tests")
         self.assertTrue(self.test_AnglePlanes())
-        self.delayDisplay('All tests passed!')
+        self.delayDisplay("All tests passed!")
 
     def downloaddata(self):
         import urllib.request, urllib.parse, urllib.error
+
         downloads = (
-            ('http://slicer.kitware.com/midas3/download?items=213632', '01.vtk',
-             slicer.util.loadModel),
-            ('http://slicer.kitware.com/midas3/download?items=213633', '02.vtk',
-             slicer.util.loadModel),
+            (
+                "http://slicer.kitware.com/midas3/download?items=213632",
+                "01.vtk",
+                slicer.util.loadModel,
+            ),
+            (
+                "http://slicer.kitware.com/midas3/download?items=213633",
+                "02.vtk",
+                slicer.util.loadModel,
+            ),
         )
         for url, name, loader in downloads:
-            filePath = slicer.app.temporaryPath + '/' + name
+            filePath = slicer.app.temporaryPath + "/" + name
             print(filePath)
             if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-                logging.info('Requesting download %s from %s...\n' % (name, url))
+                logging.info("Requesting download %s from %s...\n" % (name, url))
                 urllib.request.urlretrieve(url, filePath)
             if loader:
-                logging.info('Loading %s...' % (name,))
+                logging.info("Loading %s..." % (name,))
                 loader(filePath)
 
         layoutManager = slicer.app.layoutManager()
@@ -1494,16 +1626,17 @@ class AnglePlanesTest(ScriptedLoadableModuleTest):
 
         widget = slicer.modules.AnglePlanesWidget
 
-        self.delayDisplay('Saving planes')
+        self.delayDisplay("Saving planes")
         widget.logic.savePlanes("test.p")
 
-        self.delayDisplay('Loading planes')
+        self.delayDisplay("Loading planes")
         widget.logic.readPlanes("test.p")
 
-        self.delayDisplay('Adding planes')
+        self.delayDisplay("Adding planes")
 
         widget.inputModelSelector.setCurrentNode(
-            slicer.mrmlScene.GetNodesByName("01").GetItemAsObject(0))
+            slicer.mrmlScene.GetNodesByName("01").GetItemAsObject(0)
+        )
         movingMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
         movingMarkupsFiducial.SetName("F1")
         slicer.mrmlScene.AddNode(movingMarkupsFiducial)
@@ -1521,7 +1654,8 @@ class AnglePlanesTest(ScriptedLoadableModuleTest):
         plane1.landmark3ComboBox.setCurrentIndex(2)
 
         widget.inputModelSelector.setCurrentNode(
-            slicer.mrmlScene.GetNodesByName("02").GetItemAsObject(0))
+            slicer.mrmlScene.GetNodesByName("02").GetItemAsObject(0)
+        )
         movingMarkupsFiducial = slicer.vtkMRMLMarkupsFiducialNode()
         movingMarkupsFiducial.SetName("F2")
         slicer.mrmlScene.AddNode(movingMarkupsFiducial)
@@ -1538,40 +1672,54 @@ class AnglePlanesTest(ScriptedLoadableModuleTest):
         plane2.landmark2ComboBox.setCurrentIndex(1)
         plane2.landmark3ComboBox.setCurrentIndex(2)
 
-        self.delayDisplay('Hide Planes')
+        self.delayDisplay("Hide Planes")
         plane1.HidePlaneCheckBox.setChecked(True)
         plane2.HidePlaneCheckBox.setChecked(True)
 
-        self.delayDisplay('Adapt on bounding box')
+        self.delayDisplay("Adapt on bounding box")
         plane1.HidePlaneCheckBox.setChecked(False)
         plane2.HidePlaneCheckBox.setChecked(False)
         plane1.AdaptToBoundingBoxCheckBox.setChecked(True)
         plane2.AdaptToBoundingBoxCheckBox.setChecked(True)
 
-        self.delayDisplay('Selecting planes')
+        self.delayDisplay("Selecting planes")
         widget.planeComboBox1.setCurrentIndex(4)
         widget.planeComboBox2.setCurrentIndex(4)
 
-        self.delayDisplay('Calculating angle')
+        self.delayDisplay("Calculating angle")
         widget.angleValue()
 
-        test = widget.logic.angle_degre_RL != 03.55 or widget.logic.angle_degre_RL_comp != 176.45 or \
-               widget.logic.angle_degre_SI != 17.91 or widget.logic.angle_degre_SI_comp != 162.09 or \
-               widget.logic.angle_degre_AP != 16.34 or widget.logic.angle_degre_AP_comp != 163.66
+        test = (
+            widget.logic.angle_degre_RL != 03.55
+            or widget.logic.angle_degre_RL_comp != 176.45
+            or widget.logic.angle_degre_SI != 17.91
+            or widget.logic.angle_degre_SI_comp != 162.09
+            or widget.logic.angle_degre_AP != 16.34
+            or widget.logic.angle_degre_AP_comp != 163.66
+        )
 
-        self.delayDisplay('Testing angles')
+        self.delayDisplay("Testing angles")
         if test:
 
             print("", "Angle", "Complementary")
-            print("R-L-View", widget.logic.angle_degre_RL,
-                  widget.logic.angle_degre_RL_comp)
-            print("S-I-View", widget.logic.angle_degre_SI,
-                  widget.logic.angle_degre_SI_comp)
-            print("A-P-View", widget.logic.angle_degre_AP,
-                  widget.logic.angle_degre_AP_comp)
-            self.delayDisplay('Test Failure!')
+            print(
+                "R-L-View",
+                widget.logic.angle_degre_RL,
+                widget.logic.angle_degre_RL_comp,
+            )
+            print(
+                "S-I-View",
+                widget.logic.angle_degre_SI,
+                widget.logic.angle_degre_SI_comp,
+            )
+            print(
+                "A-P-View",
+                widget.logic.angle_degre_AP,
+                widget.logic.angle_degre_AP_comp,
+            )
+            self.delayDisplay("Test Failure!")
             return False
 
         else:
-            self.delayDisplay('Test passed!')
+            self.delayDisplay("Test passed!")
             return True

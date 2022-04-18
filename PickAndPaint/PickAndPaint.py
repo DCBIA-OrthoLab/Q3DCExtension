@@ -21,9 +21,9 @@ class PickAndPaint(ScriptedLoadableModule):
         parent.categories = ["Quantification"]
         parent.dependencies = ["DependantMarkups"]
         parent.contributors = [
-            'Lucie Macron (University of Michigan)',
-            'Jean-Baptiste Vimort (University of Michigan)',
-            'James Hoctor (Kitware Inc.)',
+            "Lucie Macron (University of Michigan)",
+            "Jean-Baptiste Vimort (University of Michigan)",
+            "James Hoctor (Kitware Inc.)",
         ]
         parent.helpText = """
         The Pick 'n Paint tool allows users to select ROIs on a
@@ -46,16 +46,17 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         # reload the logic if there is any change
         self.logic = PickAndPaintLogic(self)
         self.interactionNode = slicer.mrmlScene.GetNodeByID(
-            "vtkMRMLInteractionNodeSingleton")
+            "vtkMRMLInteractionNodeSingleton"
+        )
 
         # UI setup
         loader = qt.QUiLoader()
-        moduleName = 'PickAndPaint'
-        scriptedModulesPath = eval(
-            'slicer.modules.%s.path' % moduleName.lower())
+        moduleName = "PickAndPaint"
+        scriptedModulesPath = eval("slicer.modules.%s.path" % moduleName.lower())
         scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-        path = os.path.join(scriptedModulesPath, 'Resources',
-                            'UI', '%s.ui' % moduleName)
+        path = os.path.join(
+            scriptedModulesPath, "Resources", "UI", "%s.ui" % moduleName
+        )
 
         qfile = qt.QFile(path)
         qfile.open(qt.QFile.ReadOnly)
@@ -76,18 +77,17 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         # The "enable" property seems to not be imported from the .ui
         self.inputLandmarksSelector.setEnabled(False)
         self.loadLandmarksOnSurfacCheckBox = self.logic.get(
-            "loadLandmarksOnSurfacCheckBox")
+            "loadLandmarksOnSurfacCheckBox"
+        )
         self.landmarksScaleWidget = self.logic.get("landmarksScaleWidget")
         self.addLandmarksButton = self.logic.get("addLandmarksButton")
-        self.surfaceDeplacementCheckBox = self.logic.get(
-            "surfaceDeplacementCheckBox")
+        self.surfaceDeplacementCheckBox = self.logic.get("surfaceDeplacementCheckBox")
         self.landmarkComboBox = self.logic.get("landmarkComboBox")
         self.radiusDefinitionWidget = self.logic.get("radiusDefinitionWidget")
         self.cleanerButton = self.logic.get("cleanerButton")
         self.correspondentShapes = self.logic.get("correspondentShapes")
         self.nonCorrespondentShapes = self.logic.get("nonCorrespondentShapes")
-        self.propagationInputComboBox = self.logic.get(
-            "propagationInputComboBox")
+        self.propagationInputComboBox = self.logic.get("propagationInputComboBox")
         self.propagationInputComboBox.setMRMLScene(slicer.mrmlScene)
         self.propagateButton = self.logic.get("propagateButton")
 
@@ -95,28 +95,34 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         #                                   CONNECTIONS
         # ------------------------------------------------------------------------------------
         self.inputModelSelector.connect(
-            'currentNodeChanged(vtkMRMLNode*)', self.onModelChanged)
+            "currentNodeChanged(vtkMRMLNode*)", self.onModelChanged
+        )
         self.inputLandmarksSelector.connect(
-            'currentNodeChanged(vtkMRMLNode*)', self.onLandmarksChanged)
-        self.addLandmarksButton.connect('clicked()', self.onAddButton)
-        self.cleanerButton.connect('clicked()', self.onCleanButton)
+            "currentNodeChanged(vtkMRMLNode*)", self.onLandmarksChanged
+        )
+        self.addLandmarksButton.connect("clicked()", self.onAddButton)
+        self.cleanerButton.connect("clicked()", self.onCleanButton)
         self.landmarksScaleWidget.connect(
-            'valueChanged(double)', self.onLandmarksScaleChanged)
+            "valueChanged(double)", self.onLandmarksScaleChanged
+        )
         self.surfaceDeplacementCheckBox.connect(
-            'stateChanged(int)', self.onSurfaceDeplacementStateChanged)
+            "stateChanged(int)", self.onSurfaceDeplacementStateChanged
+        )
         self.landmarkComboBox.connect(
-            'currentIndexChanged(QString)', self.onLandmarkComboBoxChanged)
+            "currentIndexChanged(QString)", self.onLandmarkComboBoxChanged
+        )
         self.radiusDefinitionWidget.connect(
-            'valueChanged(double)', self.onRadiusValueChanged)
+            "valueChanged(double)", self.onRadiusValueChanged
+        )
         self.propagationInputComboBox.connect(
-            'checkedNodesChanged()', self.onPropagationInputComboBoxCheckedNodesChanged)
-        self.propagateButton.connect('clicked()', self.onPropagateButton)
+            "checkedNodesChanged()", self.onPropagationInputComboBoxCheckedNodesChanged
+        )
+        self.propagateButton.connect("clicked()", self.onPropagateButton)
 
-        slicer.mrmlScene.AddObserver(
-            slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
+        slicer.mrmlScene.AddObserver(slicer.mrmlScene.EndCloseEvent, self.onCloseScene)
 
     def enter(self):
-        logging.debug('------- in function: enter --------')
+        logging.debug("------- in function: enter --------")
         # See Slicer/Base/QTGUI/qSlicerAbstractModuleWidget.h for an
         # explanation of when this is called.
         model = self.inputModelSelector.currentNode()
@@ -135,14 +141,16 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         for i in range(end):
             fidList = list_.GetItemAsObject(i)
             landmarkDescription = self.logic.decodeJSON(
-                fidList.GetAttribute("landmarkDescription"))
+                fidList.GetAttribute("landmarkDescription")
+            )
             if landmarkDescription:
                 for n in range(fidList.GetNumberOfMarkups()):
                     markupID = fidList.GetNthMarkupID(n)
                     markupLabel = fidList.GetNthMarkupLabel(n)
                     landmarkDescription[markupID]["landmarkLabel"] = markupLabel
-                fidList.SetAttribute("landmarkDescription",
-                                     self.logic.encodeJSON(landmarkDescription))
+                fidList.SetAttribute(
+                    "landmarkDescription", self.logic.encodeJSON(landmarkDescription)
+                )
 
     def onCloseScene(self, obj, event):
         list_ = slicer.mrmlScene.GetNodesByClass("vtkMRMLModelNode")
@@ -150,7 +158,8 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         for i in range(end):
             model = list_.GetItemAsObject(i)
             hardenModel = slicer.mrmlScene.GetNodesByName(
-                model.GetName()).GetItemAsObject(0)
+                model.GetName()
+            ).GetItemAsObject(0)
             slicer.mrmlScene.RemoveNode(hardenModel)
         self.radiusDefinitionWidget.value = 0.0
         self.landmarksScaleWidget.value = 2.0
@@ -166,12 +175,14 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
             return
         fidList = self.logic.selectedFidList
         selectedFidReflID = self.logic.findIDFromLabel(
-            fidList, self.landmarkComboBox.currentText)
+            fidList, self.landmarkComboBox.currentText
+        )
 
         if activeInput:
             # Update values on widgets.
             landmarkDescription = self.logic.decodeJSON(
-                fidList.GetAttribute("landmarkDescription"))
+                fidList.GetAttribute("landmarkDescription")
+            )
             if landmarkDescription and selectedFidReflID:
                 activeDictLandmarkValue = landmarkDescription[selectedFidReflID]
                 self.radiusDefinitionWidget.value = activeDictLandmarkValue["ROIradius"]
@@ -188,13 +199,15 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         if self.logic.selectedModel:
             Model = self.logic.selectedModel
             try:
-                Model.RemoveObserver(self.logic.decodeJSON(
-                    self.logic.selectedModel.GetAttribute("modelModifieTagEvent")))
+                Model.RemoveObserver(
+                    self.logic.decodeJSON(
+                        self.logic.selectedModel.GetAttribute("modelModifieTagEvent")
+                    )
+                )
             except:
                 pass
         self.logic.selectedModel = self.inputModelSelector.currentNode()
-        self.logic.ModelChanged(self.inputModelSelector,
-                                self.inputLandmarksSelector)
+        self.logic.ModelChanged(self.inputModelSelector, self.inputLandmarksSelector)
         self.inputLandmarksSelector.setCurrentNode(None)
 
     def onLandmarksChanged(self):
@@ -205,23 +218,20 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
             self.logic.selectedModel = self.inputModelSelector.currentNode()
             if self.inputLandmarksSelector.currentNode():
                 onSurface = self.loadLandmarksOnSurfacCheckBox.isChecked()
-                self.logic.connectLandmarks(self.inputModelSelector,
-                                            self.inputLandmarksSelector,
-                                            onSurface)
+                self.logic.connectLandmarks(
+                    self.inputModelSelector, self.inputLandmarksSelector, onSurface
+                )
             else:
                 self.landmarkComboBox.clear()
 
     def onAddButton(self):
         # Add fiducial on the scene.
         # If no input model selected, the addition of fiducial shouldn't be possible.
-        selectionNode = slicer.mrmlScene.GetNodeByID(
-            "vtkMRMLSelectionNodeSingleton")
-        selectionNode.SetReferenceActivePlaceNodeClassName(
-            "vtkMRMLMarkupsFiducialNode")
+        selectionNode = slicer.mrmlScene.GetNodeByID("vtkMRMLSelectionNodeSingleton")
+        selectionNode.SetReferenceActivePlaceNodeClassName("vtkMRMLMarkupsFiducialNode")
         if self.logic.selectedModel:
             if self.logic.selectedFidList:
-                selectionNode.SetActivePlaceNodeID(
-                    self.logic.selectedFidList.GetID())
+                selectionNode.SetActivePlaceNodeID(self.logic.selectedFidList.GetID())
                 self.interactionNode.SetCurrentInteractionMode(1)
             else:
                 self.logic.warningMessage("Please select a fiducial list")
@@ -249,26 +259,32 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         # The following case can occur if a new MarkupsFiducial is generated to hold new
         # landmarks. The list will start empty and the landmark combo box will hold nothing.
         # In this case there is no need to continue with this routine.
-        if self.landmarkComboBox.currentText == '':
+        if self.landmarkComboBox.currentText == "":
             return
         selectedFidReflID = self.logic.findIDFromLabel(
-            fidList, self.landmarkComboBox.currentText)
+            fidList, self.landmarkComboBox.currentText
+        )
         isOnSurface = self.surfaceDeplacementCheckBox.isChecked()
         landmarkDescription = self.logic.decodeJSON(
-            fidList.GetAttribute("landmarkDescription"))
+            fidList.GetAttribute("landmarkDescription")
+        )
         if isOnSurface:
             hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                fidList.GetAttribute("hardenModelID"))
+                fidList.GetAttribute("hardenModelID")
+            )
             landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = True
-            landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] =\
-                self.logic.projectOnSurface(
-                    hardenModel, fidList, selectedFidReflID)
+            landmarkDescription[selectedFidReflID]["projection"][
+                "closestPointIndex"
+            ] = self.logic.projectOnSurface(hardenModel, fidList, selectedFidReflID)
         else:
             landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = False
-            landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] = None
+            landmarkDescription[selectedFidReflID]["projection"][
+                "closestPointIndex"
+            ] = None
             landmarkDescription[selectedFidReflID]["ROIradius"] = 0
-        fidList.SetAttribute("landmarkDescription",
-                             self.logic.encodeJSON(landmarkDescription))
+        fidList.SetAttribute(
+            "landmarkDescription", self.logic.encodeJSON(landmarkDescription)
+        )
 
     def onLandmarkComboBoxChanged(self):
         logging.debug("-------- ComboBox changement --------")
@@ -280,22 +296,28 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         if not fidList:
             return
         selectedFidReflID = self.logic.findIDFromLabel(
-            fidList, self.landmarkComboBox.currentText)
+            fidList, self.landmarkComboBox.currentText
+        )
         if selectedFidReflID:
             landmarkDescription = self.logic.decodeJSON(
-                fidList.GetAttribute("landmarkDescription"))
+                fidList.GetAttribute("landmarkDescription")
+            )
             activeLandmarkState = landmarkDescription[selectedFidReflID]
             activeLandmarkState["ROIradius"] = self.radiusDefinitionWidget.value
             if not activeLandmarkState["projection"]["isProjected"]:
                 self.surfaceDeplacementCheckBox.setChecked(True)
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                    fidList.GetAttribute("hardenModelID"))
-                landmarkDescription[selectedFidReflID]["projection"]["isProjected"] = True
-                landmarkDescription[selectedFidReflID]["projection"]["closestPointIndex"] =\
-                    self.logic.projectOnSurface(
-                        hardenModel, fidList, selectedFidReflID)
-            fidList.SetAttribute("landmarkDescription",
-                                 self.logic.encodeJSON(landmarkDescription))
+                    fidList.GetAttribute("hardenModelID")
+                )
+                landmarkDescription[selectedFidReflID]["projection"][
+                    "isProjected"
+                ] = True
+                landmarkDescription[selectedFidReflID]["projection"][
+                    "closestPointIndex"
+                ] = self.logic.projectOnSurface(hardenModel, fidList, selectedFidReflID)
+            fidList.SetAttribute(
+                "landmarkDescription", self.logic.encodeJSON(landmarkDescription)
+            )
             self.logic.findROI(fidList)
 
     def onCleanButton(self):
@@ -327,10 +349,13 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
             if model.GetID() != self.inputModelSelector.currentNode().GetID():
                 finalList.append(model.GetID())
         self.inputLandmarksSelector.currentNode().SetAttribute(
-            "modelToPropList", self.logic.encodeJSON({"modelToPropList": finalList}))
+            "modelToPropList", self.logic.encodeJSON({"modelToPropList": finalList})
+        )
 
     def onPropagateButton(self):
-        logging.debug(" ------------------------------------ onPropagateButton -------------------------------------- ")
+        logging.debug(
+            " ------------------------------------ onPropagateButton -------------------------------------- "
+        )
         if not self.inputModelSelector.currentNode():
             return
         if not self.inputLandmarksSelector.currentNode():
@@ -341,8 +366,7 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
         model.SetAttribute("hardenModelID", hardenModel.GetID())
         fidList = self.inputLandmarksSelector.currentNode()
 
-        decoded_json = self.logic.decodeJSON(
-            fidList.GetAttribute("modelToPropList"))
+        decoded_json = self.logic.decodeJSON(fidList.GetAttribute("modelToPropList"))
         modelToPropagateList = []
         if decoded_json is not None:
             modelToPropagateList = decoded_json["modelToPropList"]
@@ -354,29 +378,24 @@ class PickAndPaintWidget(ScriptedLoadableModuleWidget):
                 if not isClean["isClean"]:
                     self.logic.cleanerAndTriangleFilter(modelToPropagate)
                     hardenModel = self.logic.createIntermediateHardenModel(
-                        modelToPropagate)
-                    modelToPropagate.SetAttribute(
-                        "hardenModelID", hardenModel.GetID())
+                        modelToPropagate
+                    )
+                    modelToPropagate.SetAttribute("hardenModelID", hardenModel.GetID())
             else:
                 self.logic.cleanerAndTriangleFilter(modelToPropagate)
-                hardenModel = self.logic.createIntermediateHardenModel(
-                    modelToPropagate)
-                modelToPropagate.SetAttribute(
-                    "hardenModelID", hardenModel.GetID())
+                hardenModel = self.logic.createIntermediateHardenModel(modelToPropagate)
+                modelToPropagate.SetAttribute("hardenModelID", hardenModel.GetID())
             if self.correspondentShapes.isChecked():
-                fidList.SetAttribute("typeOfPropagation",
-                                     "correspondentShapes")
-                self.logic.propagateCorrespondent(
-                    fidList, model, modelToPropagate)
+                fidList.SetAttribute("typeOfPropagation", "correspondentShapes")
+                self.logic.propagateCorrespondent(fidList, model, modelToPropagate)
             else:
-                fidList.SetAttribute("typeOfPropagation",
-                                     "nonCorrespondentShapes")
+                fidList.SetAttribute("typeOfPropagation", "nonCorrespondentShapes")
                 self.logic.propagateNonCorrespondent(fidList, modelToPropagate)
         self.UpdateInterface()
 
 
 class PickAndPaintLogic(ScriptedLoadableModuleLogic):
-    ROI_ARRAY_NAME = '{0}_{1}_ROI'
+    ROI_ARRAY_NAME = "{0}_{1}_ROI"
 
     def __init__(self, interface):
         self.selectedModel = None
@@ -411,7 +430,8 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         for i in range(end):
             fidList = list_.GetItemAsObject(i)
             landmarkDescription = self.decodeJSON(
-                fidList.GetAttribute("landmarkDescription"))
+                fidList.GetAttribute("landmarkDescription")
+            )
             if not landmarkDescription:
                 # Not a PickAndPaint markup fiducial list
                 continue
@@ -427,18 +447,27 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             displayNode.SetScalarVisibility(True)
 
     def createIntermediateHardenModel(self, model):
-        hardenModel = slicer.mrmlScene.GetNodesByName("SurfaceRegistration_" + model.GetName() + "_hardenCopy_" + str(
-            slicer.app.applicationPid())).GetItemAsObject(0)
+        hardenModel = slicer.mrmlScene.GetNodesByName(
+            "SurfaceRegistration_"
+            + model.GetName()
+            + "_hardenCopy_"
+            + str(slicer.app.applicationPid())
+        ).GetItemAsObject(0)
         if hardenModel is None:
             hardenModel = slicer.vtkMRMLModelNode()
         hardenPolyData = vtk.vtkPolyData()
         hardenPolyData.DeepCopy(model.GetPolyData())
         hardenModel.SetAndObservePolyData(hardenPolyData)
         hardenModel.SetName(
-            "SurfaceRegistration_" + model.GetName() + "_hardenCopy_" + str(slicer.app.applicationPid()))
+            "SurfaceRegistration_"
+            + model.GetName()
+            + "_hardenCopy_"
+            + str(slicer.app.applicationPid())
+        )
         if model.GetParentTransformNode():
             hardenModel.SetAndObserveTransformNodeID(
-                model.GetParentTransformNode().GetID())
+                model.GetParentTransformNode().GetID()
+            )
         hardenModel.HideFromEditorsOn()
         slicer.mrmlScene.AddNode(hardenModel)
         logic = slicer.vtkSlicerTransformLogic()
@@ -461,17 +490,29 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
                     fidList.SetAttribute("hardenModelID", hardenModel.GetID())
                     # reproject the fiducials on the new model
                     landmarkDescription = self.decodeJSON(
-                        fidList.GetAttribute("landmarkDescription"))
+                        fidList.GetAttribute("landmarkDescription")
+                    )
                     for n in range(fidList.GetNumberOfMarkups()):
                         markupID = fidList.GetNthMarkupID(n)
-                        if landmarkDescription[markupID]["projection"]["isProjected"] == True:
+                        if (
+                            landmarkDescription[markupID]["projection"]["isProjected"]
+                            == True
+                        ):
                             hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                                fidList.GetAttribute("hardenModelID"))
+                                fidList.GetAttribute("hardenModelID")
+                            )
                             markupsIndex = fidList.GetNthControlPointIndexByID(markupID)
-                            self.replaceLandmark(hardenModel.GetPolyData(), fidList, markupsIndex,
-                                                 landmarkDescription[markupID]["projection"]["closestPointIndex"])
+                            self.replaceLandmark(
+                                hardenModel.GetPolyData(),
+                                fidList,
+                                markupsIndex,
+                                landmarkDescription[markupID]["projection"][
+                                    "closestPointIndex"
+                                ],
+                            )
                         fidList.SetAttribute(
-                            "landmarkDescription", self.encodeJSON(landmarkDescription))
+                            "landmarkDescription", self.encodeJSON(landmarkDescription)
+                        )
 
     def ModelChanged(self, inputModelSelector, inputLandmarksSelector):
         inputModel = inputModelSelector.currentNode()
@@ -481,9 +522,12 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             hardenModel = self.createIntermediateHardenModel(inputModel)
             inputModel.SetAttribute("hardenModelID", hardenModel.GetID())
             modelModifieTagEvent = inputModel.AddObserver(
-                inputModel.TransformModifiedEvent, self.onModelModified)
-            inputModel.SetAttribute("modelModifieTagEvent", self.encodeJSON(
-                {"modelModifieTagEvent": modelModifieTagEvent}))
+                inputModel.TransformModifiedEvent, self.onModelModified
+            )
+            inputModel.SetAttribute(
+                "modelModifieTagEvent",
+                self.encodeJSON({"modelModifieTagEvent": modelModifieTagEvent}),
+            )
             inputLandmarksSelector.setEnabled(True)
         # if no model is selected
         else:
@@ -496,9 +540,11 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             messageBox = ctk.ctkMessageBox()
             messageBox.setWindowTitle(" /!\ WARNING /!\ ")
             messageBox.setIcon(messageBox.Warning)
-            messageBox.setText("Your Markup Fiducial Node is currently modified by a transform,"
-                               "if you choose to continue the program will apply the transform"
-                               "before doing anything else!")
+            messageBox.setText(
+                "Your Markup Fiducial Node is currently modified by a transform,"
+                "if you choose to continue the program will apply the transform"
+                "before doing anything else!"
+            )
             messageBox.setInformativeText("Do you want to continue?")
             messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
             choice = messageBox.exec_()
@@ -519,9 +565,11 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         messageBox = ctk.ctkMessageBox()
         messageBox.setWindowTitle(" /!\ WARNING /!\ ")
         messageBox.setIcon(messageBox.Warning)
-        messageBox.setText("The Markup Fiducial Node selected is curently projected on an"
-                           "other model, if you chose to continue the fiducials will be  "
-                           "reprojected, and this could impact the functioning of other modules")
+        messageBox.setText(
+            "The Markup Fiducial Node selected is curently projected on an"
+            "other model, if you chose to continue the fiducials will be  "
+            "reprojected, and this could impact the functioning of other modules"
+        )
         messageBox.setInformativeText("Do you want to continue?")
         messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
         choice = messageBox.exec_()
@@ -536,8 +584,7 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
 
     def createNewDataStructure(self, landmarks, model, onSurface):
         landmarks.SetAttribute("connectedModelID", model.GetID())
-        landmarks.SetAttribute(
-            "hardenModelID", model.GetAttribute("hardenModelID"))
+        landmarks.SetAttribute("hardenModelID", model.GetAttribute("hardenModelID"))
         landmarkDescription = dict()
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
@@ -549,9 +596,11 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             if onSurface:
                 landmarkDescription[markupID]["projection"]["isProjected"] = True
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                    landmarks.GetAttribute("hardenModelID"))
-                landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
-                    self.projectOnSurface(hardenModel, landmarks, markupID)
+                    landmarks.GetAttribute("hardenModelID")
+                )
+                landmarkDescription[markupID]["projection"][
+                    "closestPointIndex"
+                ] = self.projectOnSurface(hardenModel, landmarks, markupID)
             else:
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
@@ -560,35 +609,41 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
             landmarkDescription[markupID]["midPoint"]["Point1"] = None
             landmarkDescription[markupID]["midPoint"]["Point2"] = None
-        landmarks.SetAttribute("landmarkDescription",
-                               self.encodeJSON(landmarkDescription))
-        planeDescription = dict()
         landmarks.SetAttribute(
-            "planeDescription", self.encodeJSON(planeDescription))
+            "landmarkDescription", self.encodeJSON(landmarkDescription)
+        )
+        planeDescription = dict()
+        landmarks.SetAttribute("planeDescription", self.encodeJSON(planeDescription))
         landmarks.SetAttribute("isClean", self.encodeJSON({"isClean": False}))
         landmarks.SetAttribute("lastTransformID", None)
-        landmarks.SetAttribute("arrayName", self.ROI_ARRAY_NAME.format(model.GetName(), landmarks.GetName()))
+        landmarks.SetAttribute(
+            "arrayName",
+            self.ROI_ARRAY_NAME.format(model.GetName(), landmarks.GetName()),
+        )
         landmarks.SetAttribute("arrayPartNames", self.encodeJSON([]))
 
     def changementOfConnectedModel(self, landmarks, model, onSurface):
         landmarks.SetAttribute("connectedModelID", model.GetID())
-        landmarks.SetAttribute(
-            "hardenModelID", model.GetAttribute("hardenModelID"))
+        landmarks.SetAttribute("hardenModelID", model.GetAttribute("hardenModelID"))
         landmarkDescription = self.decodeJSON(
-            landmarks.GetAttribute("landmarkDescription"))
+            landmarks.GetAttribute("landmarkDescription")
+        )
         for n in range(landmarks.GetNumberOfMarkups()):
             markupID = landmarks.GetNthMarkupID(n)
             if onSurface:
                 if landmarkDescription[markupID]["projection"]["isProjected"] == True:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                        landmarks.GetAttribute("hardenModelID"))
-                    landmarkDescription[markupID]["projection"]["closestPointIndex"] = \
-                        self.projectOnSurface(hardenModel, landmarks, markupID)
+                        landmarks.GetAttribute("hardenModelID")
+                    )
+                    landmarkDescription[markupID]["projection"][
+                        "closestPointIndex"
+                    ] = self.projectOnSurface(hardenModel, landmarks, markupID)
             else:
                 landmarkDescription[markupID]["projection"]["isProjected"] = False
                 landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
-            landmarks.SetAttribute("landmarkDescription",
-                                   self.encodeJSON(landmarkDescription))
+            landmarks.SetAttribute(
+                "landmarkDescription", self.encodeJSON(landmarkDescription)
+            )
         landmarks.SetAttribute("isClean", self.encodeJSON({"isClean": False}))
 
     def connectLandmarks(self, modelSelector, landmarkSelector, onSurface):
@@ -610,15 +665,13 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         except:
             pass
         try:
-            tag = self.decodeJSON(
-                landmarks.GetAttribute("PointModifiedEventTag"))
+            tag = self.decodeJSON(landmarks.GetAttribute("PointModifiedEventTag"))
             landmarks.RemoveObserver(tag["PointModifiedEventTag"])
             logging.debug("PointModifiedEvent observers removed!")
         except:
             pass
         try:
-            tag = self.decodeJSON(
-                landmarks.GetAttribute("PointRemovedEventTag"))
+            tag = self.decodeJSON(landmarks.GetAttribute("PointRemovedEventTag"))
             landmarks.RemoveObserver(tag["PointRemovedEventTag"])
             logging.debug("PointRemovedEvent observers removed!")
         except:
@@ -626,14 +679,14 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         if connectedModelID:
             if connectedModelID != model.GetID():
                 if self.connectedModelChangement():
-                    self.changementOfConnectedModel(
-                        landmarks, model, onSurface)
+                    self.changementOfConnectedModel(landmarks, model, onSurface)
                 else:
                     landmarkSelector.setCurrentNode(None)
                     return
             else:
                 landmarks.SetAttribute(
-                    "hardenModelID", model.GetAttribute("hardenModelID"))
+                    "hardenModelID", model.GetAttribute("hardenModelID")
+                )
         # creation of the data structure
         else:
             self.createNewDataStructure(landmarks, model, onSurface)
@@ -641,23 +694,31 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         self.updateLandmarkComboBox(landmarks)
         # adding of listeners
         PointAddedEventTag = landmarks.AddObserver(
-            landmarks.PointAddedEvent, self.onPointAddedEvent)
-        landmarks.SetAttribute("PointAddedEventTag", self.encodeJSON(
-            {"PointAddedEventTag": PointAddedEventTag}))
+            landmarks.PointAddedEvent, self.onPointAddedEvent
+        )
+        landmarks.SetAttribute(
+            "PointAddedEventTag",
+            self.encodeJSON({"PointAddedEventTag": PointAddedEventTag}),
+        )
         PointModifiedEventTag = landmarks.AddObserver(
-            landmarks.PointModifiedEvent, self.onPointModifiedEvent)
-        landmarks.SetAttribute("PointModifiedEventTag", self.encodeJSON(
-            {"PointModifiedEventTag": PointModifiedEventTag}))
+            landmarks.PointModifiedEvent, self.onPointModifiedEvent
+        )
+        landmarks.SetAttribute(
+            "PointModifiedEventTag",
+            self.encodeJSON({"PointModifiedEventTag": PointModifiedEventTag}),
+        )
         PointRemovedEventTag = landmarks.AddObserver(
-            landmarks.PointRemovedEvent, self.onPointRemovedEvent)
-        landmarks.SetAttribute("PointRemovedEventTag", self.encodeJSON(
-            {"PointRemovedEventTag": PointRemovedEventTag}))
+            landmarks.PointRemovedEvent, self.onPointRemovedEvent
+        )
+        landmarks.SetAttribute(
+            "PointRemovedEventTag",
+            self.encodeJSON({"PointRemovedEventTag": PointRemovedEventTag}),
+        )
 
     # Called when a landmark is added on a model
     def onPointAddedEvent(self, obj, event):
         logging.debug("------markup adding-------")
-        landmarkDescription = self.decodeJSON(
-            obj.GetAttribute("landmarkDescription"))
+        landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         numOfMarkups = obj.GetNumberOfMarkups()
         # because every time a new node is added, its index is the last one on the list:
         markupID = obj.GetNthMarkupID(numOfMarkups - 1)
@@ -673,11 +734,11 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
         landmarkDescription[markupID]["midPoint"]["Point1"] = None
         landmarkDescription[markupID]["midPoint"]["Point2"] = None
-        obj.SetAttribute("landmarkDescription",
-                         self.encodeJSON(landmarkDescription))
+        obj.SetAttribute("landmarkDescription", self.encodeJSON(landmarkDescription))
         self.interface.landmarkComboBox.addItem(landmarkLabel)
         self.interface.landmarkComboBox.setCurrentIndex(
-            self.interface.landmarkComboBox.count - 1)
+            self.interface.landmarkComboBox.count - 1
+        )
         self.interface.UpdateInterface()
         qt.QTimer.singleShot(0, lambda: self.onPointModifiedEvent(obj, None))
 
@@ -690,40 +751,45 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         fidList.GetNthFiducialPosition(landmark1Index, coord1)
         fidList.GetNthFiducialPosition(landmark2Index, coord2)
         midCoord = [-1, -1, -1]
-        midCoord[0] = (coord1[0] + coord2[0])/2
-        midCoord[1] = (coord1[1] + coord2[1])/2
-        midCoord[2] = (coord1[2] + coord2[2])/2
+        midCoord[0] = (coord1[0] + coord2[0]) / 2
+        midCoord[1] = (coord1[1] + coord2[1]) / 2
+        midCoord[2] = (coord1[2] + coord2[2]) / 2
         return midCoord
 
     def updateMidPoint(self, fidList, landmarkID):
         landmarkDescription = self.decodeJSON(
-            fidList.GetAttribute("landmarkDescription"))
-        for midPointID in landmarkDescription[landmarkID]["midPoint"]["definedByThisMarkup"]:
+            fidList.GetAttribute("landmarkDescription")
+        )
+        for midPointID in landmarkDescription[landmarkID]["midPoint"][
+            "definedByThisMarkup"
+        ]:
             if landmarkDescription[midPointID]["midPoint"]["isMidPoint"]:
                 landmark1ID = landmarkDescription[midPointID]["midPoint"]["Point1"]
                 landmark2ID = landmarkDescription[midPointID]["midPoint"]["Point2"]
-                coord = self.calculateMidPointCoord(
-                    fidList, landmark1ID, landmark2ID)
+                coord = self.calculateMidPointCoord(fidList, landmark1ID, landmark2ID)
                 index = fidList.GetNthControlPointIndexByID(midPointID)
                 fidList.SetNthFiducialPositionFromArray(index, coord)
                 if landmarkDescription[midPointID]["projection"]["isProjected"]:
                     hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                        fidList.GetAttribute("hardenModelID"))
-                    landmarkDescription[midPointID]["projection"]["closestPointIndex"] = \
-                        self.projectOnSurface(hardenModel, fidList, landmarkID)
+                        fidList.GetAttribute("hardenModelID")
+                    )
+                    landmarkDescription[midPointID]["projection"][
+                        "closestPointIndex"
+                    ] = self.projectOnSurface(hardenModel, fidList, landmarkID)
                     fidList.SetAttribute(
-                        "landmarkDescription", self.encodeJSON(landmarkDescription))
+                        "landmarkDescription", self.encodeJSON(landmarkDescription)
+                    )
                 self.updateMidPoint(fidList, midPointID)
 
     # Called when a landmarks is moved
     def onPointModifiedEvent(self, obj, event):
         logging.debug("----onPointModifiedEvent PandP-----")
-        landmarkDescription = self.decodeJSON(
-            obj.GetAttribute("landmarkDescription"))
+        landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         if not landmarkDescription:
             return
         selectedLandmarkID = self.findIDFromLabel(
-            obj, self.interface.landmarkComboBox.currentText)
+            obj, self.interface.landmarkComboBox.currentText
+        )
         # remove observer to make sure, the callback function won't work..
         tag = self.decodeJSON(obj.GetAttribute("PointModifiedEventTag"))
         obj.RemoveObserver(tag["PointModifiedEventTag"])
@@ -731,24 +797,29 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             activeLandmarkState = landmarkDescription[selectedLandmarkID]
             if activeLandmarkState["projection"]["isProjected"]:
                 hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                    obj.GetAttribute("hardenModelID"))
-                activeLandmarkState["projection"]["closestPointIndex"] = \
-                    self.projectOnSurface(hardenModel, obj, selectedLandmarkID)
-                obj.SetAttribute("landmarkDescription",
-                                 self.encodeJSON(landmarkDescription))
+                    obj.GetAttribute("hardenModelID")
+                )
+                activeLandmarkState["projection"][
+                    "closestPointIndex"
+                ] = self.projectOnSurface(hardenModel, obj, selectedLandmarkID)
+                obj.SetAttribute(
+                    "landmarkDescription", self.encodeJSON(landmarkDescription)
+                )
             self.updateMidPoint(obj, selectedLandmarkID)
             self.findROI(obj)
         time.sleep(0.08)
         # Add the observer again
         PointModifiedEventTag = obj.AddObserver(
-            obj.PointModifiedEvent, self.onPointModifiedEvent)
-        obj.SetAttribute("PointModifiedEventTag", self.encodeJSON(
-            {"PointModifiedEventTag": PointModifiedEventTag}))
+            obj.PointModifiedEvent, self.onPointModifiedEvent
+        )
+        obj.SetAttribute(
+            "PointModifiedEventTag",
+            self.encodeJSON({"PointModifiedEventTag": PointModifiedEventTag}),
+        )
 
     def onPointRemovedEvent(self, obj, event):
         logging.debug("------markup deleting-------")
-        landmarkDescription = self.decodeJSON(
-            obj.GetAttribute("landmarkDescription"))
+        landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
         IDs = []
         for ID, value in landmarkDescription.items():
             isFound = False
@@ -761,15 +832,15 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
                 IDs.append(ID)
         for ID in IDs:
             landmarkDescription.pop(ID, None)
-        obj.SetAttribute("landmarkDescription",
-                         self.encodeJSON(landmarkDescription))
+        obj.SetAttribute("landmarkDescription", self.encodeJSON(landmarkDescription))
         self.updateLandmarkComboBox(obj)
 
     def updateLandmarkComboBox(self, fidList, displayMidPoint=True):
         if not fidList:
             return
         landmarkDescription = self.decodeJSON(
-            fidList.GetAttribute("landmarkDescription"))
+            fidList.GetAttribute("landmarkDescription")
+        )
         self.interface.landmarkComboBox.blockSignals(True)
         self.interface.landmarkComboBox.clear()
         numOfFid = fidList.GetNumberOfMarkups()
@@ -784,7 +855,8 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
     def findIDFromLabel(self, fidList, landmarkLabel):
         # find the ID of the markupsNode from the label of a landmark!
         landmarkDescription = self.decodeJSON(
-            fidList.GetAttribute("landmarkDescription"))
+            fidList.GetAttribute("landmarkDescription")
+        )
         for ID, value in landmarkDescription.items():
             if value["landmarkLabel"] == landmarkLabel:
                 return ID
@@ -801,29 +873,38 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         indexClosestPoint = pointLocator.FindClosestPoint(landmarkCoord)
         return indexClosestPoint
 
-    def replaceLandmark(self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint):
+    def replaceLandmark(
+        self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint
+    ):
         landmarkCoord = [-1, -1, -1]
         inputModelPolyData.GetPoints().GetPoint(indexClosestPoint, landmarkCoord)
         fidNode.SetNthFiducialPositionFromArray(landmarkID, landmarkCoord)
 
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
-            markupsIndex = fidNode.GetNthControlPointIndexByID(
-                selectedFidReflID)
+            markupsIndex = fidNode.GetNthControlPointIndexByID(selectedFidReflID)
             indexClosestPoint = self.getClosestPointIndex(
-                fidNode, modelOnProject.GetPolyData(), markupsIndex)
-            self.replaceLandmark(modelOnProject.GetPolyData(), fidNode,
-                                 markupsIndex, indexClosestPoint)
+                fidNode, modelOnProject.GetPolyData(), markupsIndex
+            )
+            self.replaceLandmark(
+                modelOnProject.GetPolyData(), fidNode, markupsIndex, indexClosestPoint
+            )
             return indexClosestPoint
 
-    def defineNeighbor(self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance):
+    def defineNeighbor(
+        self, connectedVerticesList, inputModelNodePolyData, indexClosestPoint, distance
+    ):
         self.GetConnectedVertices(
-            connectedVerticesList, inputModelNodePolyData, indexClosestPoint)
+            connectedVerticesList, inputModelNodePolyData, indexClosestPoint
+        )
         if distance > 1:
             for dist in range(1, int(distance)):
                 for i in range(connectedVerticesList.GetNumberOfIds()):
-                    self.GetConnectedVertices(connectedVerticesList, inputModelNodePolyData,
-                                              connectedVerticesList.GetId(i))
+                    self.GetConnectedVertices(
+                        connectedVerticesList,
+                        inputModelNodePolyData,
+                        connectedVerticesList.GetId(i),
+                    )
         return connectedVerticesList
 
     def GetConnectedVertices(self, connectedVerticesIDList, polyData, pointID):
@@ -884,11 +965,14 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
 
     def findROI(self, fidList):
         hardenModel = slicer.app.mrmlScene().GetNodeByID(
-            fidList.GetAttribute("hardenModelID"))
+            fidList.GetAttribute("hardenModelID")
+        )
         connectedModel = slicer.app.mrmlScene().GetNodeByID(
-            fidList.GetAttribute("connectedModelID"))
+            fidList.GetAttribute("connectedModelID")
+        )
         landmarkDescription = self.decodeJSON(
-            fidList.GetAttribute("landmarkDescription"))
+            fidList.GetAttribute("landmarkDescription")
+        )
         arrayName = fidList.GetAttribute("arrayName")
         arrayPartNames = set()
 
@@ -897,16 +981,18 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
             currentROIPointListID = vtk.vtkIdList()
             currentArrayPartName = self.ROI_ARRAY_NAME.format(
                 connectedModel.GetName(),
-                activeLandmarkState['landmarkLabel'],
+                activeLandmarkState["landmarkLabel"],
             )
             if activeLandmarkState["ROIradius"] != 0:
-                self.defineNeighbor(currentROIPointListID,
-                                    hardenModel.GetPolyData(),
-                                    activeLandmarkState["projection"]["closestPointIndex"],
-                                    activeLandmarkState["ROIradius"])
-                self.addArrayFromIdList(currentROIPointListID,
-                                        connectedModel,
-                                        currentArrayPartName)
+                self.defineNeighbor(
+                    currentROIPointListID,
+                    hardenModel.GetPolyData(),
+                    activeLandmarkState["projection"]["closestPointIndex"],
+                    activeLandmarkState["ROIradius"],
+                )
+                self.addArrayFromIdList(
+                    currentROIPointListID, connectedModel, currentArrayPartName
+                )
                 arrayPartNames.add(currentArrayPartName)
             for j in range(currentROIPointListID.GetNumberOfIds()):
                 ROIPointListID.InsertUniqueId(currentROIPointListID.GetId(j))
@@ -931,24 +1017,29 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
         activeInput = self.selectedModel
         fidList = self.selectedFidList
         hardenModel = slicer.app.mrmlScene().GetNodeByID(
-            activeInput.GetAttribute("hardenModelID"))
+            activeInput.GetAttribute("hardenModelID")
+        )
         if activeInput:
             # Clean the mesh with vtkCleanPolyData cleaner and vtkTriangleFilter:
             self.cleanerAndTriangleFilter(activeInput)
             self.cleanerAndTriangleFilter(hardenModel)
             # Define the new ROI:
-            selectedLandmarkID = self.findIDFromLabel(
-                fidList, selectedLandmark)
+            selectedLandmarkID = self.findIDFromLabel(fidList, selectedLandmark)
             if selectedLandmarkID:
                 landmarkDescription = self.decodeJSON(
-                    fidList.GetAttribute("landmarkDescription"))
-                landmarkDescription[selectedLandmarkID]["projection"]["closestPointIndex"] = \
-                    self.projectOnSurface(hardenModel, fidList, selectedLandmarkID)
-                fidList.SetAttribute("landmarkDescription",
-                                     self.encodeJSON(landmarkDescription))
+                    fidList.GetAttribute("landmarkDescription")
+                )
+                landmarkDescription[selectedLandmarkID]["projection"][
+                    "closestPointIndex"
+                ] = self.projectOnSurface(hardenModel, fidList, selectedLandmarkID)
+                fidList.SetAttribute(
+                    "landmarkDescription", self.encodeJSON(landmarkDescription)
+                )
             fidList.SetAttribute("isClean", self.encodeJSON({"isClean": True}))
 
-    def propagateCorrespondent(self, fidList, referenceInputModel, propagatedInputModel):
+    def propagateCorrespondent(
+        self, fidList, referenceInputModel, propagatedInputModel
+    ):
         arrayName = fidList.GetAttribute("arrayName")
         arrayPartNames = self.decodeJSON(fidList.GetAttribute("arrayPartNames"))
 
@@ -963,24 +1054,29 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
                 propagatedPointData.AddArray(arrayToPropagate)
                 self.displayROI(propagatedInputModel, name)
             else:
-                logging.warning(" NO ROI ARRAY %s FOUND. PLEASE DEFINE ONE BEFORE.", name)
+                logging.warning(
+                    " NO ROI ARRAY %s FOUND. PLEASE DEFINE ONE BEFORE.", name
+                )
                 continue
 
     def propagateNonCorrespondent(self, fidList, modelToPropagate):
         logging.debug(modelToPropagate.GetAttribute("hardenModelID"))
         connectedModel = slicer.app.mrmlScene().GetNodeByID(
-            fidList.GetAttribute("connectedModel"))
+            fidList.GetAttribute("connectedModel")
+        )
         hardenModel = slicer.app.mrmlScene().GetNodeByID(
-            modelToPropagate.GetAttribute("hardenModelID"))
+            modelToPropagate.GetAttribute("hardenModelID")
+        )
         landmarkDescription = self.decodeJSON(
-            fidList.GetAttribute("landmarkDescription"))
+            fidList.GetAttribute("landmarkDescription")
+        )
         arrayName = fidList.GetAttribute("arrayName")
 
         ROIPointListID = vtk.vtkIdList()
         for key, activeLandmarkState in landmarkDescription.items():
             currentROIPointListID = vtk.vtkIdList()
             currentArrayPartName = self.ROI_ARRAY_NAME.format(
-                connectedModel.GetName(), activeLandmarkState['landmarkLabel']
+                connectedModel.GetName(), activeLandmarkState["landmarkLabel"]
             )
             markupsIndex = fidList.GetNthControlPointIndexByID(key)
             indexClosestPoint = self.getClosestPointIndex(
@@ -991,9 +1087,11 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
                     currentROIPointListID,
                     hardenModel.GetPolyData(),
                     indexClosestPoint,
-                    activeLandmarkState["ROIradius"]
+                    activeLandmarkState["ROIradius"],
                 )
-                self.addArrayFromIdList(currentROIPointListID, modelToPropagate, currentArrayPartName)
+                self.addArrayFromIdList(
+                    currentROIPointListID, modelToPropagate, currentArrayPartName
+                )
             for j in range(currentROIPointListID.GetNumberOfIds()):
                 ROIPointListID.InsertUniqueId(currentROIPointListID.GetId(j))
 
@@ -1011,12 +1109,12 @@ class PickAndPaintLogic(ScriptedLoadableModuleLogic):
 
     def encodeJSON(self, input):
         encodedString = json.dumps(input)
-        encodedString = encodedString.replace('\"', '\'')
+        encodedString = encodedString.replace('"', "'")
         return encodedString
 
     def decodeJSON(self, input):
         if input:
-            input = input.replace('\'', '\"')
+            input = input.replace("'", '"')
             return json.loads(input)
         return None
 
@@ -1027,21 +1125,21 @@ class PickAndPaintTest(ScriptedLoadableModuleTest):
 
     def runTest(self):
         self.setUp()
-        self.delayDisplay(' Starting tests ')
+        self.delayDisplay(" Starting tests ")
 
-        self.delayDisplay(' Test getClosestPointIndex Function ')
+        self.delayDisplay(" Test getClosestPointIndex Function ")
         self.assertTrue(self.testGetClosestPointIndexFunction())
 
-        self.delayDisplay(' Test replaceLandmark Function ')
+        self.delayDisplay(" Test replaceLandmark Function ")
         self.assertTrue(self.testReplaceLandmarkFunction())
 
-        self.delayDisplay(' Test DefineNeighbors Function ')
+        self.delayDisplay(" Test DefineNeighbors Function ")
         self.assertTrue(self.testDefineNeighborsFunction())
 
-        self.delayDisplay(' Test addArrayFromIdList Function ')
+        self.delayDisplay(" Test addArrayFromIdList Function ")
         self.assertTrue(self.testAddArrayFromIdListFunction())
 
-        self.delayDisplay(' Tests Passed! ')
+        self.delayDisplay(" Tests Passed! ")
 
     def testGetClosestPointIndexFunction(self):
         sphereModel = self.defineSphere()
@@ -1051,45 +1149,71 @@ class PickAndPaintTest(ScriptedLoadableModuleTest):
         logic = PickAndPaintLogic(slicer.modules.PickAndPaintWidget)
         markupsLogic = self.defineMarkupsLogic()
 
-        closestPointIndexList.append(logic.getClosestPointIndex(slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
-                                                                polyData,
-                                                                0))
-        closestPointIndexList.append(logic.getClosestPointIndex(slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
-                                                                polyData,
-                                                                1))
-        closestPointIndexList.append(logic.getClosestPointIndex(slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
-                                                                polyData,
-                                                                2))
+        closestPointIndexList.append(
+            logic.getClosestPointIndex(
+                slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
+                polyData,
+                0,
+            )
+        )
+        closestPointIndexList.append(
+            logic.getClosestPointIndex(
+                slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
+                polyData,
+                1,
+            )
+        )
+        closestPointIndexList.append(
+            logic.getClosestPointIndex(
+                slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
+                polyData,
+                2,
+            )
+        )
 
-        if closestPointIndexList[0] != 9 or closestPointIndexList[1] != 35 or closestPointIndexList[2] != 1:
+        if (
+            closestPointIndexList[0] != 9
+            or closestPointIndexList[1] != 35
+            or closestPointIndexList[2] != 1
+        ):
             return False
         return True
 
     def testReplaceLandmarkFunction(self):
-        logging.info(' Test replaceLandmark Function ')
+        logging.info(" Test replaceLandmark Function ")
         logic = PickAndPaintLogic(slicer.modules.PickAndPaintWidget)
         sphereModel = self.defineSphere()
         polyData = sphereModel.GetPolyData()
         markupsLogic = self.defineMarkupsLogic()
         listCoordinates = list()
         listCoordinates.append(
-            [55.28383255004883, 55.28383255004883, 62.34897994995117])
+            [55.28383255004883, 55.28383255004883, 62.34897994995117]
+        )
         listCoordinates.append(
-            [-68.93781280517578, -68.93781280517578, -22.252094268798828])
+            [-68.93781280517578, -68.93781280517578, -22.252094268798828]
+        )
         listCoordinates.append([0.0, 0.0, -100.0])
         closestPointIndexList = [9, 35, 1]
         coord = [-1, -1, -1]
-        for i in range(slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()).GetNumberOfFiducials()):
-            logic.replaceLandmark(polyData, slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
-                                  i,
-                                  closestPointIndexList[i])
+        for i in range(
             slicer.mrmlScene.GetNodeByID(
-                markupsLogic.GetActiveListID()).GetNthFiducialPosition(i, coord)
+                markupsLogic.GetActiveListID()
+            ).GetNumberOfFiducials()
+        ):
+            logic.replaceLandmark(
+                polyData,
+                slicer.mrmlScene.GetNodeByID(markupsLogic.GetActiveListID()),
+                i,
+                closestPointIndexList[i],
+            )
+            slicer.mrmlScene.GetNodeByID(
+                markupsLogic.GetActiveListID()
+            ).GetNthFiducialPosition(i, coord)
             if coord != listCoordinates[i]:
-                logging.warning(f'{i}  - Failed ')
+                logging.warning(f"{i}  - Failed ")
                 return False
             else:
-                logging.info(f'{i}  - Passed! ')
+                logging.info(f"{i}  - Passed! ")
         return True
 
     def testDefineNeighborsFunction(self):
@@ -1100,27 +1224,52 @@ class PickAndPaintTest(ScriptedLoadableModuleTest):
         connectedVerticesReferenceList = list()
         connectedVerticesReferenceList.append([9, 2, 3, 8, 10, 15, 16])
         connectedVerticesReferenceList.append(
-            [35, 28, 29, 34, 36, 41, 42, 21, 22, 27, 23, 30, 33, 40, 37, 43, 47, 48, 49])
+            [35, 28, 29, 34, 36, 41, 42, 21, 22, 27, 23, 30, 33, 40, 37, 43, 47, 48, 49]
+        )
         connectedVerticesReferenceList.append(
-            [1, 7, 13, 19, 25, 31, 37, 43, 49, 6, 48, 12, 18, 24, 30, 36, 42, 5, 47, 41, 11, 17, 23, 29, 35])
+            [
+                1,
+                7,
+                13,
+                19,
+                25,
+                31,
+                37,
+                43,
+                49,
+                6,
+                48,
+                12,
+                18,
+                24,
+                30,
+                36,
+                42,
+                5,
+                47,
+                41,
+                11,
+                17,
+                23,
+                29,
+                35,
+            ]
+        )
         connectedVerticesTestedList = list()
 
         for i in range(3):
             inter = vtk.vtkIdList()
-            logic.defineNeighbor(inter,
-                                 polyData,
-                                 closestPointIndexList[i],
-                                 i + 1)
+            logic.defineNeighbor(inter, polyData, closestPointIndexList[i], i + 1)
             connectedVerticesTestedList.append(inter)
             list1 = list()
             for j in range(connectedVerticesTestedList[i].GetNumberOfIds()):
                 list1.append(int(connectedVerticesTestedList[i].GetId(j)))
             connectedVerticesTestedList[i] = list1
             if connectedVerticesTestedList[i] != connectedVerticesReferenceList[i]:
-                logging.warning(f'test  {i}  AddArrayFromIdList: failed')
+                logging.warning(f"test  {i}  AddArrayFromIdList: failed")
                 return False
             else:
-                logging.info(f'test  {i}  AddArrayFromIdList: succeed')
+                logging.info(f"test  {i}  AddArrayFromIdList: succeed")
         return True
 
     def testAddArrayFromIdListFunction(self):
@@ -1130,16 +1279,13 @@ class PickAndPaintTest(ScriptedLoadableModuleTest):
         closestPointIndexList = [9, 35, 1]
         for i in range(3):
             inter = vtk.vtkIdList()
-            logic.defineNeighbor(
-                inter, polyData, closestPointIndexList[i], i + 1)
-            logic.addArrayFromIdList(inter,
-                                     sphereModel,
-                                     'Test_' + str(i + 1))
-            if polyData.GetPointData().HasArray('Test_' + str(i + 1)) != 1:
-                logging.warning(f'test  {i}  AddArrayFromIdList: failed')
+            logic.defineNeighbor(inter, polyData, closestPointIndexList[i], i + 1)
+            logic.addArrayFromIdList(inter, sphereModel, "Test_" + str(i + 1))
+            if polyData.GetPointData().HasArray("Test_" + str(i + 1)) != 1:
+                logging.warning(f"test  {i}  AddArrayFromIdList: failed")
                 return False
             else:
-                logging.info(f'test  {i}  AddArrayFromIdList: succeed')
+                logging.info(f"test  {i}  AddArrayFromIdList: succeed")
         return True
 
     def defineSphere(self):
