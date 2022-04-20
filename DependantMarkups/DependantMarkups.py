@@ -5,7 +5,10 @@ import json
 from copy import deepcopy
 
 import slicer
-from slicer.ScriptedLoadableModule import *
+from slicer.ScriptedLoadableModule import ScriptedLoadableModule
+from slicer.ScriptedLoadableModule import ScriptedLoadableModuleWidget
+from slicer.ScriptedLoadableModule import ScriptedLoadableModuleLogic
+from slicer.ScriptedLoadableModule import ScriptedLoadableModuleTest
 from slicer.util import VTKObservationMixin
 from slicer.util import NodeModify
 
@@ -40,16 +43,16 @@ class VTKSuppressibleObservationMixin(VTKObservationMixin):
     def suppress(self, obj=..., event=..., method=...):
         suppressed = []
         for o, e, m, g, t, p in self.Observations:
-            if obj is not ... and obj != o:
-                continue
-            if event is not ... and event != e:
-                continue
-            if method is not ... and method != m:
-                continue
-
-            o.RemoveObserver(t)
-            self.Observations.remove([o, e, m, g, t, p])
-            suppressed.append([o, e, m, g, t, p])
+            if all(
+                (
+                    obj is ... or obj == o,
+                    event is ... or event == e,
+                    method is ... or method == m,
+                )
+            ):
+                o.RemoveObserver(t)
+                self.Observations.remove([o, e, m, g, t, p])
+                suppressed.append([o, e, m, g, t, p])
 
         yield
 
@@ -67,6 +70,83 @@ class DependantMarkupsLogic(
 
         self.default_projected = True
 
+    @staticmethod
+    def recover_midpoint_provenance(landmarks):  # todo integrate into connect()
+        """
+        When a new list of fiducials is loaded from a file, we know which are
+        midpoints, but we don't know from which points those midpoints were
+        constructed. This function recovers this information.
+        """
+        # Build the data structures we will need.
+        point_ids = []
+        points = []
+        ids_and_midpoints = []
+        all_ids = []
+        scratch_array = np.zeros(3)
+        for n in range(landmarks.GetNumberOfMarkups()):
+            markupID = landmarks.GetNthMarkupID(n)
+            is_sel = landmarks.GetNthFiducialSelected(n)
+            landmarks.GetNthFiducialPosition(n, scratch_array)
+            markup_pos = np.copy(scratch_array)
+            if is_sel:  # not a midpoint
+                point_ids.append(markupID)
+                points.append(markup_pos)
+            else:  # midpoint
+                ids_and_midpoints.append((markupID, markup_pos))
+            all_ids.append(markupID)
+
+        # This is the structure we want to populate to help build
+        # landmarkDescription in createNewDataStructure.
+        midpoint_data = {
+            point_id: {
+                "definedByThisMarkup": [],
+                "isMidPoint": False,
+                "Point1": None,
+                "Point2": None,
+            }
+            for point_id in all_ids
+        }
+
+        # Use a kd-tree to find points that could be the missing endpoint of a
+        # hypothetical midpoint operation.
+        points = np.array(points)
+        n_new_points = len(points)
+        while n_new_points > 0 and len(ids_and_midpoints) > 0:
+            kdt = scipy.spatial.KDTree(points)
+            n_new_points = 0
+            new_ids_and_midpoints = []
+            for mp_id, mp in ids_and_midpoints:
+                provenance_found = False
+                for p_idx, p in enumerate(points):
+                    # hp for "hypothetical point"
+                    # mp = (hp + p) / 2
+                    hp = 2 * mp - p
+                    max_error = np.linalg.norm(mp - p) / 10000.0
+                    distance, kdt_p_idx = kdt.query(hp, distance_upper_bound=max_error)
+                    # distance = np.inf on failure
+                    if distance < max_error:
+                        ids = (point_ids[p_idx], point_ids[kdt_p_idx])
+                        midpoint_data[mp_id].update(
+                            {
+                                "isMidPoint": True,
+                                "Point1": ids[0],
+                                "Point2": ids[1],
+                            }
+                        )
+                        for id_ in ids:
+                            midpoint_data[id_]["definedByThisMarkup"].append(mp_id)
+
+                        provenance_found = True
+                        point_ids.append(mp_id)
+                        points = np.concatenate((points, mp.reshape((1, 3))))
+                        n_new_points += 1
+                        break
+                if not provenance_found:
+                    new_ids_and_midpoints.append((mp_id, mp))
+            ids_and_midpoints = new_ids_and_midpoints
+
+        return midpoint_data
+
     def default(self):
         return {
             "midPoint": {
@@ -83,11 +163,11 @@ class DependantMarkupsLogic(
 
         # todo roi radius
 
-    #     planeDescription = dict()
-    #     landmarks.SetAttribute("planeDescription", self.encodeJSON(planeDescription))
-    #     landmarks.SetAttribute("isClean", self.encodeJSON({"isClean": False}))
-    #     landmarks.SetAttribute("lastTransformID", None)
-    #     landmarks.SetAttribute("arrayName", model.GetName() + "_ROI")
+        # planeDescription = dict()
+        # landmarks.SetAttribute("planeDescription", self.encodeJSON(planeDescription))
+        # landmarks.SetAttribute("isClean", self.encodeJSON({"isClean": False}))
+        # landmarks.SetAttribute("lastTransformID", None)
+        # landmarks.SetAttribute("arrayName", model.GetName() + "_ROI")
 
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
         landmarkCoord = np.zeros(3)
@@ -213,6 +293,7 @@ class DependantMarkupsLogic(
                             sub["midPoint"]["Point1"] = None
                             sub["midPoint"]["Point2"] = None
 
+            # todo topological sort. graphlib if python >= 3.9 else pip_install networkx
             for ID, desc in data.items():
                 if desc["midPoint"]["isMidPoint"]:
                     self.computeMidPoint(
@@ -246,6 +327,7 @@ class DependantMarkupsLogic(
             comboBox.setCurrentIndex(idx)
 
         comboBox.blockSignals(False)
+
 
 class DependantMarkupsTest(ScriptedLoadableModuleTest):
     def setUp(self):

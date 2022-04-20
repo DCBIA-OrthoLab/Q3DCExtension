@@ -6,12 +6,17 @@ import numpy
 import os
 import pickle
 import time
-import vtk, qt, ctk, slicer
+import vtk, qt, ctk
 
 from math import acos, pi, sqrt
 
-from slicer.ScriptedLoadableModule import *
+import slicer
+from slicer.ScriptedLoadableModule import ScriptedLoadableModule
+from slicer.ScriptedLoadableModule import ScriptedLoadableModuleWidget
+from slicer.ScriptedLoadableModule import ScriptedLoadableModuleLogic
+from slicer.ScriptedLoadableModule import ScriptedLoadableModuleTest
 from slicer.util import VTKObservationMixin
+from slicer.util import NodeModify
 
 
 class AnglePlanes(ScriptedLoadableModule):
@@ -288,7 +293,9 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         markups = self.inputLandmarksSelector.currentNode()
         model = self.inputModelSelector.currentNode()
 
+        self.logic.FidList = markups
         self.logic.selectedFidList = markups
+        self.logic.selectedModel = model
 
         if markups and model:
             self.deps.connect(markups, model)
@@ -327,8 +334,12 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.deps.updateLandmarkComboBox(control.fidlist, control.landmark3ComboBox)
 
         control = self.selectPlaneForMidPoint.currentData
-        self.deps.updateLandmarkComboBox(control.fidlist, self.landmarkComboBox1MidPoint)
-        self.deps.updateLandmarkComboBox(control.fidlist, self.landmarkComboBox2MidPoint)
+        self.deps.updateLandmarkComboBox(
+            control.fidlist, self.landmarkComboBox1MidPoint
+        )
+        self.deps.updateLandmarkComboBox(
+            control.fidlist, self.landmarkComboBox2MidPoint
+        )
 
     def onSurfaceDeplacementStateChanged(self):
         self.deps.default_projected = self.surfaceDeplacementCheckBox.isChecked()
@@ -558,9 +569,17 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if not fidList:
             self.logic.warningMessage("Fiducial list problem.")
 
-        ID = fidList.GetNthControlPointID(fidList.AddControlPoint(vtk.vtkVector3d()))
         ID1 = self.landmarkComboBox1MidPoint.currentData
         ID2 = self.landmarkComboBox2MidPoint.currentData
+
+        key = "{}_{}".format(
+            fidList.GetNthControlPointLabel(fidList.GetNthControlPointIndexByID(ID1)),
+            fidList.GetNthControlPointLabel(fidList.GetNthControlPointIndexByID(ID2)),
+        )
+
+        ID = fidList.GetNthControlPointID(
+            fidList.AddControlPoint(vtk.vtkVector3d(), key)
+        )
 
         self.deps.setMidPoint(fidList, ID, ID1, ID2)
 
@@ -932,7 +951,7 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
         logic.hardenTransform(hardenModel)
         return hardenModel
 
-    def onModelModified(self, obj, event):
+    def onModelModified(self, obj, event):  # todo move to deps
         # recompute the harden model
         hardenModel = self.createIntermediateHardenModel(obj)
         obj.SetNodeReferenceID("hardenModel", hardenModel.GetID())
@@ -969,7 +988,9 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
                         "landmarkDescription", self.encodeJSON(landmarkDescription)
                     )
 
-    def ModelChanged(self, inputModelSelector, inputLandmarksSelector):
+    def ModelChanged(  # todo move to deps
+        self, inputModelSelector, inputLandmarksSelector
+    ):
         inputModel = inputModelSelector.currentNode()
         # if a Model Node is present
         if inputModel:
@@ -989,98 +1010,6 @@ class AnglePlanesLogic(ScriptedLoadableModuleLogic):
             # Update the fiducial list selector
             inputLandmarksSelector.setCurrentNode(None)
             inputLandmarksSelector.setEnabled(False)
-
-    def isUnderTransform(self, markups):
-        if markups.GetParentTransformNode():
-            messageBox = ctk.ctkMessageBox()
-            messageBox.setWindowTitle(" /!\ WARNING /!\ ")
-            messageBox.setIcon(messageBox.Warning)
-            messageBox.setText(
-                "Your Markup Fiducial Node is currently modified by a transform,"
-                "if you choose to continue the program will apply the transform"
-                "before doing anything else!"
-            )
-            messageBox.setInformativeText("Do you want to continue?")
-            messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
-            choice = messageBox.exec_()
-            if choice == messageBox.Yes:
-                logic = slicer.vtkSlicerTransformLogic()
-                logic.hardenTransform(markups)
-                return False
-            else:
-                messageBox.setText(" Node not modified")
-                messageBox.setStandardButtons(messageBox.Ok)
-                messageBox.setInformativeText("")
-                messageBox.exec_()
-                return True
-        else:
-            return False
-
-    def connectedModelChangement(self):
-        messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
-        messageBox.setIcon(messageBox.Warning)
-        messageBox.setText(
-            "The Markup Fiducial Node selected is curently projected on an"
-            "other model, if you chose to continue the fiducials will be  "
-            "reprojected, and this could impact the functioning of other modules"
-        )
-        messageBox.setInformativeText("Do you want to continue?")
-        messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
-        choice = messageBox.exec_()
-        if choice == messageBox.Yes:
-            return True
-        else:
-            messageBox.setText(" Node not modified")
-            messageBox.setStandardButtons(messageBox.Ok)
-            messageBox.setInformativeText("")
-            messageBox.exec_()
-            return False
-
-    def changementOfConnectedModel(self, landmarks, model, onSurface):
-        landmarks.SetNodeReferenceID("connectedModel", model.GetID())
-        landmarks.SetNodeReferenceID(
-            "hardenModel", model.GetNodeReferenceID("hardenModel")
-        )
-        landmarkDescription = self.decodeJSON(
-            landmarks.GetAttribute("landmarkDescription")
-        )
-        for n in range(landmarks.GetNumberOfMarkups()):
-            markupID = landmarks.GetNthMarkupID(n)
-            if onSurface:
-                if landmarkDescription[markupID]["projection"]["isProjected"] == True:
-                    hardenModel = landmarks.GetNodeReferenceID("hardenModel")
-                    landmarkDescription[markupID]["projection"][
-                        "closestPointIndex"
-                    ] = self.projectOnSurface(hardenModel, landmarks, markupID)
-            else:
-                landmarkDescription[markupID]["projection"]["isProjected"] = False
-                landmarkDescription[markupID]["projection"]["closestPointIndex"] = None
-            landmarks.SetAttribute(
-                "landmarkDescription", self.encodeJSON(landmarkDescription)
-            )
-        landmarks.SetAttribute("isClean", self.encodeJSON({"isClean": False}))
-
-    # Called when a landmark is added on a model
-    def onPointAddedEvent(self, obj, event):
-        print("------markup adding-------")
-        landmarkDescription = self.decodeJSON(obj.GetAttribute("landmarkDescription"))
-        numOfMarkups = obj.GetNumberOfMarkups()
-        markupID = obj.GetNthMarkupID(numOfMarkups - 1)
-        landmarkDescription[markupID] = dict()
-        landmarkLabel = obj.GetNthMarkupLabel(numOfMarkups - 1)
-        landmarkDescription[markupID]["landmarkLabel"] = landmarkLabel
-        landmarkDescription[markupID]["ROIradius"] = 0
-        landmarkDescription[markupID]["projection"] = dict()
-        landmarkDescription[markupID]["projection"]["isProjected"] = True
-        # The landmark will be projected by onPointModifiedEvent
-        landmarkDescription[markupID]["midPoint"] = dict()
-        landmarkDescription[markupID]["midPoint"]["definedByThisMarkup"] = list()
-        landmarkDescription[markupID]["midPoint"]["isMidPoint"] = False
-        landmarkDescription[markupID]["midPoint"]["Point1"] = None
-        landmarkDescription[markupID]["midPoint"]["Point2"] = None
-        obj.SetAttribute("landmarkDescription", self.encodeJSON(landmarkDescription))
-        qt.QTimer.singleShot(0, lambda: self.onPointModifiedEvent(obj, None))
 
     def getMatrix(self, slice):
         # print "--- get Matrix ---"
