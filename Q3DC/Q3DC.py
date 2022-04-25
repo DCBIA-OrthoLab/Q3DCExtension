@@ -717,7 +717,13 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fidList.AddControlPoint(vtk.vtkVector3d(), key)
         )
 
+        isProjected = self.ui.midPointOnSurfaceCheckBox.checked
+        print('isProjected', isProjected)
+
+        self.deps.setProjected(fidList, ID, isProjected)
         self.deps.setMidPoint(fidList, ID, ID1, ID2)
+
+        print(self.deps.getData(fidList))
 
         self.UpdateInterface()
         self.updateAllLandmarkComboBox(fidList)
