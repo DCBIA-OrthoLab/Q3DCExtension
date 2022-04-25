@@ -15,6 +15,12 @@ import numpy as np
 
 import vtk
 
+try:
+    import networkx as nx
+except ModuleNotFoundError as e:
+    slicer.util.pip_install("networkx")
+    import networkx as nx
+
 
 def normalize(arr):
     arr = np.asarray(arr)
@@ -299,6 +305,20 @@ class DependantMarkupsLogic(
         text = json.dumps(data)
         node.SetAttribute("descriptions", text)
 
+    def getUpdateOrder(self, data):
+        graph = nx.DiGraph()
+
+        for ID in data:
+            graph.add_node(ID)
+
+        for ID in data:
+            dependencies = data[ID]['midPoint']['definedByThisMarkup']
+            for dependent in dependencies:
+                graph.add_edge(ID, dependent)
+
+        return nx.topological_sort(graph)
+
+
     def setMidPoint(self, node, ID, ID1, ID2):
         data = self.getData(node)
 
@@ -351,16 +371,16 @@ class DependantMarkupsLogic(
                             sub["midPoint"]["Point1"] = None
                             sub["midPoint"]["Point2"] = None
 
-            # todo topological sort. graphlib if python >= 3.9 else pip_install networkx
-            for ID, desc in data.items():
-                if desc["midPoint"]["isMidPoint"]:
+            for ID in self.getUpdateOrder(data):
+                info = data[ID]
+                if info['midPoint']['isMidPoint']:
                     self.computeMidPoint(
                         node,
                         ID,
-                        desc["midPoint"]["Point1"],
-                        desc["midPoint"]["Point2"],
+                        info['midPoint']['Point1'],
+                        info['midPoint']['Point2'],
                     )
-                if desc["projection"]["isProjected"]:
+                if info['projection']['isProjected']:
                     self.computeProjection(node, ID)
 
             self.setData(node, data)

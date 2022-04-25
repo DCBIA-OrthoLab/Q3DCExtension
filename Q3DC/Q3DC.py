@@ -18,14 +18,6 @@ from slicer.ScriptedLoadableModule import ScriptedLoadableModuleTest
 from slicer.util import VTKObservationMixin
 from slicer.util import NodeModify
 
-# needed for topological sort. Yes, this is basically just DFS.
-try:
-    import networkx as nx
-except ModuleNotFoundError as e:
-    # This requires a network connection!
-    slicer.util.pip_install("networkx")
-    import networkx as nx
-
 
 class Q3DC(ScriptedLoadableModule):
     def __init__(self, parent):
