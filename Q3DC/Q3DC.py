@@ -384,23 +384,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.landmarkComboBox.clear()
         self.UpdateInterface()
 
-        # Checking the names of the fiducials
-        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
-        end = list.GetNumberOfItems()
-        for i in range(0, end):
-            fidList = list.GetItemAsObject(i)
-            landmarkDescription = self.logic.decodeJSON(
-                fidList.GetAttribute("landmarkDescription")
-            )
-            if landmarkDescription:
-                for n in range(fidList.GetNumberOfMarkups()):
-                    markupID = fidList.GetNthMarkupID(n)
-                    markupLabel = fidList.GetNthMarkupLabel(n)
-                    landmarkDescription[markupID]["landmarkLabel"] = markupLabel
-                fidList.SetAttribute(
-                    "landmarkDescription", self.logic.encodeJSON(landmarkDescription)
-                )
-
     def UpdateInterface(self):
         self.ui.defineMiddlePointButton.enabled = (
             self.ui.landmarkComboBox1.currentData != ""
@@ -625,10 +608,15 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             except:
                 pass
         self.logic.selectedModel = self.ui.inputModelSelector.currentNode()
-        self.logic.ModelChanged(
-            self.ui.inputModelSelector, self.ui.inputLandmarksSelector
-        )
         self.ui.inputLandmarksSelector.setCurrentNode(None)
+
+        model = self.ui.inputModelSelector.currentNode()
+        if model:
+            self.ui.inputLandmarksSelector.setEnabled(True)
+        else:
+            self.ui.inputLandmarksSelector.setCurrentNode(None)
+            self.ui.inputLandmarksSelector.setEnabled(False)
+
 
     def onLandmarksChanged(self):
         print("---- Landmarks Changed ----")
@@ -951,96 +939,65 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
                         fidList.SetNthMarkupLocked(markupsIndex, False)
                         fidList.SetNthMarkupLocked(markupsIndex, False)
 
-    def createIntermediateHardenModel(self, model):
-        hardenModel = slicer.mrmlScene.GetNodesByName(
-            "SurfaceRegistration_"
-            + model.GetName()
-            + "_hardenCopy_"
-            + str(slicer.app.applicationPid())
-        ).GetItemAsObject(0)
-        if hardenModel is None:
-            hardenModel = slicer.vtkMRMLModelNode()
-        hardenPolyData = vtk.vtkPolyData()
-        hardenPolyData.DeepCopy(model.GetPolyData())
-        hardenModel.SetAndObservePolyData(hardenPolyData)
-        hardenModel.SetName(
-            "SurfaceRegistration_"
-            + model.GetName()
-            + "_hardenCopy_"
-            + str(slicer.app.applicationPid())
-        )
-        if model.GetParentTransformNode():
-            hardenModel.SetAndObserveTransformNodeID(
-                model.GetParentTransformNode().GetID()
-            )
-        hardenModel.HideFromEditorsOn()
-        slicer.mrmlScene.AddNode(hardenModel)
-        logic = slicer.vtkSlicerTransformLogic()
-        logic.hardenTransform(hardenModel)
-        return hardenModel
+    # def onModelModified(self, obj, event):  # todo move to deps
+    #     # recompute the harden model
+    #     hardenModel = self.createIntermediateHardenModel(obj)
+    #     obj.SetAttribute("hardenModelID", hardenModel.GetID())
+    #     # for each fiducial list
+    #     list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
+    #     end = list.GetNumberOfItems()
+    #     for i in range(0, end):
+    #         # If landmarks are projected on the modified model
+    #         fidList = list.GetItemAsObject(i)
+    #         if fidList.GetAttribute("connectedModelID"):
+    #             if fidList.GetAttribute("connectedModelID") == obj.GetID():
+    #                 # replace the harden model with the new one
+    #                 fidList.SetAttribute("hardenModelID", hardenModel.GetID())
+    #                 # reproject the fiducials on the new model
+    #                 landmarkDescription = self.decodeJSON(
+    #                     fidList.GetAttribute("landmarkDescription")
+    #                 )
+    #                 for n in range(fidList.GetNumberOfMarkups()):
+    #                     markupID = fidList.GetNthMarkupID(n)
+    #                     if landmarkDescription[markupID]["projection"]["isProjected"]:
+    #                         hardenModel = slicer.app.mrmlScene().GetNodeByID(
+    #                             fidList.GetAttribute("hardenModelID")
+    #                         )
+    #                         markupsIndex = fidList.GetNthControlPointIndexByID(markupID)
+    #                         self.replaceLandmark(
+    #                             hardenModel.GetPolyData(),
+    #                             fidList,
+    #                             markupsIndex,
+    #                             landmarkDescription[markupID]["projection"][
+    #                                 "closestPointIndex"
+    #                             ],
+    #                         )
+    #                     fidList.SetAttribute(
+    #                         "landmarkDescription", self.encodeJSON(landmarkDescription)
+    #                     )
 
-    def onModelModified(self, obj, event):  # todo move to deps
-        # recompute the harden model
-        hardenModel = self.createIntermediateHardenModel(obj)
-        obj.SetAttribute("hardenModelID", hardenModel.GetID())
-        # for each fiducial list
-        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
-        end = list.GetNumberOfItems()
-        for i in range(0, end):
-            # If landmarks are projected on the modified model
-            fidList = list.GetItemAsObject(i)
-            if fidList.GetAttribute("connectedModelID"):
-                if fidList.GetAttribute("connectedModelID") == obj.GetID():
-                    # replace the harden model with the new one
-                    fidList.SetAttribute("hardenModelID", hardenModel.GetID())
-                    # reproject the fiducials on the new model
-                    landmarkDescription = self.decodeJSON(
-                        fidList.GetAttribute("landmarkDescription")
-                    )
-                    for n in range(fidList.GetNumberOfMarkups()):
-                        markupID = fidList.GetNthMarkupID(n)
-                        if (
-                            landmarkDescription[markupID]["projection"]["isProjected"]
-                            == True
-                        ):
-                            hardenModel = slicer.app.mrmlScene().GetNodeByID(
-                                fidList.GetAttribute("hardenModelID")
-                            )
-                            markupsIndex = fidList.GetNthControlPointIndexByID(markupID)
-                            self.replaceLandmark(
-                                hardenModel.GetPolyData(),
-                                fidList,
-                                markupsIndex,
-                                landmarkDescription[markupID]["projection"][
-                                    "closestPointIndex"
-                                ],
-                            )
-                        fidList.SetAttribute(
-                            "landmarkDescription", self.encodeJSON(landmarkDescription)
-                        )
-
-    def ModelChanged(  # todo move to deps
-        self, inputModelSelector, inputLandmarksSelector
-    ):
-        inputModel = inputModelSelector.currentNode()
-        # if a Model Node is present
-        if inputModel:
-            self.selectedModel = inputModel
-            hardenModel = self.createIntermediateHardenModel(inputModel)
-            inputModel.SetAttribute("hardenModelID", hardenModel.GetID())
-            modelModifieTagEvent = inputModel.AddObserver(
-                inputModel.TransformModifiedEvent, self.onModelModified
-            )
-            inputModel.SetAttribute(
-                "modelModifieTagEvent",
-                self.encodeJSON({"modelModifieTagEvent": modelModifieTagEvent}),
-            )
-            inputLandmarksSelector.setEnabled(True)
-        # if no model is selected
-        else:
-            # Update the fiducial list selector
-            inputLandmarksSelector.setCurrentNode(None)
-            inputLandmarksSelector.setEnabled(False)
+    # def ModelChanged(  # todo move to deps
+    #     self, inputModelSelector, inputLandmarksSelector
+    # ):
+    #     inputModel = inputModelSelector.currentNode()
+    #     # if a Model Node is present
+    #     if inputModel:
+    #         self.selectedModel = inputModel
+    #         hardenModel = self.createIntermediateHardenModel(inputModel)
+    #         inputModel.SetAttribute("hardenModelID", hardenModel.GetID())
+    #         modelModifieTagEvent = inputModel.AddObserver(
+    #             inputModel.TransformModifiedEvent, self.onModelModified
+    #         )
+    #         inputModel.SetAttribute(
+    #             "modelModifieTagEvent",
+    #             self.encodeJSON({"modelModifieTagEvent": modelModifieTagEvent}),
+    #         )
+    #         inputLandmarksSelector.setEnabled(True)
+    #     # if no model is selected
+    #     else:
+    #         # Update the fiducial list selector
+    #         inputLandmarksSelector.setCurrentNode(None)
+    #         inputLandmarksSelector.setEnabled(False)
 
     def updateLinesEvent(self, obj, event):
         if (

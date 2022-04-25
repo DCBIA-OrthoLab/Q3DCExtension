@@ -216,23 +216,6 @@ class AnglePlanesWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.landmarkComboBox.clear()
         self.UpdateInterface()
 
-        # Checking the names of the fiducials
-        list = slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsFiducialNode")
-        end = list.GetNumberOfItems()
-        for i in range(0, end):
-            fidList = list.GetItemAsObject(i)
-            landmarkDescription = self.logic.decodeJSON(
-                fidList.GetAttribute("landmarkDescription")
-            )
-            if landmarkDescription:
-                for n in range(fidList.GetNumberOfMarkups()):
-                    markupID = fidList.GetNthMarkupID(n)
-                    markupLabel = fidList.GetNthMarkupLabel(n)
-                    landmarkDescription[markupID]["landmarkLabel"] = markupLabel
-                fidList.SetAttribute(
-                    "landmarkDescription", self.logic.encodeJSON(landmarkDescription)
-                )
-
     def UpdateInterface(self):
         print("--- UpdateInterface ---")
         self.logic.UpdateThreeDView(self.landmarkComboBox.currentData)

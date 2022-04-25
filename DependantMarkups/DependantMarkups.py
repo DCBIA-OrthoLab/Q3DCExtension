@@ -169,6 +169,32 @@ class DependantMarkupsLogic(
         # landmarks.SetAttribute("lastTransformID", None)
         # landmarks.SetAttribute("arrayName", model.GetName() + "_ROI")
 
+    @staticmethod
+    def createHardenModel(model):
+        name = model.GetName()
+        pid = slicer.app.applicationPid()
+        name = f'SurafceRegistration_{name}_hardenCopy_{pid}'
+
+        hardenModel = slicer.mrmlScene.GetFirstNodeByName(name)
+        if hardenModel is None:
+            # hardenModel = slicer.mrmlScene.
+            hardenModel = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLModelNode', name)
+
+        hardenPolyData = vtk.vtkPolyData()
+        hardenPolyData.DeepCopy(model.GetPolyData())
+        hardenModel.SetAndObservePolyData(hardenPolyData)
+
+        if model.GetParentTransformNode():
+            hardenModel.SetAndObserveTransformNodeID(
+                model.GetParentTransformNode().GetID()
+            )
+
+        hardenModel.HideFromEditorsOn()
+
+        logic = slicer.vtkSlicerTransformLogic()
+        logic.hardenTransform(hardenModel)
+        return hardenModel
+
     def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
         landmarkCoord = np.zeros(3)
         landmarkCoord[1] = 42
@@ -203,7 +229,9 @@ class DependantMarkupsLogic(
             return indexClosestPoint
 
     def getModel(self, node):
-        return node.GetNodeReference("MODEL")
+        hardened = node.GetNodeReference("HARDENED_MODEL")
+        model = node.GetNodeReference('MODEL')
+        return hardened or model
 
     def computeProjection(self, node, ID):
         model = self.getModel(node)
@@ -213,17 +241,14 @@ class DependantMarkupsLogic(
         self.projectOnSurface(model, node, ID)
 
     def connect(self, node, model):
-        self.addObserver(
-            node, node.PointAddedEvent, self.onPointsChanged, priority=100.0
-        )
-        self.addObserver(
-            node, node.PointModifiedEvent, self.onPointsChanged, priority=100.0
-        )
-        self.addObserver(
-            node, node.PointRemovedEvent, self.onPointsChanged, priority=100.0
-        )
-
         node.AddNodeReferenceID("MODEL", model.GetID())
+
+        events = node.PointAddedEvent, node.PointModifiedEvent, node.PointRemovedEvent
+        for event in events:
+            self.addObserver(node, event, self.onPointsChanged, priority=100.0)
+
+        self.addObserver(model, model.TransformModifiedEvent, self.onModelChanged)
+        # todo remove observer when model changed.
 
     def getData(self, node):
         text = node.GetAttribute("descriptions")
@@ -306,6 +331,14 @@ class DependantMarkupsLogic(
                     self.computeProjection(node, ID)
 
             self.setData(node, data)
+
+    def onModelChanged(self, model, e):
+        hardened = self.createHardenModel(model)
+
+        for node in slicer.mrmlScene.GetNodesByClass('vtkMRMLMarkupsNode'):
+            if node.GetNodeReference("MODEL") == model:
+                node.SetNodeReferenceID("HARDENED_MODEL", hardened.GetID())
+                # todo re-project
 
     def updateLandmarkComboBox(self, node, comboBox, displayMidPoints=True):
         current = comboBox.currentData
