@@ -126,7 +126,6 @@ class DependantMarkupsLogic(
         # landmarkDescription in createNewDataStructure.
         midpoint_data = {
             point_id: {
-                "definedByThisMarkup": [],
                 "isMidPoint": False,
                 "Point1": None,
                 "Point2": None,
@@ -160,8 +159,6 @@ class DependantMarkupsLogic(
                                 "Point2": ids[1],
                             }
                         )
-                        for id_ in ids:
-                            midpoint_data[id_]["definedByThisMarkup"].append(mp_id)
 
                         provenance_found = True
                         point_ids.append(mp_id)
@@ -177,7 +174,6 @@ class DependantMarkupsLogic(
     def default(self):
         return {
             "midPoint": {
-                "definedByThisMarkup": [],
                 "isMidPoint": False,
                 "Point1": None,
                 "Point2": None,
@@ -312,9 +308,13 @@ class DependantMarkupsLogic(
             graph.add_node(ID)
 
         for ID in data:
-            dependencies = data[ID]['midPoint']['definedByThisMarkup']
-            for dependent in dependencies:
-                graph.add_edge(ID, dependent)
+            if data[ID]['midPoint']['isMidPoint']:
+                sources = [
+                    data[ID]['midPoint']['Point1'],
+                    data[ID]['midPoint']['Point2'],
+                ]
+                for source in sources:
+                    graph.add_edge(source, ID)
 
         return nx.topological_sort(graph)
 
@@ -325,9 +325,6 @@ class DependantMarkupsLogic(
         data[ID]["midPoint"]["isMidPoint"] = True
         data[ID]["midPoint"]["Point1"] = ID1
         data[ID]["midPoint"]["Point2"] = ID2
-
-        data[ID1]["midPoint"]["definedByThisMarkup"].append(ID)
-        data[ID2]["midPoint"]["definedByThisMarkup"].append(ID)
 
         self.setData(node, data)
 
