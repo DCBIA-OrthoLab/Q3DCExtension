@@ -2,14 +2,11 @@ import csv
 from collections import defaultdict
 import json
 import logging
-import math
 import os
-import time
 
 import ctk
 import numpy as np
 import qt
-import scipy.spatial
 import vtk
 
 import DependantMarkups
