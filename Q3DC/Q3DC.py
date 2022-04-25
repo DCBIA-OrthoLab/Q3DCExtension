@@ -735,26 +735,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.updateAllLandmarkComboBox(fidList)
 
     def onComputeDistanceClicked(self):
-        fidList = self.logic.selectedFidList
-        fidListA = self.ui.fidListComboBoxA.currentNode()
-        fidListB = self.ui.fidListComboBoxB.currentNode()
-        nameList = [fidListA.GetName(), fidListB.GetName()]
-        if not fidList:
-            self.logic.warningMessage("Please connect a fiducial list to a model.")
-            return
-        for fidListIter in list(set(nameList)):
-            landmarkDescription = (
-                slicer.mrmlScene.GetNodesByName(fidListIter)
-                .GetItemAsObject(0)
-                .GetAttribute("landmarkDescription")
-            )
-            if not landmarkDescription:
-                self.logic.warningMessage(
-                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
-                    'Landmarks" panel to connect the landmarks to a model.'
-                )
-                return
-
         self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
 
         key, args = self.logic.getDistanceArgs(
@@ -769,33 +749,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
     def onComputeAnglesClicked(self):
-        fidList = self.logic.selectedFidList
-        fidListline1LA = self.ui.fidListComboBoxline1LA.currentNode()
-        fidListline1LB = self.ui.fidListComboBoxline1LB.currentNode()
-        fidListline2LA = self.ui.fidListComboBoxline2LA.currentNode()
-        fidListline2LB = self.ui.fidListComboBoxline2LB.currentNode()
-        nameList = [
-            fidListline1LA.GetName(),
-            fidListline1LB.GetName(),
-            fidListline2LA.GetName(),
-            fidListline2LB.GetName(),
-        ]
-        if not fidList:
-            self.logic.warningMessage("Please connect a fiducial list to a model.")
-            return
-        for fidListIter in list(set(nameList)):
-            landmarkDescription = (
-                slicer.mrmlScene.GetNodesByName(fidListIter)
-                .GetItemAsObject(0)
-                .GetAttribute("landmarkDescription")
-            )
-            if not landmarkDescription:
-                self.logic.warningMessage(
-                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
-                    'Landmarks" panel to connect the landmarks to a model.'
-                )
-                return
-
         self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
 
         key, args = self.logic.getAnglesArgs(
@@ -817,31 +770,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.updateTableView(self.angles_table, self.angles_table_view)
 
     def onComputeLinePointClicked(self):
-        fidList = self.logic.selectedFidList
-        if not fidList:
-            self.logic.warningMessage("Please connect a fiducial list to a model.")
-            return
-        fidListlineLA = self.ui.fidListComboBoxlineLA.currentNode()
-        fidListlineLB = self.ui.fidListComboBoxlineLB.currentNode()
-        fidListPoint = self.ui.fidListComboBoxlinePoint.currentNode()
-        nameList = [
-            fidListlineLA.GetName(),
-            fidListlineLB.GetName(),
-            fidListPoint.GetName(),
-        ]
-        for fidListIter in list(set(nameList)):
-            landmarkDescription = (
-                slicer.mrmlScene.GetNodesByName(fidListIter)
-                .GetItemAsObject(0)
-                .GetAttribute("landmarkDescription")
-            )
-            if not landmarkDescription:
-                self.logic.warningMessage(
-                    f'{fidListIter} is not connected to a model. Please use "Add and Move '
-                    'Landmarks" panel to connect the landmarks to a model.'
-                )
-                return
-
         self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
 
         key, args = self.logic.getLinePointArgs(
