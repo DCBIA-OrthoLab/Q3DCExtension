@@ -294,19 +294,19 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.fidListComboBoxlineLA.connect(
             "currentNodeChanged(vtkMRMLNode*)",
             lambda: self.deps.updateLandmarkComboBox(
-                self.ui.fidListComboBoxlineLA, self.ui.lineLAComboBox
+                self.ui.fidListComboBoxlineLA.currentNode(), self.ui.lineLAComboBox
             ),
         )
         self.ui.fidListComboBoxlineLB.connect(
             "currentNodeChanged(vtkMRMLNode*)",
             lambda: self.deps.updateLandmarkComboBox(
-                self.ui.fidListComboBoxlineLB, self.ui.lineLBComboBox
+                self.ui.fidListComboBoxlineLB.currentNode(), self.ui.lineLBComboBox
             ),
         )
         self.ui.fidListComboBoxlinePoint.connect(
             "currentNodeChanged(vtkMRMLNode*)",
             lambda: self.deps.updateLandmarkComboBox(
-                self.ui.fidListComboBoxlinePoint, self.ui.linePointComboBox
+                self.ui.fidListComboBoxlinePoint.currentNode(), self.ui.linePointComboBox
             ),
         )
         self.ui.computeLinePointPushButton.connect(
@@ -525,7 +525,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for radio_button in self.anatomical_radio_buttons:
             self.anatomical_radio_buttons_layout.addWidget(radio_button)
             radio_button.toggled.connect(
-                lambda state, _radio_button=radio_button: self.on_anatomical_radio_button_toggled(
+                lambda state,
+                       _radio_button=radio_button: self.on_anatomical_radio_button_toggled(
                     state, _radio_button
                 )
             )
@@ -622,7 +623,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else:
             self.ui.inputLandmarksSelector.setCurrentNode(None)
             self.ui.inputLandmarksSelector.setEnabled(False)
-
 
     def onLandmarksChanged(self):
         print("---- Landmarks Changed ----")
@@ -743,15 +743,17 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fidIDA=self.ui.landmarkComboBoxA.currentData,
             fidIDB=self.ui.landmarkComboBoxB.currentData,
         )
-        data = self.logic.computeDistance(*args)
+        data = self.deps.computeDistance(*args)
+        row = [*data.delta, data.norm]
+        row = self.deps.roundall(row)
 
-        self.logic.updateTable(self.distance_table, key, data)
+        self.logic.updateTable(self.distance_table, key, row)
         self.logic.updateTableView(self.distance_table, self.distance_table_view)
 
     def onComputeAnglesClicked(self):
         self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
 
-        key, args = self.logic.getAnglesArgs(
+        key, (line1, line2, states) = self.logic.getAnglesArgs(
             fidlist1A=self.ui.fidListComboBoxline1LA.currentNode(),
             fidlist1B=self.ui.fidListComboBoxline1LB.currentNode(),
             fidlist2A=self.ui.fidListComboBoxline2LA.currentNode(),
@@ -764,9 +766,24 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             pitchState=self.ui.pitchCheckBox.isChecked(),
             rollState=self.ui.rollCheckBox.isChecked(),
         )
-        data = self.logic.computeAngles(*args)
+        data = self.deps.computeAngles(line1, line2)
 
-        self.logic.updateTable(self.angles_table, key, data)
+        def fmt(deg):
+            sign = np.sin(deg)
+            comp = sign * (180 - np.abs(deg))
+
+            deg = self.deps.round(deg)
+            comp = self.deps.round(comp)
+
+            return f'{deg} / {comp}'
+
+        row = [
+            fmt(deg) if state else ' - '
+            for deg, state in zip(data.byaxis, states)
+        ]
+
+        self.logic.updateTable(self.angles_table, key, row)
+
         self.logic.updateTableView(self.angles_table, self.angles_table_view)
 
     def onComputeLinePointClicked(self):
@@ -780,9 +797,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             fidIDLineB=self.ui.lineLBComboBox.currentData,
             fidIDPoint=self.ui.linePointComboBox.currentData,
         )
-        data = self.logic.computeLinePoint(*args)
+        data = self.deps.computeLinePoint(*args)
+        row = [*data.delta, data.norm]
+        row = self.deps.roundall(row)
 
-        self.logic.updateTable(self.line_point_table, key, data)
+        self.logic.updateTable(self.line_point_table, key, row)
         self.logic.updateTableView(self.line_point_table, self.line_point_table_view)
 
     def onExportButton(self):
@@ -1004,99 +1023,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             element.SIComponent = None
             element.ThreeDComponent = None
         return element
-
-    def round(self, value):
-        return round(value, self.numberOfDecimals)
-
-    def computeDistance(self, point1, point2):
-        delta = point2 - point1
-        norm = np.linalg.norm(delta)
-
-        result = [*delta, norm]
-        return [self.round(value) for value in result]
-
-    def computeAngle(self, line1, line2, axis):
-        """
-        line1: np.array of the first line
-        line2: np.array of the second line
-
-        axis: project the lines onto the plane defined by this axis.
-        ex. axis=3 (z) would project lines to the 0-1 (x-y) plane
-        """
-
-        # create a mask which removes the coordinate on axis. this performs the projection
-        mask = [True] * 3
-        mask[axis] = False
-        line1 = line1[mask]
-        line2 = line2[mask]
-
-        norm1 = np.linalg.norm(line1)
-        norm2 = np.linalg.norm(line2)
-
-        if norm1 == 0 or norm2 == 0:
-            slicer.util.errorDisplay(
-                "ERROR, norm of your vector is 0! DEFINE A VECTOR!"
-            )
-            return None
-
-        try:
-            # find the _signed_ angle using the determinant of a 2x2 matrix
-            # https://en.wikipedia.org/wiki/Determinant#2_%C3%97_2_matrices
-            # |A| = |u||v|sin(t) where u, v are columns of A and t is the angle between them
-
-            matrix = np.array([line1, line2])
-            det = np.linalg.det(matrix)
-            radians = np.arcsin(det / norm1 / norm2)
-            return np.degrees(radians)
-        except np.linalg.LinAlgError:
-            slicer.util.errorDisplay(
-                "ERROR: failed to project vectors. Only able to compute angles in one plane."
-            )
-
-    def computeAngles(self, line1, line2, states):
-        axes = [
-            2,  # axis=S; axial; for yaw
-            0,  # axis=R; saggital; for pitch
-            1,  # axis=A; coronal; for roll
-        ]
-
-        result = []
-        for axis, state in zip(axes, states):
-            if state:
-                value = self.computeAngle(line1, line2, axis)
-                value = self.round(value)
-
-                # we want to show the angle and the complementary angle, signed
-                sign = np.sign(value)
-                complement = sign * (180 - abs(value))
-                formatted = f"{value} / {complement}"
-
-                result.append(formatted)
-            else:
-                result.append(None)
-
-        return result
-
-    def computeLinePoint(self, lineA, lineB, point):
-        if np.allclose(lineA, lineB, atol=self.tolerance):
-            # if lineA and lineB overlap, then just compute the distance to that overlapping point
-            delta = point - lineA
-            norm = np.linalg.norm(delta)
-
-        else:
-            # make vectors relative to lineB
-            line = lineA - lineB
-            offset = point - lineB
-
-            # project relative point onto line
-            proj = np.dot(line, offset) / np.dot(line, line) * line
-
-            # get distance from relative point to projection
-            delta = offset - proj
-            norm = np.linalg.norm(delta)
-
-        result = [*delta, norm]
-        return [self.round(value) for value in result]
 
     def getDistanceArgs(self, fidListA, fidListB, fidIDA, fidIDB):
         """returns: key, (point1, point2)"""
@@ -1670,15 +1596,15 @@ class Q3DCTest(ScriptedLoadableModuleTest):
             midpointMarkupID
         )
         initialPosition = [
-            0,
-        ] * 3
+                              0,
+                          ] * 3
         movingMarkupsFiducial.GetNthFiducialPosition(
             midpointMarkupIndex, initialPosition
         )
         movingMarkupsFiducial.SetNthFiducialPosition(0, 45, 20, -15)
         movedPosition = [
-            0,
-        ] * 3
+                            0,
+                        ] * 3
         movingMarkupsFiducial.GetNthFiducialPosition(midpointMarkupIndex, movedPosition)
         if initialPosition == movedPosition:
             logging.info("midpoint landmark did not move")

@@ -1,3 +1,4 @@
+import collections
 import contextlib
 import json
 from copy import deepcopy
@@ -13,6 +14,26 @@ from slicer.util import NodeModify
 import numpy as np
 
 import vtk
+
+
+def normalize(arr):
+    arr = np.asarray(arr)
+
+    return arr / np.linalg.norm(arr)
+
+
+def project(vec, axis):
+    vec = np.asarray(vec)
+    axis = np.asarray(axis)
+
+    return axis * (np.dot(vec, axis) / np.dot(axis, axis))
+
+
+def reject(vec, axis):
+    vec = np.asarray(vec)
+    axis = np.asarray(axis)
+
+    return vec - axis * (np.dot(vec, axis) / np.dot(axis, axis))
 
 
 class DependantMarkups(ScriptedLoadableModule):
@@ -67,6 +88,8 @@ class DependantMarkupsLogic(
         VTKSuppressibleObservationMixin.__init__(self)
 
         self.default_projected = True
+        self.ndigits = 3
+        self.tolerance = 1e-5
 
     @staticmethod
     def recover_midpoint_provenance(landmarks):  # todo integrate into connect()
@@ -361,6 +384,64 @@ class DependantMarkupsLogic(
             comboBox.setCurrentIndex(idx)
 
         comboBox.blockSignals(False)
+
+    def round(self, value):
+        if value is None:
+            return None
+
+        return round(value, self.ndigits)
+
+    def roundall(self, values):
+        return [self.round(value) for value in values]
+
+    DistanceResult = collections.namedtuple('DistanceResult', ('delta', 'norm'))
+
+    def computeDistance(self, point1, point2) -> DistanceResult:
+        delta = point2 - point1
+        return self.DistanceResult(
+            delta,
+            np.linalg.norm(delta),
+        )
+
+    def computeAngle(self, line1, line2, axis=None):
+        if axis:
+            line1 = reject(line1, normalize(axis))
+            line2 = reject(line2, normalize(axis))
+
+        line1 = normalize(line1)
+        line2 = normalize(line2)
+
+        radians = np.arccos(np.dot(line1, line2))
+
+        return np.degrees(radians)
+
+    AnglesResult = collections.namedtuple('AnglesResult', ('absolute', 'byaxis'))
+
+    def computeAngles(self, line1, line2) -> AnglesResult:
+        axes = [
+            (0, 0, 1),  # axis=S; axial; for yaw
+            (1, 0, 0),  # axis=R; saggital; for pitch
+            (0, 1, 0),  # axis=A; coronal; for roll
+        ]
+
+        return self.AnglesResult(
+            self.computeAngle(line1, line2),
+            [self.computeAngle(line1, line2, axis) for axis in axes],
+        )
+
+    def computeLinePoint(self, line1, line2, point) -> DistanceResult:
+        if np.allclose(line1, line2, atol=self.tolerance):
+            delta = point - line1
+        else:
+            delta = reject(
+                point - line2,
+                line1 - line2,
+            )
+
+        return self.DistanceResult(
+            delta,
+            np.linalg.norm(delta),
+        )
 
 
 class DependantMarkupsTest(ScriptedLoadableModuleTest):
