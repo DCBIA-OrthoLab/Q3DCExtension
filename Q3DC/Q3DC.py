@@ -176,14 +176,16 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         )
         self.ui.fidListComboBoxA.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
-                self.ui.fidListComboBoxA, self.ui.landmarkComboBoxA
+            lambda: self.deps.updateLandmarkComboBox(
+                self.ui.fidListComboBoxA.currentNode(),
+                self.ui.landmarkComboBoxA,
             ),
         )
         self.ui.fidListComboBoxB.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
-                self.ui.fidListComboBoxB, self.ui.landmarkComboBoxB
+            lambda: self.deps.updateLandmarkComboBox(
+                self.ui.fidListComboBoxB.currentNode(),
+                self.ui.landmarkComboBoxB,
             ),
         )
         # ---------------------- Save Distances ----------------------
@@ -218,26 +220,30 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.fidListComboBoxline2LB.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxline1LA.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
-                self.ui.fidListComboBoxline1LA, self.ui.line1LAComboBox
+            lambda: self.deps.updateLandmarkComboBox(
+                self.ui.fidListComboBoxline1LA.currentNode(),
+                self.ui.line1LAComboBox,
             ),
         )
         self.ui.fidListComboBoxline1LB.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
-                self.ui.fidListComboBoxline1LB, self.ui.line1LBComboBox
+            lambda: self.deps.updateLandmarkComboBox(
+                self.ui.fidListComboBoxline1LB.currentNode(),
+                self.ui.line1LBComboBox,
             ),
         )
         self.ui.fidListComboBoxline2LA.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
-                self.ui.fidListComboBoxline2LA, self.ui.line2LAComboBox
+            lambda: self.deps.updateLandmarkComboBox(
+                self.ui.fidListComboBoxline2LA.currentNode(),
+                self.ui.line2LAComboBox,
             ),
         )
         self.ui.fidListComboBoxline2LB.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
-                self.ui.fidListComboBoxline2LB, self.ui.line2LBComboBox
+            lambda: self.deps.updateLandmarkComboBox(
+                self.ui.fidListComboBoxline2LB.currentNode(),
+                self.ui.line2LBComboBox,
             ),
         )
         self.ui.computeAnglesPushButton.connect(
@@ -287,19 +293,19 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.fidListComboBoxlinePoint.setMRMLScene(slicer.mrmlScene)
         self.ui.fidListComboBoxlineLA.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
+            lambda: self.deps.updateLandmarkComboBox(
                 self.ui.fidListComboBoxlineLA, self.ui.lineLAComboBox
             ),
         )
         self.ui.fidListComboBoxlineLB.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
+            lambda: self.deps.updateLandmarkComboBox(
                 self.ui.fidListComboBoxlineLB, self.ui.lineLBComboBox
             ),
         )
         self.ui.fidListComboBoxlinePoint.connect(
             "currentNodeChanged(vtkMRMLNode*)",
-            lambda: self.logic.UpdateLandmarkComboboxA(
+            lambda: self.deps.updateLandmarkComboBox(
                 self.ui.fidListComboBoxlinePoint, self.ui.linePointComboBox
             ),
         )
@@ -572,13 +578,13 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         fidList.SetNthControlPointDescription(fid_index, description)
 
         # Update the landmark combo boxes to reflect the name change.
-        self.logic.updateLandmarkComboBox(fidList, self.ui.landmarkComboBox, False)
+        self.deps.updateLandmarkComboBox(fidList, self.ui.landmarkComboBox, False)
         self.ui.landmarkComboBox.setCurrentText(name)
         for box in (self.ui.landmarkComboBox1, self.ui.landmarkComboBox2):
             new_selection = box.currentText
             if new_selection == old_name:
                 new_selection = name
-            self.logic.updateLandmarkComboBox(fidList, box)
+            self.deps.updateLandmarkComboBox(fidList, box)
             box.setCurrentText(new_selection)
         self.UpdateInterface()
 

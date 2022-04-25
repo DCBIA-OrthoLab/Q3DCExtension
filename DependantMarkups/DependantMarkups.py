@@ -341,10 +341,13 @@ class DependantMarkupsLogic(
     def updateLandmarkComboBox(self, node, comboBox, displayMidPoints=True):
         current = comboBox.currentData
 
-        data = self.getData(node)
-
         comboBox.blockSignals(True)
         comboBox.clear()
+
+        if not node:
+            return
+
+        data = self.getData(node)
 
         for idx in range(node.GetNumberOfControlPoints()):
             ID = node.GetNthControlPointID(idx)
