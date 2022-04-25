@@ -724,12 +724,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         )
 
         isProjected = self.ui.midPointOnSurfaceCheckBox.checked
-        print('isProjected', isProjected)
 
         self.deps.setProjected(fidList, ID, isProjected)
         self.deps.setMidPoint(fidList, ID, ID1, ID2)
-
-        print(self.deps.getData(fidList))
 
         self.UpdateInterface()
         self.updateAllLandmarkComboBox(fidList)
@@ -737,13 +734,21 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def onComputeDistanceClicked(self):
         self.ui.distanceLayout.addLayout(self.tableAndExportLayout)
 
-        key, args = self.logic.getDistanceArgs(
-            fidListA=self.ui.fidListComboBoxA.currentNode(),
-            fidListB=self.ui.fidListComboBoxB.currentNode(),
-            fidIDA=self.ui.landmarkComboBoxA.currentData,
-            fidIDB=self.ui.landmarkComboBoxB.currentData,
+        listA = self.ui.fidListComboBoxA.currentNode()
+        listB = self.ui.fidListComboBoxB.currentNode()
+
+        IDA = self.ui.landmarkComboBoxA.currentData
+        IDB = self.ui.landmarkComboBoxB.currentData
+
+        key = '{} - {}'.format(
+            self.deps.getNthControlPointLabelByID(listA, IDA),
+            self.deps.getNthControlPointLabelByID(listB, IDB),
         )
-        data = self.deps.computeDistance(*args)
+
+        pointA = self.deps.getNthControlPointPositionByID(listA, IDA)
+        pointB = self.deps.getNthControlPointPositionByID(listB, IDB)
+
+        data = self.deps.computeDistance(pointA, pointB)
         row = [*data.delta, data.norm]
         row = self.deps.roundall(row)
 
@@ -753,19 +758,37 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def onComputeAnglesClicked(self):
         self.ui.angleLayout.addLayout(self.tableAndExportAngleLayout)
 
-        key, (line1, line2, states) = self.logic.getAnglesArgs(
-            fidlist1A=self.ui.fidListComboBoxline1LA.currentNode(),
-            fidlist1B=self.ui.fidListComboBoxline1LB.currentNode(),
-            fidlist2A=self.ui.fidListComboBoxline2LA.currentNode(),
-            fidlist2B=self.ui.fidListComboBoxline2LB.currentNode(),
-            fidID1A=self.ui.line1LAComboBox.currentData,
-            fidID1B=self.ui.line1LBComboBox.currentData,
-            fidID2A=self.ui.line2LAComboBox.currentData,
-            fidID2B=self.ui.line2LBComboBox.currentData,
-            yawState=self.ui.yawCheckBox.isChecked(),
-            pitchState=self.ui.pitchCheckBox.isChecked(),
-            rollState=self.ui.rollCheckBox.isChecked(),
+        list1A = self.ui.fidListComboBoxline1LA.currentNode()
+        list1B = self.ui.fidListComboBoxline1LB.currentNode()
+        list2A = self.ui.fidListComboBoxline2LA.currentNode()
+        list2B = self.ui.fidListComboBoxline2LB.currentNode()
+
+        ID1A = self.ui.line1LAComboBox.currentData
+        ID1B = self.ui.line1LBComboBox.currentData
+        ID2A = self.ui.line2LAComboBox.currentData
+        ID2B = self.ui.line2LBComboBox.currentData
+
+        key = '{}-{} / {}-{}'.format(
+            self.deps.getNthControlPointLabelByID(list1A, ID1A),
+            self.deps.getNthControlPointLabelByID(list1B, ID1B),
+            self.deps.getNthControlPointLabelByID(list2A, ID2A),
+            self.deps.getNthControlPointLabelByID(list2B, ID2B),
         )
+
+        point1A = self.deps.getNthControlPointPositionByID(list1A, ID1A)
+        point1B = self.deps.getNthControlPointPositionByID(list1B, ID1B)
+        point2A = self.deps.getNthControlPointPositionByID(list2A, ID2A)
+        point2B = self.deps.getNthControlPointPositionByID(list2B, ID2B)
+
+        line1 = point1B - point1A
+        line2 = point2B - point2A
+
+        states = [
+            self.ui.yawCheckBox.isChecked(),
+            self.ui.pitchCheckBox.isChecked(),
+            self.ui.rollCheckBox.isChecked(),
+        ]
+
         data = self.deps.computeAngles(line1, line2)
 
         def fmt(deg):
@@ -789,15 +812,25 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def onComputeLinePointClicked(self):
         self.ui.LinePointLayout.addLayout(self.tableAndExportLinePointLayout)
 
-        key, args = self.logic.getLinePointArgs(
-            fidListLineA=self.ui.fidListComboBoxlineLA.currentNode(),
-            fidListLineB=self.ui.fidListComboBoxlineLB.currentNode(),
-            fidListPoint=self.ui.fidListComboBoxlinePoint.currentNode(),
-            fidIDLineA=self.ui.lineLAComboBox.currentData,
-            fidIDLineB=self.ui.lineLBComboBox.currentData,
-            fidIDPoint=self.ui.linePointComboBox.currentData,
+        listLA = self.ui.fidListComboBoxlineLA.currentNode()
+        listLB = self.ui.fidListComboBoxlineLB.currentNode()
+        listPoint = self.ui.fidListComboBoxlinePoint.currentNode()
+
+        IDLA = self.ui.lineLAComboBox.currentData
+        IDLB = self.ui.lineLBComboBox.currentData
+        IDPoint = self.ui.linePointComboBox.currentData
+
+        key = "{}-{} / {}".format(
+            self.deps.getNthControlPointLabelByID(listLA, IDLA),
+            self.deps.getNthControlPointLabelByID(listLB, IDLB),
+            self.deps.getNthControlPointLabelByID(listPoint, IDPoint),
         )
-        data = self.deps.computeLinePoint(*args)
+
+        lineA = self.deps.getNthControlPointPositionByID(listLA, IDLA)
+        lineB = self.deps.getNthControlPointPositionByID(listLB, IDLB)
+        point = self.deps.getNthControlPointPositionByID(listPoint, IDPoint)
+
+        data = self.deps.computeLinePoint(lineA, lineB, point)
         row = [*data.delta, data.norm]
         row = self.deps.roundall(row)
 
@@ -1023,95 +1056,6 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
             element.SIComponent = None
             element.ThreeDComponent = None
         return element
-
-    def getDistanceArgs(self, fidListA, fidListB, fidIDA, fidIDB):
-        """returns: key, (point1, point2)"""
-        fidIndexA = fidListA.GetNthControlPointIndexByID(fidIDA)
-        fidIndexB = fidListB.GetNthControlPointIndexByID(fidIDB)
-
-        point1 = np.array(fidListA.GetMarkupPointVector(fidIndexA, 0))
-        point2 = np.array(fidListB.GetMarkupPointVector(fidIndexB, 0))
-
-        args = point1, point2
-
-        key = "{} - {}".format(
-            fidListA.GetNthControlPointLabel(fidIndexA),
-            fidListB.GetNthControlPointLabel(fidIndexB),
-        )
-
-        return key, args
-
-    def getAnglesArgs(
-        self,
-        fidlist1A,
-        fidlist1B,
-        fidlist2A,
-        fidlist2B,
-        fidID1A,
-        fidID1B,
-        fidID2A,
-        fidID2B,
-        yawState,
-        pitchState,
-        rollState,
-    ):
-        """returns: key, (line1, line2, states)"""
-        landmark1Index = fidlist1A.GetNthControlPointIndexByID(fidID1A)
-        landmark2Index = fidlist1B.GetNthControlPointIndexByID(fidID1B)
-        landmark3Index = fidlist2A.GetNthControlPointIndexByID(fidID2A)
-        landmark4Index = fidlist2B.GetNthControlPointIndexByID(fidID2B)
-
-        coord1 = np.array(fidlist1A.GetMarkupPointVector(landmark1Index, 0))
-        coord2 = np.array(fidlist1B.GetMarkupPointVector(landmark2Index, 0))
-        coord3 = np.array(fidlist2A.GetMarkupPointVector(landmark3Index, 0))
-        coord4 = np.array(fidlist2B.GetMarkupPointVector(landmark4Index, 0))
-
-        line1 = coord2 - coord1
-        line2 = coord4 - coord3
-
-        states = (
-            yawState,
-            pitchState,
-            rollState,
-        )
-
-        args = line1, line2, states
-
-        key = "{}-{} / {}-{}".format(
-            fidlist1A.GetNthControlPointLabel(landmark1Index),
-            fidlist1B.GetNthControlPointLabel(landmark2Index),
-            fidlist2A.GetNthControlPointLabel(landmark3Index),
-            fidlist2B.GetNthControlPointLabel(landmark4Index),
-        )
-
-        return key, args
-
-    def getLinePointArgs(
-        self,
-        fidListLineA,
-        fidListLineB,
-        fidListPoint,
-        fidIDLineA,
-        fidIDLineB,
-        fidIDPoint,
-    ):
-        landmarkLineAIndex = fidListLineA.GetNthControlPointIndexByID(fidIDLineA)
-        landmarkLineBIndex = fidListLineB.GetNthControlPointIndexByID(fidIDLineB)
-        landmarkPointIndex = fidListPoint.GetNthControlPointIndexByID(fidIDPoint)
-
-        lineA = np.array(fidListLineA.GetMarkupPointVector(landmarkLineAIndex, 0))
-        lineB = np.array(fidListLineB.GetMarkupPointVector(landmarkLineBIndex, 0))
-        point = np.array(fidListPoint.GetMarkupPointVector(landmarkPointIndex, 0))
-
-        args = lineA, lineB, point
-
-        key = "{}-{} / {}".format(
-            fidListLineA.GetNthControlPointLabel(landmarkLineAIndex),
-            fidListLineB.GetNthControlPointLabel(landmarkLineBIndex),
-            fidListPoint.GetNthControlPointLabel(landmarkPointIndex),
-        )
-
-        return key, args
 
     @classmethod
     def createTable(cls, col_names):

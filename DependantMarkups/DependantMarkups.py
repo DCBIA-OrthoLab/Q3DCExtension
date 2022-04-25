@@ -238,6 +238,24 @@ class DependantMarkupsLogic(
             slicer.vtkMRMLMarkupsNode.PositionPreview,
         )
 
+    def getNthControlPointLabelByID(self, node, ID):
+        index = node.GetNthControlPointIndexByID(ID)
+        return node.GetNthControlPointLabel(index)
+
+    def setNthControlPointLabelByID(self, node, ID, value):
+        index = node.GetNthControlPointIndexByID(ID )
+        node.SetNthControlPointLabel(index, value)
+
+    def getNthControlPointPositionByID(self, node, ID):
+        result = np.zeros(3)
+        index = node.GetNthControlPointIndexByID(ID)
+        node.GetNthControlPointPosition(index, result)
+        return result
+
+    def setNthControlPointPositionByID(self, node, ID, value):
+        index = node.GetNthControlPointIndexByID(ID)
+        node.SetNthControlPointPositionFromArray(index, value)
+
     def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
         if selectedFidReflID:
             markupsIndex = fidNode.GetNthControlPointIndexByID(selectedFidReflID)
@@ -304,18 +322,12 @@ class DependantMarkupsLogic(
         self.setData(node, data)
 
     def computeMidPoint(self, node, ID, ID1, ID2):
-        p1 = np.zeros(3)
-        p2 = np.zeros(3)
-
-        node.GetNthControlPointPosition(node.GetNthControlPointIndexByID(ID1), p1)
-
-        node.GetNthControlPointPosition(node.GetNthControlPointIndexByID(ID2), p2)
+        p1 = self.getNthControlPointPositionByID(node, ID1)
+        p2 = self.getNthControlPointPositionByID(node, ID2)
 
         mp = (p1 + p2) / 2
 
-        node.SetNthControlPointPositionFromArray(
-            node.GetNthControlPointIndexByID(ID), mp
-        )
+        self.setNthControlPointPositionByID(node, ID, mp)
 
     def onPointsChanged(self, node, e):
         with self.suppress(node, method=self.onPointsChanged):
