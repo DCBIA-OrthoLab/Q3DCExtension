@@ -196,12 +196,12 @@ class DependantMarkupsLogic(
     def createHardenModel(model):
         name = model.GetName()
         pid = slicer.app.applicationPid()
-        name = f'SurafceRegistration_{name}_hardenCopy_{pid}'
+        name = f"SurafceRegistration_{name}_hardenCopy_{pid}"
 
         hardenModel = slicer.mrmlScene.GetFirstNodeByName(name)
         if hardenModel is None:
             # hardenModel = slicer.mrmlScene.
-            hardenModel = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLModelNode', name)
+            hardenModel = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLModelNode", name)
 
         hardenPolyData = vtk.vtkPolyData()
         hardenPolyData.DeepCopy(model.GetPolyData())
@@ -245,7 +245,7 @@ class DependantMarkupsLogic(
         return node.GetNthControlPointLabel(index)
 
     def setNthControlPointLabelByID(self, node, ID, value):
-        index = node.GetNthControlPointIndexByID(ID )
+        index = node.GetNthControlPointIndexByID(ID)
         node.SetNthControlPointLabel(index, value)
 
     def getNthControlPointPositionByID(self, node, ID):
@@ -271,7 +271,7 @@ class DependantMarkupsLogic(
 
     def getModel(self, node):
         hardened = node.GetNodeReference("HARDENED_MODEL")
-        model = node.GetNodeReference('MODEL')
+        model = node.GetNodeReference("MODEL")
         return hardened or model
 
     def computeProjection(self, node, ID):
@@ -308,16 +308,15 @@ class DependantMarkupsLogic(
             graph.add_node(ID)
 
         for ID in data:
-            if data[ID]['midPoint']['isMidPoint']:
+            if data[ID]["midPoint"]["isMidPoint"]:
                 sources = [
-                    data[ID]['midPoint']['Point1'],
-                    data[ID]['midPoint']['Point2'],
+                    data[ID]["midPoint"]["Point1"],
+                    data[ID]["midPoint"]["Point2"],
                 ]
                 for source in sources:
                     graph.add_edge(source, ID)
 
         return nx.topological_sort(graph)
-
 
     def setMidPoint(self, node, ID, ID1, ID2):
         data = self.getData(node)
@@ -370,14 +369,14 @@ class DependantMarkupsLogic(
 
             for ID in self.getUpdateOrder(data):
                 info = data[ID]
-                if info['midPoint']['isMidPoint']:
+                if info["midPoint"]["isMidPoint"]:
                     self.computeMidPoint(
                         node,
                         ID,
-                        info['midPoint']['Point1'],
-                        info['midPoint']['Point2'],
+                        info["midPoint"]["Point1"],
+                        info["midPoint"]["Point2"],
                     )
-                if info['projection']['isProjected']:
+                if info["projection"]["isProjected"]:
                     self.computeProjection(node, ID)
 
             self.setData(node, data)
@@ -385,7 +384,7 @@ class DependantMarkupsLogic(
     def onModelChanged(self, model, e):
         hardened = self.createHardenModel(model)
 
-        for node in slicer.mrmlScene.GetNodesByClass('vtkMRMLMarkupsNode'):
+        for node in slicer.mrmlScene.GetNodesByClass("vtkMRMLMarkupsNode"):
             if node.GetNodeReference("MODEL") == model:
                 node.SetNodeReferenceID("HARDENED_MODEL", hardened.GetID())
                 # todo re-project
@@ -423,7 +422,7 @@ class DependantMarkupsLogic(
     def roundall(self, values):
         return [self.round(value) for value in values]
 
-    DistanceResult = collections.namedtuple('DistanceResult', ('delta', 'norm'))
+    DistanceResult = collections.namedtuple("DistanceResult", ("delta", "norm"))
 
     def computeDistance(self, point1, point2) -> DistanceResult:
         delta = point2 - point1
@@ -444,7 +443,7 @@ class DependantMarkupsLogic(
 
         return np.degrees(radians)
 
-    AnglesResult = collections.namedtuple('AnglesResult', ('absolute', 'byaxis'))
+    AnglesResult = collections.namedtuple("AnglesResult", ("absolute", "byaxis"))
 
     def computeAngles(self, line1, line2) -> AnglesResult:
         axes = [

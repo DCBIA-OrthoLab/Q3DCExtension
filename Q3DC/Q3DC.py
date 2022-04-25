@@ -295,7 +295,8 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.fidListComboBoxlinePoint.connect(
             "currentNodeChanged(vtkMRMLNode*)",
             lambda: self.deps.updateLandmarkComboBox(
-                self.ui.fidListComboBoxlinePoint.currentNode(), self.ui.linePointComboBox
+                self.ui.fidListComboBoxlinePoint.currentNode(),
+                self.ui.linePointComboBox,
             ),
         )
         self.ui.computeLinePointPushButton.connect(
@@ -514,8 +515,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for radio_button in self.anatomical_radio_buttons:
             self.anatomical_radio_buttons_layout.addWidget(radio_button)
             radio_button.toggled.connect(
-                lambda state,
-                       _radio_button=radio_button: self.on_anatomical_radio_button_toggled(
+                lambda state, _radio_button=radio_button: self.on_anatomical_radio_button_toggled(
                     state, _radio_button
                 )
             )
@@ -729,7 +729,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         IDA = self.ui.landmarkComboBoxA.currentData
         IDB = self.ui.landmarkComboBoxB.currentData
 
-        key = '{} - {}'.format(
+        key = "{} - {}".format(
             self.deps.getNthControlPointLabelByID(listA, IDA),
             self.deps.getNthControlPointLabelByID(listB, IDB),
         )
@@ -757,7 +757,7 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         ID2A = self.ui.line2LAComboBox.currentData
         ID2B = self.ui.line2LBComboBox.currentData
 
-        key = '{}-{} / {}-{}'.format(
+        key = "{}-{} / {}-{}".format(
             self.deps.getNthControlPointLabelByID(list1A, ID1A),
             self.deps.getNthControlPointLabelByID(list1B, ID1B),
             self.deps.getNthControlPointLabelByID(list2A, ID2A),
@@ -787,12 +787,9 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             deg = self.deps.round(deg)
             comp = self.deps.round(comp)
 
-            return f'{deg} / {comp}'
+            return f"{deg} / {comp}"
 
-        row = [
-            fmt(deg) if state else ' - '
-            for deg, state in zip(data.byaxis, states)
-        ]
+        row = [fmt(deg) if state else " - " for deg, state in zip(data.byaxis, states)]
 
         self.logic.updateTable(self.angles_table, key, row)
 
@@ -1529,15 +1526,15 @@ class Q3DCTest(ScriptedLoadableModuleTest):
             midpointMarkupID
         )
         initialPosition = [
-                              0,
-                          ] * 3
+            0,
+        ] * 3
         movingMarkupsFiducial.GetNthFiducialPosition(
             midpointMarkupIndex, initialPosition
         )
         movingMarkupsFiducial.SetNthFiducialPosition(0, 45, 20, -15)
         movedPosition = [
-                            0,
-                        ] * 3
+            0,
+        ] * 3
         movingMarkupsFiducial.GetNthFiducialPosition(midpointMarkupIndex, movedPosition)
         if initialPosition == movedPosition:
             logging.info("midpoint landmark did not move")
