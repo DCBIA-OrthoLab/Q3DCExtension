@@ -10,17 +10,66 @@
     <height>1554</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="5" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="0">
+    <widget class="QPushButton" name="applyButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="toolTip">
+      <string>Run the algorithm.</string>
+     </property>
+     <property name="text">
+      <string>Apply</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="ctkCollapsibleButton" name="SceneCollapsibleButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="qMRMLTreeView" name="TreeView">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>167772</height>
+      </size>
+     </property>
+     <property name="autoScrollMargin">
+      <number>16</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
     <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
      <property name="text">
-      <string>Calculate distance between time points</string>
+      <string>Sample</string>
      </property>
      <layout class="QFormLayout" name="formLayout_2">
       <item row="0" column="0">
        <widget class="QPushButton" name="pushButton_DataFolder_T1">
         <property name="text">
-         <string>Fiducial markup T1</string>
+         <string>Point list T1</string>
         </property>
        </widget>
       </item>
@@ -30,21 +79,14 @@
       <item row="1" column="0">
        <widget class="QPushButton" name="pushButton_DataFolder_T2">
         <property name="text">
-         <string>Fiducial markup T2</string>
+         <string>Point list T2</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="lineEditLandPathT2"/>
       </item>
-      <item row="2" column="0">
-       <widget class="QPushButton" name="pushButton_Display">
-        <property name="text">
-         <string>Display</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" colspan="2">
+      <item row="2" column="0" colspan="2">
        <layout class="QVBoxLayout" name="verticalLayout_1">
         <property name="leftMargin">
          <number>10</number>
@@ -67,7 +109,7 @@
         </item>
        </layout>
       </item>
-      <item row="4" column="0" colspan="2">
+      <item row="3" column="0" colspan="2">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <property name="leftMargin">
          <number>10</number>
@@ -88,57 +130,36 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QTableWidget" name="tableWidget"/>
+        </item>
        </layout>
       </item>
-      <item row="5" column="0" colspan="2">
-       <widget class="QPushButton" name="pushButton_OclusalDataT1T2">
-        <property name="text">
-         <string>Oclusal landmarks</string>
+      <item row="4" column="0" colspan="2">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="leftMargin">
+         <number>10</number>
         </property>
-       </widget>
-      </item>
-      <item row="6" column="0" colspan="2">
-       <widget class="QPushButton" name="pushButton_MesialDataT1T2">
-        <property name="text">
-         <string>Mesial landmarks</string>
+        <property name="topMargin">
+         <number>10</number>
         </property>
-       </widget>
-      </item>
-      <item row="7" column="0" colspan="2">
-       <widget class="QPushButton" name="pushButton_DistalDataT1T2">
-        <property name="text">
-         <string>Distal landmarks</string>
+        <property name="rightMargin">
+         <number>10</number>
         </property>
-       </widget>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="applyButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="toolTip">
-      <string>Run the algorithm.</string>
-     </property>
-     <property name="text">
-      <string>Apply</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>
@@ -148,6 +169,11 @@
    <extends>QWidget</extends>
    <header>ctkCollapsibleButton.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLTreeView</class>
+   <extends>QTreeView</extends>
+   <header>qMRMLTreeView.h</header>
   </customwidget>
   <customwidget>
    <class>qMRMLWidget</class>
