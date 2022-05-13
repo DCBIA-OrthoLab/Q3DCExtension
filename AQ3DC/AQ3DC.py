@@ -9,6 +9,7 @@ import collections
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 
+
 # slicer.app.pythonConsole().clear()
 #
 # AQ3DC
@@ -89,7 +90,7 @@ list_tooth,list_type_tooth = JawLandmarks('/home/luciacev-admin/Desktop/AQ3DC_da
 GROUPS_LANDMARKS = {
   "Canine Impaction" : ["IF","ANS","UR6","UL6","UR1","UL1","UR1A","UL1A","UR2","UL2","UR2A","UL2A","UR3","UL3","UR3A","UL3A"],
   "Cranial Base" :['Ba','S','N'],
-  "Mandibul" : ['RCo','RGo','LR6apex','L1apex','Me','Gn','Pog','B','LL6apex','LGo','LCo','LR6d','LR6m','LItip','LL6m','LL6d'],
+  "Mandible" : ['RCo','RGo','LR6apex','L1apex','Me','Gn','Pog','B','LL6apex','LGo','LCo','LR6d','LR6m','LItip','LL6m','LL6d'],
   "Maxilla" : ['PNS','ANS','A','UR6apex','UR3apex','U1apex','UL3apex','UL6apex','UR6d','UR6m','UR3tip','UItip','UL3tip','UL6m','UL6d'],
   "Dental" : list_tooth,
   "Landmarks" : list_type_tooth
@@ -331,8 +332,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     
 
-    self.layout_measure = TabMeasure()
-    self.ui.verticalLayout_3.addWidget(self.layout_measure.widget)
+    # self.layout_measure = TabMeasure()
+    # self.ui.verticalLayout_3.addWidget(self.layout_measure.widget)
 
 
     # Buttons
@@ -340,7 +341,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.pushButton_DataFolder_T1.connect('clicked(bool)',self.onSearchFolderButton_T1)
     self.ui.pushButton_DataFolder_T2.connect('clicked(bool)',self.onSearchFolderButton_T2)
  
-    self.table_view = TableView(self.ui.lineEditLandPathT2)
+    self.table_view = TableView(self.ui.tableWidget)
     self.ui.verticalLayout_2.addWidget(self.table_view.widget)
 
 
@@ -609,6 +610,7 @@ class LMTab:
       vb.addWidget(scr_box)
       self.buttons_options = qt.QComboBox()
       self.buttons_options.addItems(["none","Select Tab","Clear Tab","Select All","Clear All"])
+      # self.buttons_options.itemIcon(qt.QIcon(":/Icons/MarkupsSelectedOrUnselected.png"))
       vb.addWidget(self.buttons_options)
       self.buttons_options.connect('currentIndexChanged(int)', self.SelectOptions)
       
@@ -660,11 +662,12 @@ class LMTab:
     self.Fulltab(True)
   
   def ClearTab(self):
-    self.FulverticalLayout_2ltab(False)
+    self.Fulltab(False)
 
 class TableView:
-  def __init__(self,lineEditLandPathT2) -> None:
-    self.lineEditLandPathT2 = lineEditLandPathT2
+  def __init__(self,tableWidget) -> None:
+    # self.lineEditLandPathT2 = lineEditLandPathT2
+    self.tableWidget = tableWidget
     self.widget = qt.QWidget()
     self.layout = qt.QVBoxLayout(self.widget)
 
@@ -675,29 +678,37 @@ class TableView:
     self.LM_tab_widget.setMovable(True)
 
     self.layout.addWidget(self.LM_tab_widget)
+   
+    self.dist_dic_measurment = {'point_to_point':[{'P1':'Ln1','P2':'Ln2'}],
+                                'point_to_line':[{'P':'Ln1','L':{'P1':'Ln2','P2':'Ln3'}}],
+                                'point_T1_to_T2':[{'PT1':'Ln1','PT2':'Ln1'}]
+                              }
 
     # -------------------------- Gen Tab ---------------------------
-    lst_tab = ["Distance between T1 and T2","Mid point","Distance point line","Angle between two lines"]
+    # lst_tab = ["Distance","Angle"]
+    tab = "Distance"
     # print(self.lineEditLandPathT2.hasSelectedText)
     # if self.lineEditLandPathT2.hasSelectedText :
     #   lst_tab.insert(0,"Distance between T1 and T2")
 
-    for tab in lst_tab:   
-      self.new_widget = qt.QWidget()
-      self.vb = qt.QVBoxLayout(self.new_widget)
-      scr_box = qt.QScrollArea()
-      self.vb.addWidget(scr_box)
+    # for tab in lst_tab:   
+    self.new_widget = qt.QWidget()
+    self.vb = qt.QVBoxLayout(self.new_widget)
+    scr_box = qt.QScrollArea()
+    self.vb.addWidget(scr_box)
 
-      wid = qt.QWidget()
-      self.vb2 = qt.QVBoxLayout()
-      wid.setLayout(self.vb2)
-
-      scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
-      scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-      scr_box.setWidgetResizable(True)
-      scr_box.setWidget(wid)
-      
-      self.LM_tab_widget.insertTab(-1,self.new_widget,tab)
+    wid = qt.QWidget()
+    self.vb2 = qt.QVBoxLayout()
+    wid.setLayout(self.vb2)
+    
+    self.vb2.addWidget(self.tableWidget)
+    
+    scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
+    scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+    scr_box.setWidgetResizable(True)
+    scr_box.setWidget(wid)
+    
+    self.LM_tab_widget.insertTab(-1,self.new_widget,tab)
       # self.LM_tab_widget.currentIndex = 0
 
 
@@ -712,17 +723,17 @@ class TableView:
     self.layout.addLayout(self.hb_add)
 
     # -------------------------- Import/Export measurment , Compute/Export results ---------------------------
-    # hb = qt.QHBoxLayout()
-    # combobox_import_export = qt.QComboBox()
-    # combobox_import_export.addItems(["Import measurment","Export measurment"])
-    # hb.addWidget(combobox_import_export)
-    # combobox_compute_export = qt.QComboBox()
-    # combobox_compute_export.addItems(["Compute","Export results"])
-    # hb.addWidget(combobox_compute_export)
-    # self.layout.addLayout(hb)
+    hb = qt.QHBoxLayout()
+    combobox_import_export = qt.QComboBox()
+    combobox_import_export.addItems(["Import measurment","Export measurment"])
+    hb.addWidget(combobox_import_export)
+    combobox_compute_export = qt.QComboBox()
+    combobox_compute_export.addItems(["Compute","Export results"])
+    hb.addWidget(combobox_compute_export)
+    self.layout.addLayout(hb)
 
     self.lm_status_dic = {}
-    # self.FillTab()
+    self.FillTab()
 
   def Test(self,idx):
     print(idx)
@@ -754,8 +765,54 @@ class TableView:
   #     type_measur_combobox.connect('currentIndexChanged(int)', self.DefinineWidget)
   #     self.layout.addLayout(hb_add)
     
+  def FillTab(self):
+    # "check box",
+    self.columnLabels = [ "check box","type of measurment","point 1", "point 2"]
+    self.tableWidget.setColumnCount(len(self.columnLabels))
+    self.tableWidget.setHorizontalHeaderLabels(self.columnLabels)
+    self.tableWidget.resizeColumnsToContents()
+    big_list = []
+    for type_measurment,lst_measurment in self.dist_dic_measurment.items():
+      list_row = []
+      type_measurment_label = qt.QTableWidgetItem(type_measurment)
+      list_row.append(type_measurment_label)
+      for dic_measurment in lst_measurment:
+        checkBoxItem = qt.QTableWidgetItem()
+        checkBoxItem.setCheckState(True)
+        list_row.insert(0,checkBoxItem)
+        for point,landmark in dic_measurment.items():
+          landmark_label = qt.QTableWidgetItem(landmark)
+          list_row.append(landmark_label)
+      big_list.append(list_row)
 
+    self.tableWidget.setRowCount(len(big_list))
+    for row in range(len(big_list)):
+      for col in range(len(self.columnLabels)):
+        # item = qt.QTableWidgetItem(f'Item {row}-{col}')
+        # item.setFlags(Qt.ItemFlag.ItemIsuserCheckable)
+        # print(big_list[row][col])
+        self.tableWidget.setItem(row,col,big_list[row][col])
+
+
+
+
+    # print(list_row)
   # def FillTab(self):
+  #   for type_measurment,lst_measurment in self.dist_dic_measurment.items():
+  #     for dic_measurment in lst_measurment:
+  #       wid = qt.QWidget()
+  #       hb = qt.QHBoxLayout()
+  #       wid.setLayout(hb)
+  #       new_cb = qt.QCheckBox()
+  #       hb.addWidget(new_cb)
+  #       # print(dic_measurment)
+  #       for point,landmark in dic_measurment.items():
+  #         print(point,landmark)
+  #         point_label = qt.QLabel(point)
+  #         landmark_label = qt.QLabel(landmark)
+  #         hb.addWidget(point_label)
+  #         hb.addWidget(landmark_label)
+  #       self.vb2.addWidget(wid)
   #   lst_tab = ['Distances','Angles']
   #   lst_wid = []
     
