@@ -327,26 +327,36 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
 
-    self.lm_tab = LMTab()
-    self.ui.verticalLayout_1.addWidget(self.lm_tab.widget)
-
-    
-
-    # self.layout_measure = TabMeasure()
-    # self.ui.verticalLayout_3.addWidget(self.layout_measure.widget)
-
 
     # Buttons
     self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
     self.ui.pushButton_DataFolder_T1.connect('clicked(bool)',self.onSearchFolderButton_T1)
     self.ui.pushButton_DataFolder_T2.connect('clicked(bool)',self.onSearchFolderButton_T2)
- 
+
+    # display of all the different measurment
     self.table_view = TableView(self.ui.tableWidget)
     self.ui.verticalLayout_2.addWidget(self.table_view.widget)
 
-
+    # layout to add measurment to the tab
+    self.layout_measure = TabMeasure()
+    self.ui.verticalLayout_3.addWidget(self.layout_measure.widget)
+    
+    # selection of the landmarks
+    self.lm_tab = LMTab(self.layout_measure)
+    self.ui.verticalLayout_1.addWidget(self.lm_tab.widget)
+ 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
+
+    # -------------------------- Import/Export measurment , Compute/Export results ---------------------------
+    self.hb = qt.QHBoxLayout()
+    self.combobox_import_export = qt.QComboBox()
+    self.combobox_import_export.addItems(["Import measurment","Export measurment"])
+    self.hb.addWidget(self.combobox_import_export)
+    self.combobox_compute_export = qt.QComboBox()
+    self.combobox_compute_export.addItems(["Compute","Export results"])
+    self.hb.addWidget(self.combobox_compute_export)
+    self.layout.addLayout(self.hb)
 
 
   def onSearchFolderButton_T1(self):
@@ -515,8 +525,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       traceback.print_exc()
 
 class LMTab:
-  def __init__(self) -> None:
-
+  def __init__(self,layout_measure) -> None:
+    self.layout_measure = layout_measure
     self.widget = qt.QWidget()
     layout = qt.QVBoxLayout(self.widget)
 
@@ -526,8 +536,6 @@ class LMTab:
     self.LM_tab_widget.setMovable(True)
 
 
-    # print(self.lm_status_dic)
-    # print(lcbd)
     buttons_wid = qt.QWidget()
     buttons_layout = qt.QHBoxLayout(buttons_wid)
 
@@ -567,7 +575,7 @@ class LMTab:
       self.LM_tab_widget.insertTab(0,new_lm_tab,group)
     self.LM_tab_widget.currentIndex = 0
 
-    # print(self.check_box_dic)
+    print(self.check_box_dic)
     lcbd = {}
     for cb,lm in self.check_box_dic.items():
       if lm not in lcbd.keys():
@@ -579,7 +587,9 @@ class LMTab:
 
     for cb in self.check_box_dic.keys():
       cb.connect("toggled(bool)", self.CheckBox)
-   
+    
+    # print(self.lm_status_dic)
+
   def CheckBox(self, caller=None, event=None):
     for cb,lm in self.check_box_dic.items():
       if cb.checkState():
@@ -589,7 +599,9 @@ class LMTab:
       
       if self.lm_status_dic[lm] != state:
         self.UpdateLmSelect(lm,state)
-  
+
+    self.layout_measure.GetLmList(self.lm_status_dic)
+
   def SelectOptions(self,idx):
     # print(idx)
     if idx == 1:
@@ -600,8 +612,6 @@ class LMTab:
       self.SelectAll()
     else :
       self.ClearAll()
-
-
 
   def GenNewTab(self,widget_lst):
       new_widget = qt.QWidget()
@@ -672,16 +682,16 @@ class TableView:
     self.layout = qt.QVBoxLayout(self.widget)
 
     self.LM_tab_widget = qt.QTabWidget()
-    self.LM_tab_widget.connect('currentChanged(int)',self.Test)
+    # self.LM_tab_widget.connect('currentChanged(int)',self.Test)
     self.LM_tab_widget.minimumSize = qt.QSize(100,200)
     self.LM_tab_widget.maximumSize = qt.QSize(800,400)
     self.LM_tab_widget.setMovable(True)
 
     self.layout.addWidget(self.LM_tab_widget)
    
-    self.dist_dic_measurment = {'point_to_point':[{'P1':'Ln1','P2':'Ln2'}],
-                                'point_to_line':[{'P':'Ln1','L':{'P1':'Ln2','P2':'Ln3'}}],
-                                'point_T1_to_T2':[{'PT1':'Ln1','PT2':'Ln1'}]
+    self.dist_dic_measurment = {'point to point':[{'P1':'Ln1','P2':'Ln2'},{'P1':'Ln3','P2':'Ln4'}],
+                                'point to line':[{'P':'Ln1','L':{'P1':'Ln2','P2':'Ln3'}}],
+                                'point T1 to T2':[{'PT1':'Ln1','PT2':'Ln1'}]
                               }
 
     # -------------------------- Gen Tab ---------------------------
@@ -712,130 +722,36 @@ class TableView:
       # self.LM_tab_widget.currentIndex = 0
 
 
-    # -------------------------- Gen layout add line ---------------------------
-    self.hb_add  = qt.QHBoxLayout()
-    self.type_measur_combobox = qt.QComboBox()
-    self.label = qt.QLabel("Type of measurment")
-    self.hb_add.addWidget(self.label)
-    self.hb_add.addWidget(self.type_measur_combobox)
-    self.type_measur_combobox.addItems(self.lst_type_meas)
-    self.type_measur_combobox.connect('currentIndexChanged(int)', self.DefinineWidget)
-    self.layout.addLayout(self.hb_add)
-
-    # -------------------------- Import/Export measurment , Compute/Export results ---------------------------
-    hb = qt.QHBoxLayout()
-    combobox_import_export = qt.QComboBox()
-    combobox_import_export.addItems(["Import measurment","Export measurment"])
-    hb.addWidget(combobox_import_export)
-    combobox_compute_export = qt.QComboBox()
-    combobox_compute_export.addItems(["Compute","Export results"])
-    hb.addWidget(combobox_compute_export)
-    self.layout.addLayout(hb)
-
     self.lm_status_dic = {}
     self.FillTab()
 
-  def Test(self,idx):
-    print(idx)
-    # type_measur_combobox = qt.QComboBox()
-    if idx == 0:
-      self.lst_type_meas = ["Distance between T1 and T2","Mid point","Distance point line"]
-    else:
-      self.lst_type_meas = ["Angle between two lines"]
-    
   def Clear(self):
     self.LM_verticalLayout_2tab_widget.clear()
-  
-  # def GenerateChoiceTab(self):
-  #   # idx = self.LM_tab_widget.currentIndex
-  #   # print(idx)
-  #   if idx == 0:
-  #     hb_add  = qt.QHBoxLayout()
-  #     type_measur_combobox = qt.QComboBox()
-  #     type_measur_combobox.addItems(["Distance between T1 and T2","Mid point","Distance point line"])
-  #     hb_add.addWidget(type_measur_combobox)
-  #     type_measur_combobox.connect('currentIndexChanged(int)', self.DefinineWidget)
-  #     self.layout.addLayout(hb_add)
-
-  #   else :
-  #     hb_add  = qt.QHBoxLayout()
-  #     type_measur_combobox = qt.QComboBox()
-  #     type_measur_combobox.addItems(["Angle between two lines"])
-  #     hb_add.addWidget(type_measur_combobox)
-  #     type_measur_combobox.connect('currentIndexChanged(int)', self.DefinineWidget)
-  #     self.layout.addLayout(hb_add)
     
   def FillTab(self):
-    # "check box",
-    self.columnLabels = [ "check box","type of measurment","point 1", "point 2"]
+    self.columnLabels = ["check box","type of measurment","point 1", "point 2"]
     self.tableWidget.setColumnCount(len(self.columnLabels))
     self.tableWidget.setHorizontalHeaderLabels(self.columnLabels)
     self.tableWidget.resizeColumnsToContents()
     big_list = []
     for type_measurment,lst_measurment in self.dist_dic_measurment.items():
-      list_row = []
-      type_measurment_label = qt.QTableWidgetItem(type_measurment)
-      list_row.append(type_measurment_label)
       for dic_measurment in lst_measurment:
+        list_row = []
+        type_measurment_label = qt.QTableWidgetItem(type_measurment)
+        list_row.append(type_measurment_label)
         checkBoxItem = qt.QTableWidgetItem()
-        checkBoxItem.setCheckState(True)
+        checkBoxItem.setCheckState(False)
         list_row.insert(0,checkBoxItem)
         for point,landmark in dic_measurment.items():
           landmark_label = qt.QTableWidgetItem(landmark)
           list_row.append(landmark_label)
-      big_list.append(list_row)
+        big_list.append(list_row)
 
     self.tableWidget.setRowCount(len(big_list))
     for row in range(len(big_list)):
       for col in range(len(self.columnLabels)):
-        # item = qt.QTableWidgetItem(f'Item {row}-{col}')
-        # item.setFlags(Qt.ItemFlag.ItemIsuserCheckable)
-        # print(big_list[row][col])
         self.tableWidget.setItem(row,col,big_list[row][col])
 
-
-
-
-    # print(list_row)
-  # def FillTab(self):
-  #   for type_measurment,lst_measurment in self.dist_dic_measurment.items():
-  #     for dic_measurment in lst_measurment:
-  #       wid = qt.QWidget()
-  #       hb = qt.QHBoxLayout()
-  #       wid.setLayout(hb)
-  #       new_cb = qt.QCheckBox()
-  #       hb.addWidget(new_cb)
-  #       # print(dic_measurment)
-  #       for point,landmark in dic_measurment.items():
-  #         print(point,landmark)
-  #         point_label = qt.QLabel(point)
-  #         landmark_label = qt.QLabel(landmark)
-  #         hb.addWidget(point_label)
-  #         hb.addWidget(landmark_label)
-  #       self.vb2.addWidget(wid)
-  #   lst_tab = ['Distances','Angles']
-  #   lst_wid = []
-    
-  #   for tab in lst_tab:   
-  #     # new_lm_tab = self.GenNewTab()
-  #     self.LM_tab_widget.insertTab(-1,self.new_widget,tab)
-
-  #   self.LM_tab_widget.currentIndex = 0
-
-    # lcbd = {}
-    # for cb,lm in self.check_box_dic.items():
-    #   if lm not in lcbd.keys():
-    #     lcbd[lm] = [cb]
-    #   else:
-    #     lcbd[lm].append(cb)
-
-    # self.lm_cb_dic = lcbd
-
-    # for lm in lm_dic["U"]:
-    #   self.UpdateLmSelect(lm,True)
-
-    # for cb in self.check_box_dic.keys():
-    #   cb.connect("toggled(bool)", self.CheckBox)
 
   def CheckBox(self, caller=None, event=None):
     for cb,lm in self.check_box_dic.items():
@@ -846,94 +762,6 @@ class TableView:
       
       if self.lm_status_dic[lm] != state:
         self.UpdateLmSelect(lm,state)
-
-  def GenNewLine(self):
-    combo_box_1 = qt.QComboBox()
-    # self.combo_box_1.addItems()
-    combo_box_2 = qt.QComboBox()
-    # self.combo_box_2.addItems()
-    combo_box_3 = qt.QComboBox()
-    # self.combo_box_3.addItems()
-    remove_button = qt.QPushButton("Delete")
-    widget_lst = [combo_box_1,combo_box_2,combo_box_3,remove_button]
-    
-    # wid = qt.QWidget()
-    hb = qt.QHBoxLayout()
-    for widget in widget_lst:
-        hb.addWidget(widget)
-    self.vb2.addLayout(hb)
-    # wid.setLayout(hb)
-    
-    # self.scr_box.setWidget(wid)
-
-  # def GenNewTab(self):
-  #   new_widget = qt.QWidget()
-  #   self.vb = qt.QVBoxLayout(new_widget)
-  #   scr_box = qt.QScrollArea()
-  #   self.vb.addWidget(scr_box)
-
-  #   self.hb_add  = qt.QHBoxLayout()
-  #   self.type_measur_combobox = qt.QComboBox()
-  #   self.type_measur_combobox.addItems(["Distance between T1 and T2","Mid point","Distance point line"])
-  #   self.hb_add.addWidget(self.type_measur_combobox)
-  #   self.type_measur_combobox.connect('currentIndexChanged(int)', self.DefinineWidget)
-  #   self.vb.addLayout(self.hb_add)
-
-  #   wid = qt.QWidget()
-  #   self.vb2 = qt.QVBoxLayout()
-  #   wid.setLayout(self.vb2)
-
-  #   scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
-  #   scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-  #   scr_box.setWidgetResizable(True)
-  #   scr_box.setWidget(wid)
-
-  #   return new_widget
-
-
-  def DefinineWidget(self,idx):
-    # index_tab = self.LM_tab_widget.currentIndex
-    print('index_tab :',index_tab)
-    print('index combo box :', idx)
-    hbwi = qt.QHBoxLayout()
-    if idx == 2:
-      point_1_combobox = qt.QComboBox()
-      point_2_combobox = qt.QComboBox()
-      point_3_combobox = qt.QComboBox()
-      button_add = qt.QPushButton("Add")
-      button_add.connect('clicked(bool)', self.GenNewLine)
-
-      hbwi.addWidget(point_1_combobox)
-      hbwi.addWidget(point_2_combobox)
-      hbwi.addWidget(point_3_combobox)
-      hbwi.addWidget(button_add)
-
-    elif idx == 3:
-      point_1_combobox = qt.QComboBox()
-      point_2_combobox = qt.QComboBox()
-      point_3_combobox = qt.QComboBox()
-      point_4_combobox = qt.QComboBox()
-      button_add = qt.QPushButton("Add")
-      button_add.connect('clicked(bool)', self.GenNewLine)
-
-      hbwi.addWidget(point_1_combobox)
-      hbwi.addWidget(point_2_combobox)
-      hbwi.addWidget(point_3_combobox)
-      hbwi.addWidget(point_4_combobox)
-      hbwi.addWidget(button_add)
-    
-    else :
-      point_1_combobox = qt.QComboBox()
-      point_2_combobox = qt.QComboBox()
-      button_add = qt.QPushButton("Add")
-      button_add.connect('clicked(bool)', self.GenNewLine)
-
-      hbwi.addWidget(point_1_combobox)
-      hbwi.addWidget(point_2_combobox)
-      hbwi.addWidget(button_add)
-        
-    self.vb.addLayout(hbwi)
-
 
   def UpdateLmSelect(self,lm_id,state):
     for cb in self.lm_cb_dic[lm_id]:
@@ -962,7 +790,7 @@ class TableView:
 
 def GetAvailableLm(mfold,lm_group):
   All_landmarks = GetAllLandmarks(mfold)
-  print(All_landmarks)
+  # print(All_landmarks)
   available_lm = {"Other":[]}
   for lm in All_landmarks:
     if lm in lm_group.keys():
@@ -1003,47 +831,88 @@ def GetAllLandmarks(dir_path):
 
 class TabMeasure:
   def __init__(self) -> None:
+    # self.lm_status_dic = lm_status_dic
     self.widget = qt.QWidget()
     self.layout = qt.QVBoxLayout(self.widget)
-    
-    self.new_widget_1 = qt.QWidget()
-    self.hb1 = qt.QHBoxLayout(self.new_widget_1)
-    self.new_widget_2 = qt.QWidget()
-    self.hb2 = qt.QHBoxLayout(self.new_widget_2)    
-    self.new_widget_3 = qt.QWidget()
-    self.hb3 = qt.QHBoxLayout(self.new_widget_3)
 
-    self.new_widget_2.setHidden(True)
-    self.new_widget_3.setHidden(True)
+    # -------------------------- Gen layout add line ---------------------------
+    self.lst_type_meas = ["none","Distance between T1 and T2","Mid point","Distance point line"]
+    self.hb_add  = qt.QHBoxLayout()
+    self.type_measur_combobox = qt.QComboBox()
+    self.label = qt.QLabel("Type of measurment")
+    self.hb_add.addWidget(self.label)
+    self.hb_add.addWidget(self.type_measur_combobox)
+    self.type_measur_combobox.addItems(self.lst_type_meas)
+    self.layout.addLayout(self.hb_add)
 
-    # -------------------------- Gen layout T1 T2/midpoint ---------------------------
-    combo_box_1 = qt.QComboBox()
-    combo_box_2 = qt.QComboBox()
-    remove_button = qt.QPushButton("add")
-    widget_lst = [combo_box_1,combo_box_2,remove_button]
-    for widget in widget_lst:
-        self.hb1.addWidget(widget)
-    self.layout.addWidget(self.new_widget_1)
+    # define the different widgets
+    self.new_widget_1,self.combo_box_1,self.combo_box_2 = widgetPP(self.layout)
+    self.new_widget_2 = widgetPL(self.layout)
 
-    # -------------------------- Gen layout point line ---------------------------
-    combo_box_1 = qt.QComboBox()
-    combo_box_2 = qt.QComboBox()
-    combo_box_3 = qt.QComboBox()
-    remove_button = qt.QPushButton("add")
-    widget_lst = [combo_box_1,combo_box_2,combo_box_3,remove_button]
-    for widget in widget_lst:
-        self.hb2.addWidget(widget)
-    self.layout.addWidget(self.new_widget_2)
-    # -------------------------- Gen layout angle ---------------------------
-    combo_box_1 = qt.QComboBox()
-    combo_box_2 = qt.QComboBox()
-    combo_box_3 = qt.QComboBox()
-    combo_box_4 = qt.QComboBox()
-    remove_button = qt.QPushButton("add")
-    widget_lst = [combo_box_1,combo_box_2,combo_box_3,combo_box_4,remove_button]
-    for widget in widget_lst:
-        self.hb3.addWidget(widget)
-    self.layout.addWidget(self.new_widget_3)
+
+    self.type_measur_combobox.connect('currentIndexChanged(int)', self.DisplayLayout)
+    # self.GetLmList()
+
+  def DisplayLayout(self,idx):
+    if idx == 3:
+      self.new_widget_1.setHidden(True)
+      self.new_widget_2.setHidden(False)
+    else:
+      self.new_widget_2.setHidden(True)
+      self.new_widget_1.setHidden(False)
+
+  def GetLmList(self,lm_status_dic):
+    self.list_lm = []
+    print(lm_status_dic)
+    for landmark,state in lm_status_dic.items():
+      if state == True:
+        self.list_lm.append(landmark)
+    self.combo_box_1.addItems(self.list_lm)
+    self.combo_box_2.addItems(self.list_lm)
+
+  # def OnAddButton(self):
+  #   data_cb_1 = self.combo_box_1.currentData
+  #   data_cb_2 = self.combo_box_2.currentData
+
+
+  # -------------------------- Gen layout T1 T2/midpoint ---------------------------
+def widgetPP(layout): 
+  new_widget = qt.QWidget()
+  hb = qt.QHBoxLayout(new_widget)
+  combo_box_1 = qt.QComboBox()
+  combo_box_2 = qt.QComboBox()
+  remove_button = qt.QPushButton("add")
+  widget_lst = [combo_box_1,combo_box_2,remove_button]
+  for widget in widget_lst:
+      hb.addWidget(widget)
+  layout.addWidget(new_widget)
+  new_widget.setHidden(True)
+  return new_widget,combo_box_1,combo_box_2
+  
+# -------------------------- Gen layout point line ---------------------------
+def widgetPL(layout): 
+  new_widget = qt.QWidget()
+  hb = qt.QHBoxLayout(new_widget)
+  combo_box_1 = qt.QComboBox()
+  combo_box_2 = qt.QComboBox()
+  combo_box_3 = qt.QComboBox()
+  remove_button = qt.QPushButton("add")
+  widget_lst = [combo_box_1,combo_box_2,combo_box_3,remove_button]
+  for widget in widget_lst:
+      hb.addWidget(widget)
+  layout.addWidget(new_widget)
+  new_widget.setHidden(True)
+  return new_widget
+    # # -------------------------- Gen layout angle ---------------------------
+    # combo_box_1 = qt.QComboBox()
+    # combo_box_2 = qt.QComboBox()
+    # combo_box_3 = qt.QComboBox()
+    # combo_box_4 = qt.QComboBox()
+    # remove_button = qt.QPushButton("add")
+    # widget_lst = [combo_box_1,combo_box_2,combo_box_3,combo_box_4,remove_button]
+    # for widget in widget_lst:
+    #     self.hb3.addWidget(widget)
+    # self.layout.addWidget(self.new_widget_3)
 
 #
 # AQ3DCLogic
