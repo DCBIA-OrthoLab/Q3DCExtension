@@ -327,7 +327,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
 
-
     # Buttons
     self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
     self.ui.pushButton_DataFolder_T1.connect('clicked(bool)',self.onSearchFolderButton_T1)
@@ -338,7 +337,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.verticalLayout_2.addWidget(self.table_view.widget)
 
     # layout to add measurment to the tab
-    self.layout_measure = TabMeasure()
+    self.layout_measure = TabMeasure(self.table_view)
     self.ui.verticalLayout_3.addWidget(self.layout_measure.widget)
     
     # selection of the landmarks
@@ -689,10 +688,12 @@ class TableView:
 
     self.layout.addWidget(self.LM_tab_widget)
    
-    self.dist_dic_measurment = {'point to point':[{'P1':'Ln1','P2':'Ln2'},{'P1':'Ln3','P2':'Ln4'}],
-                                'point to line':[{'P':'Ln1','L':{'P1':'Ln2','P2':'Ln3'}}],
-                                'point T1 to T2':[{'PT1':'Ln1','PT2':'Ln1'}]
-                              }
+    # self.dist_dic_measurment = {'point to point':[{'P1':'Ln1','P2':'Ln2'},{'P1':'Ln3','P2':'Ln4'}],
+    #                             'point to line':[{'P':'Ln1','L':{'P1':'Ln2','P2':'Ln3'}}],
+    #                             'point T1 to T2':[{'PT1':'Ln1','PT2':'Ln1'}]
+    #                           }
+
+    
 
     # -------------------------- Gen Tab ---------------------------
     # lst_tab = ["Distance","Angle"]
@@ -722,16 +723,107 @@ class TableView:
       # self.LM_tab_widget.currentIndex = 0
 
 
-    self.lm_status_dic = {}
-    self.FillTab()
+    # self.lm_status_dic = {}
+    # self.FillTab()
 
   def Clear(self):
-    self.LM_verticalLayout_2tab_widget.clear()
+    self.LM_tab_widget.clear()
     
+  # def FillTab(self):
+  #   self.columnLabels = ["check box","type of measurment","point 1", "point 2"]
+  #   self.tableWidget.setColumnCount(len(self.columnLabels))
+  #   self.tableWidget.setHorizontalHeaderLabels(self.columnLabels)
+  #   self.tableWidget.resizeColumnsToContents()
+  #   big_list = []
+  #   for type_measurment,lst_measurment in self.dist_dic_measurment.items():
+  #     for dic_measurment in lst_measurment:
+  #       list_row = []
+  #       type_measurment_label = qt.QTableWidgetItem(type_measurment)
+  #       list_row.append(type_measurment_label)
+  #       checkBoxItem = qt.QTableWidgetItem()
+  #       checkBoxItem.setCheckState(False)
+  #       list_row.insert(0,checkBoxItem)
+  #       for point,landmark in dic_measurment.items():
+  #         landmark_label = qt.QTableWidgetItem(landmark)
+  #         list_row.append(landmark_label)
+  #       big_list.append(list_row)
+
+  #   self.tableWidget.setRowCount(len(big_list))
+  #   for row in range(len(big_list)):
+  #     for col in range(len(self.columnLabels)):
+  #       self.tableWidget.setItem(row,col,big_list[row][col])
+
+  
+
+
+  
+
+
+class TabMeasure:
+  def __init__(self,table_view) -> None:
+    self.table_view = table_view
+    self.widget = qt.QWidget()
+    self.layout = qt.QVBoxLayout(self.widget)
+
+    # -------------------------- Gen layout add line ---------------------------
+    self.lst_type_meas = ["none","Distance between T1 and T2","Mid point","Distance point line"]
+    self.hb_add  = qt.QHBoxLayout()
+    self.type_measur_combobox = qt.QComboBox()
+    self.label = qt.QLabel("Type of measurment")
+    self.hb_add.addWidget(self.label)
+    self.hb_add.addWidget(self.type_measur_combobox)
+    self.type_measur_combobox.addItems(self.lst_type_meas)
+    self.layout.addLayout(self.hb_add)
+
+    # define the different widgets
+    self.new_widget_1,self.combo_box_1,self.combo_box_2,self.add_button = widgetPP(self.layout)
+    self.new_widget_2 = widgetPL(self.layout)
+
+    self.add_button.connect('clicked()',self.OnAddButton)
+
+    self.type_measur_combobox.connect('currentIndexChanged(int)', self.DisplayLayout)
+    self.dist_dic_measurment = {'point to point':[],
+                                'point to line':[],
+                                'point T1 to T2':[]
+                              }
+
+  def DisplayLayout(self,idx):
+    if idx == 3:
+      self.new_widget_1.setHidden(True)
+      self.new_widget_2.setHidden(False)
+    else:
+      self.new_widget_2.setHidden(True)
+      self.new_widget_1.setHidden(False)
+
+  def GetLmList(self,lm_status_dic):
+    self.list_lm = []
+    # print(lm_status_dic)
+    for landmark,state in lm_status_dic.items():
+      if state == True:
+        self.list_lm.append(landmark)
+    self.combo_box_1.addItems(self.list_lm)
+    self.combo_box_2.addItems(self.list_lm)
+
+  def OnAddButton(self):
+    data_type_of_measurment = self.type_measur_combobox.currentData
+    if data_type_of_measurment == "Distance point line" :
+      data_cb_1 = self.combo_box_1.currentData
+      data_cb_2 = self.combo_box_2.currentData
+      data_cb_3 = self.combo_box_3.currentData
+      new_dic = {'P1':data_cb_1,'L':f'{data_cb_2}-{data_cb_3}'}
+      self.dist_dic_measurment[data_type_of_measurment].append(new_dic)
+    else :
+      data_cb_1 = self.combo_box_1.currentData
+      data_cb_2 = self.combo_box_2.currentData
+      new_dic = {'P1':data_cb_1,'P2':data_cb_2}
+      self.dist_dic_measurment[data_type_of_measurment].append(new_dic)
+    
+    FillTab()
+
   def FillTab(self):
-    self.columnLabels = ["check box","type of measurment","point 1", "point 2"]
-    self.tableWidget.setColumnCount(len(self.columnLabels))
-    self.tableWidget.setHorizontalHeaderLabels(self.columnLabels)
+    columnLabels = ["check box","type of measurment","point 1", "point 2"]
+    self.tableWidget.setColumnCount(len(columnLabels))
+    self.tableWidget.setHorizontalHeaderLabels(columnLabels)
     self.tableWidget.resizeColumnsToContents()
     big_list = []
     for type_measurment,lst_measurment in self.dist_dic_measurment.items():
@@ -749,44 +841,37 @@ class TableView:
 
     self.tableWidget.setRowCount(len(big_list))
     for row in range(len(big_list)):
-      for col in range(len(self.columnLabels)):
-        self.tableWidget.setItem(row,col,big_list[row][col])
+      for col in range(len(columnLabels)):
+        self.tableWidget.setItem(row,col,big_list[row][col])  
 
-
-  def CheckBox(self, caller=None, event=None):
-    for cb,lm in self.check_box_dic.items():
-      if cb.checkState():
-        state = True
-      else:
-        state = False
-      
-      if self.lm_status_dic[lm] != state:
-        self.UpdateLmSelect(lm,state)
-
-  def UpdateLmSelect(self,lm_id,state):
-    for cb in self.lm_cb_dic[lm_id]:
-      cb.setChecked(state)
-    self.lm_status_dic[lm_id] = state
-
-  def UpdateAll(self,state):
-    for lm_id,cb_lst in self.lm_cb_dic.items():
-      for cb in cb_lst:
-        cb.setChecked(state)
-      self.lm_status_dic[lm_id] = state
-
-  def GetSelectedLM(self):
-    selectedLM = []
-    for lm,state in self.lm_status_dic.items():
-      if state:
-        selectedLM.append(lm)
-    return selectedLM
-
-  def SelectAll(self):
-    self.UpdateAll(True)
+# -------------------------- Gen layout T1 T2/midpoint ---------------------------
+def widgetPP(layout): 
+  new_widget = qt.QWidget()
+  hb = qt.QHBoxLayout(new_widget)
+  combo_box_1 = qt.QComboBox()
+  combo_box_2 = qt.QComboBox()
+  add_button = qt.QPushButton("add")
+  widget_lst = [combo_box_1,combo_box_2,add_button]
+  for widget in widget_lst:
+      hb.addWidget(widget)
+  layout.addWidget(new_widget)
+  new_widget.setHidden(True)
+  return new_widget,combo_box_1,combo_box_2,add_button
   
-  def ClearAll(self):
-    self.UpdateAll(False)
-
+# -------------------------- Gen layout point line ---------------------------
+def widgetPL(layout): 
+  new_widget = qt.QWidget()
+  hb = qt.QHBoxLayout(new_widget)
+  combo_box_1 = qt.QComboBox()
+  combo_box_2 = qt.QComboBox()
+  combo_box_3 = qt.QComboBox()
+  remove_button = qt.QPushButton("add")
+  widget_lst = [combo_box_1,combo_box_2,combo_box_3,remove_button]
+  for widget in widget_lst:
+      hb.addWidget(widget)
+  layout.addWidget(new_widget)
+  new_widget.setHidden(True)
+  return new_widget
 
 def GetAvailableLm(mfold,lm_group):
   All_landmarks = GetAllLandmarks(mfold)
@@ -803,7 +888,6 @@ def GetAvailableLm(mfold,lm_group):
       available_lm[group].append(lm)
 
   return available_lm,All_landmarks
-
 
 def GetLandmarkGroup(group_landmark):
   lm_group = {}
@@ -829,80 +913,6 @@ def GetAllLandmarks(dir_path):
 
   return All_landmarks
 
-class TabMeasure:
-  def __init__(self) -> None:
-    # self.lm_status_dic = lm_status_dic
-    self.widget = qt.QWidget()
-    self.layout = qt.QVBoxLayout(self.widget)
-
-    # -------------------------- Gen layout add line ---------------------------
-    self.lst_type_meas = ["none","Distance between T1 and T2","Mid point","Distance point line"]
-    self.hb_add  = qt.QHBoxLayout()
-    self.type_measur_combobox = qt.QComboBox()
-    self.label = qt.QLabel("Type of measurment")
-    self.hb_add.addWidget(self.label)
-    self.hb_add.addWidget(self.type_measur_combobox)
-    self.type_measur_combobox.addItems(self.lst_type_meas)
-    self.layout.addLayout(self.hb_add)
-
-    # define the different widgets
-    self.new_widget_1,self.combo_box_1,self.combo_box_2 = widgetPP(self.layout)
-    self.new_widget_2 = widgetPL(self.layout)
-
-
-    self.type_measur_combobox.connect('currentIndexChanged(int)', self.DisplayLayout)
-    # self.GetLmList()
-
-  def DisplayLayout(self,idx):
-    if idx == 3:
-      self.new_widget_1.setHidden(True)
-      self.new_widget_2.setHidden(False)
-    else:
-      self.new_widget_2.setHidden(True)
-      self.new_widget_1.setHidden(False)
-
-  def GetLmList(self,lm_status_dic):
-    self.list_lm = []
-    print(lm_status_dic)
-    for landmark,state in lm_status_dic.items():
-      if state == True:
-        self.list_lm.append(landmark)
-    self.combo_box_1.addItems(self.list_lm)
-    self.combo_box_2.addItems(self.list_lm)
-
-  # def OnAddButton(self):
-  #   data_cb_1 = self.combo_box_1.currentData
-  #   data_cb_2 = self.combo_box_2.currentData
-
-
-  # -------------------------- Gen layout T1 T2/midpoint ---------------------------
-def widgetPP(layout): 
-  new_widget = qt.QWidget()
-  hb = qt.QHBoxLayout(new_widget)
-  combo_box_1 = qt.QComboBox()
-  combo_box_2 = qt.QComboBox()
-  remove_button = qt.QPushButton("add")
-  widget_lst = [combo_box_1,combo_box_2,remove_button]
-  for widget in widget_lst:
-      hb.addWidget(widget)
-  layout.addWidget(new_widget)
-  new_widget.setHidden(True)
-  return new_widget,combo_box_1,combo_box_2
-  
-# -------------------------- Gen layout point line ---------------------------
-def widgetPL(layout): 
-  new_widget = qt.QWidget()
-  hb = qt.QHBoxLayout(new_widget)
-  combo_box_1 = qt.QComboBox()
-  combo_box_2 = qt.QComboBox()
-  combo_box_3 = qt.QComboBox()
-  remove_button = qt.QPushButton("add")
-  widget_lst = [combo_box_1,combo_box_2,combo_box_3,remove_button]
-  for widget in widget_lst:
-      hb.addWidget(widget)
-  layout.addWidget(new_widget)
-  new_widget.setHidden(True)
-  return new_widget
     # # -------------------------- Gen layout angle ---------------------------
     # combo_box_1 = qt.QComboBox()
     # combo_box_2 = qt.QComboBox()
