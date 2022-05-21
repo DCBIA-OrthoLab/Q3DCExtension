@@ -105,7 +105,7 @@ def WriteJson(lm_lst,out_path):
 
 
 
-fcsv_dir = '/home/luciacev-admin/Desktop/AQ3DC_data'
+fcsv_dir = '/home/luciacev-admin/Desktop/data_cervical/landmarks'
 normpath = os.path.normpath("/".join([fcsv_dir,'**','']))
 lst_fscv = []
 for fiducial in sorted(glob.iglob(normpath, recursive=True)):
