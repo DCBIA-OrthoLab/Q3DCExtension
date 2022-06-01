@@ -1,6 +1,7 @@
 import collections
 import contextlib
 import json
+import unittest
 from copy import deepcopy
 
 import slicer
@@ -65,7 +66,7 @@ class DependantMarkups(ScriptedLoadableModule):
 
 class VTKSuppressibleObservationMixin(VTKObservationMixin):
     @contextlib.contextmanager
-    def suppress(self, obj=..., event=..., method=...):
+    def suppress(self, obj=..., event=..., method=...):  # todo test
         suppressed = []
         for o, e, m, g, t, p in self.Observations:
             if all(
@@ -86,8 +87,14 @@ class VTKSuppressibleObservationMixin(VTKObservationMixin):
             self.Observations.append([o, e, m, g, t, p])
 
 
+class DependantMarkupsWidget(ScriptedLoadableModuleWidget):
+    # Stub widget is only present so that we get the "Reload and Test" button in the UI.
+    pass
+
+
 class DependantMarkupsLogic(
-    ScriptedLoadableModuleLogic, VTKSuppressibleObservationMixin
+    ScriptedLoadableModuleLogic,
+    VTKSuppressibleObservationMixin,
 ):
     def __init__(self):
         ScriptedLoadableModuleLogic.__init__(self)
@@ -193,7 +200,7 @@ class DependantMarkupsLogic(
         # landmarks.SetAttribute("arrayName", model.GetName() + "_ROI")
 
     @staticmethod
-    def createHardenModel(model):
+    def createHardenModel(model):  # todo test
         name = model.GetName()
         pid = slicer.app.applicationPid()
         name = f"SurafceRegistration_{name}_hardenCopy_{pid}"
@@ -218,7 +225,7 @@ class DependantMarkupsLogic(
         logic.hardenTransform(hardenModel)
         return hardenModel
 
-    def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):
+    def getClosestPointIndex(self, fidNode, inputPolyData, landmarkID):  # todo test
         landmarkCoord = np.zeros(3)
         landmarkCoord[1] = 42
         fidNode.GetNthFiducialPosition(landmarkID, landmarkCoord)
@@ -229,7 +236,7 @@ class DependantMarkupsLogic(
         indexClosestPoint = pointLocator.FindClosestPoint(landmarkCoord)
         return indexClosestPoint
 
-    def replaceLandmark(
+    def replaceLandmark(  # todo test (or remove)
         self, inputModelPolyData, fidNode, landmarkID, indexClosestPoint
     ):
         landmarkCoord = [-1, -1, -1]
@@ -240,25 +247,25 @@ class DependantMarkupsLogic(
             slicer.vtkMRMLMarkupsNode.PositionPreview,
         )
 
-    def getNthControlPointLabelByID(self, node, ID):
+    def getNthControlPointLabelByID(self, node, ID):  # used externally
         index = node.GetNthControlPointIndexByID(ID)
         return node.GetNthControlPointLabel(index)
 
-    def setNthControlPointLabelByID(self, node, ID, value):
+    def setNthControlPointLabelByID(self, node, ID, value):  # used externally
         index = node.GetNthControlPointIndexByID(ID)
         node.SetNthControlPointLabel(index, value)
 
-    def getNthControlPointPositionByID(self, node, ID):
+    def getNthControlPointPositionByID(self, node, ID):  # todo test; used externally
         result = np.zeros(3)
         index = node.GetNthControlPointIndexByID(ID)
         node.GetNthControlPointPosition(index, result)
         return result
 
-    def setNthControlPointPositionByID(self, node, ID, value):
+    def setNthControlPointPositionByID(self, node, ID, value):  # todo test; used externally
         index = node.GetNthControlPointIndexByID(ID)
         node.SetNthControlPointPositionFromArray(index, value)
 
-    def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):
+    def projectOnSurface(self, modelOnProject, fidNode, selectedFidReflID):  # todo test
         if selectedFidReflID:
             markupsIndex = fidNode.GetNthControlPointIndexByID(selectedFidReflID)
             indexClosestPoint = self.getClosestPointIndex(
@@ -269,12 +276,12 @@ class DependantMarkupsLogic(
             )
             return indexClosestPoint
 
-    def getModel(self, node):
+    def getModel(self, node):  # todo test
         hardened = node.GetNodeReference("HARDENED_MODEL")
         model = node.GetNodeReference("MODEL")
         return hardened or model
 
-    def computeProjection(self, node, ID):
+    def computeProjection(self, node, ID):  # todo test
         model = self.getModel(node)
         if not model:
             return
@@ -477,5 +484,4 @@ class DependantMarkupsTest(ScriptedLoadableModuleTest):
         slicer.mrmlScene.Clear(0)
 
     def runTest(self):
-        self.setUp()
-        self.delayDisplay("Tests not yet implemented.")
+        self.delayDisplay('runTest')
