@@ -6,7 +6,7 @@ import unittest
 import weakref
 
 from copy import deepcopy
-from typing import Union, Tuple, List, Optional, Any
+from typing import Union, Tuple, List, Optional, Any, Dict
 
 import numpy as np
 import numpy.testing as npt
@@ -225,79 +225,155 @@ class MarkupConstraintsTest(
         # todo assert logic.constraints is empty
 
         # constraints within a node
-        node = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLMarkupsFiducialNode')
+        node = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
 
         a = ControlPoint.new(node, [1, 2, 3])
         b = ControlPoint.new(node, [2, 3, 4])
         t = ControlPoint.new(node, [3, 4, 5])
 
-        np.testing.assert_almost_equal(t.position, [3, 4, 5])
+        np.testing.assert_almost_equal(
+            t.position,
+            [3, 4, 5],
+            err_msg="ControlPoint.position invalid",
+        )
 
         # midpoint within node
-        logic.setConstraint(t, [a, b], 'midpoint')
-        np.testing.assert_almost_equal(t.position, [1.5, 2.5, 3.5])
+        logic.setConstraint(t, [a, b], "midpoint")
+        np.testing.assert_almost_equal(
+            t.position,
+            [1.5, 2.5, 3.5],
+            err_msg="initial midpoint (intra) invalid",
+        )
         a.position = [0, 1, 2]
-        np.testing.assert_almost_equal(t.position, [1, 2, 3])
+        np.testing.assert_almost_equal(
+            t.position,
+            [1, 2, 3],
+            err_msg="midpoint update (intra) invalid",
+        )
 
         # lock within node
-        logic.setConstraint(t, [a], 'lock')
-        np.testing.assert_almost_equal(t.position, [0, 1, 2])
+        logic.setConstraint(t, [a], "lock")
+        np.testing.assert_almost_equal(
+            t.position,
+            [0, 1, 2],
+            err_msg="initial lock (intra) invalid",
+        )
+        a.position = [1, 2, 3]
+        np.testing.assert_almost_equal(
+            t.position,
+            [1, 2, 3],
+            err_msg="lock update (intra) invalid",
+        )
 
         # project within node
-        logic.setConstraint(t, [a, b], 'project')
-        np.testing.assert_almost_equal(t.position, [0, 1, 2])
+        logic.setConstraint(t, [a, b], "project")
+        np.testing.assert_almost_equal(
+            t.position,
+            [0, 1, 2],
+            err_msg="initial project (intra) invalid",
+        )
         a.position = [0, 0, 0]
         b.position = [5, -5, 5]
         t.position = [1, 1, 1]
-        np.testing.assert_almost_equal(t.position, [0.3333333, -0.3333333, 0.3333333])
+        np.testing.assert_almost_equal(
+            t.position,
+            [0.3333333, -0.3333333, 0.3333333],
+            err_msg="project update (intra) invalid",
+        )
 
         # remove constraint
         logic.delConstraint(t)
         a.position = [0, 0, 0]
         b.position = [0, 0, 0]
-        np.testing.assert_almost_equal(t.position, [0.3333333, -0.3333333, 0.3333333])
+        np.testing.assert_almost_equal(
+            t.position,
+            [0.3333333, -0.3333333, 0.3333333],
+            err_msg="initial delConstraint (intra) invalid",
+        )
         t.position = [1, 1, 1]
-        np.testing.assert_almost_equal(t.position, [1, 1, 1])
+        np.testing.assert_almost_equal(
+            t.position,
+            [1, 1, 1],
+            err_msg="delConstraint (intra) invalid",
+        )
 
         slicer.mrmlScene.RemoveNode(node)
         del node, a, b, t  # todo fix memory leaks
         # todo assert logic.constraints is empty
 
         # constraints between nodes
-        srcNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLMarkupsFiducialNode')
-        tgtNode = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLMarkupsFiducialNode')
+        srcNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
+        tgtNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
 
         a = ControlPoint.new(srcNode, [1, 2, 3])
         b = ControlPoint.new(srcNode, [2, 3, 4])
         t = ControlPoint.new(tgtNode, [3, 4, 5])
 
-        np.testing.assert_almost_equal(t.position, [3, 4, 5])
+        np.testing.assert_almost_equal(
+            t.position,
+            [3, 4, 5],
+            err_msg="ControlPoint.position invalid",
+        )
 
         # midpoint between nodes
-        logic.setConstraint(t, [a, b], 'midpoint')
-        np.testing.assert_almost_equal(t.position, [1.5, 2.5, 3.5])
+        logic.setConstraint(t, [a, b], "midpoint")
+        np.testing.assert_almost_equal(
+            t.position,
+            [1.5, 2.5, 3.5],
+            err_msg="initial midpoint (inter) invalid",
+        )
         a.position = [0, 1, 2]
-        np.testing.assert_almost_equal(t.position, [1, 2, 3])
+        np.testing.assert_almost_equal(
+            t.position,
+            [1, 2, 3],
+            err_msg="midpoint update (inter) invalid",
+        )
 
         # lock between nodes
-        logic.setConstraint(t, [a], 'lock')
-        np.testing.assert_almost_equal(t.position, [0, 1, 2])
+        logic.setConstraint(t, [a], "lock")
+        np.testing.assert_almost_equal(
+            t.position,
+            [0, 1, 2],
+            err_msg="initial lock (inter) invalid",
+        )
+        a.position = [1, 2, 3]
+        np.testing.assert_almost_equal(
+            t.position,
+            [1, 2, 3],
+            err_msg="lock update (inter) invalid",
+        )
 
         # project between nodes
-        logic.setConstraint(t, [a, b], 'project')
-        np.testing.assert_almost_equal(t.position, [0, 1, 2])
+        logic.setConstraint(t, [a, b], "project")
+        np.testing.assert_almost_equal(
+            t.position,
+            [0, 1, 2],
+            err_msg="initial project (inter) invalid",
+        )
         a.position = [0, 0, 0]
         b.position = [5, -5, 5]
         t.position = [1, 1, 1]
-        np.testing.assert_almost_equal(t.position, [0.3333333, -0.3333333, 0.3333333])
+        np.testing.assert_almost_equal(
+            t.position,
+            [0.3333333, -0.3333333, 0.3333333],
+            err_msg="project update (inter) invalid",
+        )
 
         # remove constraint
         logic.delConstraint(t)
         a.position = [0, 0, 0]
         b.position = [0, 0, 0]
-        np.testing.assert_almost_equal(t.position, [0.3333333, -0.3333333, 0.3333333])
+        np.testing.assert_almost_equal(
+            t.position,
+            [0.3333333, -0.3333333, 0.3333333],
+            err_msg="initial delConstraint (inter) invalid",
+        )
         t.position = [1, 1, 1]
-        np.testing.assert_almost_equal(t.position, [1, 1, 1])
+        np.testing.assert_almost_equal(
+            t.position,
+            [1, 1, 1],
+            err_msg="delConstraint (inter) invalid",
+        )
 
         slicer.mrmlScene.RemoveNode(srcNode)
         slicer.mrmlScene.RemoveNode(tgtNode)
@@ -306,28 +382,52 @@ class MarkupConstraintsTest(
 
         # todo failing tests
         # chained dependency
-        node = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLMarkupsFiducialNode')
+        node = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
         a = ControlPoint.new(node, [0, 1, 2])
         b = ControlPoint.new(node, [-1, -2, 3])
         r = ControlPoint.new(node, [0, 0, 0])
         u = ControlPoint.new(node)
         v = ControlPoint.new(node)
 
-        logic.setConstraint(u, [a, b], 'midpoint')
-        logic.setConstraint(v, [r, u], 'midpoint')
+        logic.setConstraint(u, [a, b], "midpoint")
+        logic.setConstraint(v, [r, u], "midpoint")
 
-        np.testing.assert_almost_equal(u.position, [-0.5, -0.5, 2.5])
-        np.testing.assert_almost_equal(v.position, [-0.25, -0.25, 1.25])
+        np.testing.assert_almost_equal(
+            u.position,
+            [-0.5, -0.5, 2.5],
+            err_msg="initial chained midpoint u invalid",
+        )
+        np.testing.assert_almost_equal(
+            v.position,
+            [-0.25, -0.25, 1.25],
+            err_msg="initial chained midpoint v invalid",
+        )
 
         a.position = [1, 1, 2]
 
-        np.testing.assert_almost_equal(u.position, [0, -0.5, 2.5])
-        np.testing.assert_almost_equal(v.position, [0, -0.25, 1.25])
+        np.testing.assert_almost_equal(
+            u.position,
+            [0, -0.5, 2.5],
+            err_msg="update (a) chained midpoint u",
+        )
+        np.testing.assert_almost_equal(
+            v.position,
+            [0, -0.25, 1.25],
+            err_msg="update (a) chained midpoint v",
+        )
 
         r.position = [0, 1, 0]
 
-        np.testing.assert_almost_equal(u.position, [0, -0.5, 2.5])
-        np.testing.assert_almost_equal(v.position, [0, 0.25, 1.25])
+        np.testing.assert_almost_equal(
+            u.position,
+            [0, -0.5, 2.5],
+            err_msg="update (r) chained midpoint u",
+        )
+        np.testing.assert_almost_equal(
+            v.position,
+            [0, 0.25, 1.25],
+            err_msg="update (r) chained midpoint v",
+        )
 
         slicer.mrmlScene.RemoveNode(node)
         del node, a, b, r, u, v
