@@ -329,7 +329,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.verticalLayout_2.addWidget(self.table_view.widget)
 
     # layout to add measurment to the tab
-    self.layout_measure = TabMeasure(self.ui.tableWidget)
+    self.layout_measure = TabMeasure(self.ui.tableWidget,self.ui.verticalLayout_2)
     self.ui.verticalLayout_3.addWidget(self.layout_measure.widget)
     
     # selection of the landmarks
@@ -626,6 +626,12 @@ class LMTab:
     for cb in self.lm_cb_dic[lm_id]:
       cb.setChecked(state)
     self.lm_status_dic[lm_id] = state
+  
+  def Fulltab(self,state):
+    idx = self.LM_tab_widget.currentIndex
+    group = self.LM_tab_widget.tabText(idx)
+    for lm in self.lm_group_dic[group]:
+      self.UpdateLmSelect(lm,state)
 
   def SelectTab(self):
     self.Fulltab(True)
@@ -684,13 +690,14 @@ class TableView:
     
 
 class TabMeasure:
-  def __init__(self,tableWidget,parent=None) -> None:
+  def __init__(self,tableWidget,verticalLayout_2,parent=None) -> None:
     self.parent = parent
     self.tableWidget = tableWidget
+    self.delete_button = qt.QPushButton('Delete')
+    verticalLayout_2.addWidget(self.delete_button)
     self.widget = qt.QWidget()
     self.layout = qt.QVBoxLayout(self.widget)
     self.dist_dic_measurment = {'Distance between T1 and T2':[],
-                                # 'Mid point':[],
                                 'Distance point line':[]
                               }
     self.status_cb = {}
@@ -732,15 +739,17 @@ class TabMeasure:
     self.layout.addLayout(self.hb_ce)   
 
     # -------------------------- connect ---------------------------
-
     self.add_button.connect('clicked()',self.OnAddButton)
     self.add_button_PL.connect('clicked()',self.OnAddButton)
+    self.delete_button.connect('clicked()',self.OnDeleteButton)
     self.folder_export_button.connect('clicked()',self.OnExportFolder)
     self.export_button.connect('clicked()',self.OnExportMeasurment)
     self.type_measur_combobox.connect('currentIndexChanged(int)', self.DisplayLayout)
     self.file_import_button.connect('clicked()',self.OnImportFile)
     self.import_button.connect('clicked()',self.OnImportMeasurment)
     self.combobox_ie.connect('currentIndexChanged(int)',self.DisplayImportExportLayout)
+    self.combobox_compute_export.connect('currentIndexChanged(int)',self.OnComboBoxComputeExport)
+
 
 
   def DisplayLayout(self,idx):
@@ -799,16 +808,39 @@ class TabMeasure:
       data_cb_2 = self.combo_box_2.currentText
       new_dic = {'P1':data_cb_1,'P2':data_cb_2}
       self.dist_dic_measurment[data_type_of_measurment].append(new_dic)
-    # print(self.dist_dic_measurment)
-    self.FillTab(self.dist_dic_measurment)
+    print('dict different type of measurement :',self.dist_dic_measurment)
+    self.CreateTableDict(self.dist_dic_measurment)
+    self.FillTab()
 
-  def FillTab(self,dist_dic_measurment):
-    columnLabels = ["check box","type of measurment","point 1", "point 2"]
+  def OnDeleteButton(self):
+    for cb in self.table_dict.keys():
+      if self.status_cb[cb] == True:
+        del self.table_dict[cb]
+    # print(self.status_cb,self.table_dict)
+    self.FillTab()
+
+  def FillTab(self):
+    columnLabels = ["check box","type of measurement","point 1", "point 2"]
     self.tableWidget.setColumnCount(len(columnLabels))
     self.tableWidget.setHorizontalHeaderLabels(columnLabels)
     self.tableWidget.resizeColumnsToContents()
-    self.big_list = []
+    self.tableWidget.setRowCount(len(self.table_dict))
+    for cb in self.table_dict.keys():
+      if cb not in self.status_cb.keys():
+        self.status_cb[cb] = False
+    for row in range(len(self.table_dict)):
+      for col in range(len(columnLabels)):
+        if col == 0 :
+          self.tableWidget.setItem(row,col,list(self.table_dict.keys())[row])
+        else:
+          self.tableWidget.setItem(row,col,list(self.table_dict.values())[row][col-1])       
 
+    for cb in self.table_dict.keys():
+      self.tableWidget.itemChanged.connect(self.CheckBox) 
+      # cb.itemChanged.connect("toggled(bool)", self.CheckBox)
+  
+  def CreateTableDict(self,dist_dic_measurment):
+    self.table_dict = {}
     for type_measurment,lst_measurment in dist_dic_measurment.items():
       for dic_measurment in lst_measurment:
         list_row = []
@@ -816,25 +848,28 @@ class TabMeasure:
         list_row.append(type_measurment_label)
         checkBoxItem = qt.QTableWidgetItem()
         checkBoxItem.setCheckState(False)
-        list_row.insert(0,checkBoxItem)
+        # list_row.insert(0,checkBoxItem)
         for point,landmark in dic_measurment.items():
           landmark_label = qt.QTableWidgetItem(landmark)
           list_row.append(landmark_label)
-        # list_row.append(remove_button)
-        self.big_list.append(list_row)
-    print(self.big_list)
-    
-    self.tableWidget.setRowCount(len(self.big_list))
-    for row in range(len(self.big_list)):
-      for col in range(len(columnLabels)):
-        self.tableWidget.setItem(row,col,self.big_list[row][col])  
+        if checkBoxItem not in self.table_dict.keys():
+          self.table_dict[checkBoxItem] = list_row
 
-    for row in self.big_list:
-      cb = row[0]
-      if cb not in self.status_cb.keys():
-        self.status_cb[cb] = False
-      
-      cb.connect("toggled(bool)", self.SelectedLandmark)
+    print('table_dict :',self.table_dict)
+    
+  
+  def CheckBox(self, caller=None, event=None):
+    for cb,lst_measurment in self.table_dict.items():
+      if cb.checkState():
+        state = True
+      else:
+        state = False
+  
+      if self.status_cb[cb] != state:
+        self.UpdateLmSelect(cb,state)
+    # print(self.status_cb)
+    # self.layout_measure.GetLmList(self.status_cb)
+
 
   def OnExportFolder(self):
     self.export_folder = qt.QFileDialog.getExistingDirectory(self.parent,"Select folder")
@@ -867,7 +902,6 @@ class TabMeasure:
 
   def OnImportMeasurment(self):
     dict_from_csv = {'Distance between T1 and T2':[],
-                      # 'Mid point':[],
                       'Distance point line':[]
                     }
 
@@ -880,15 +914,14 @@ class TabMeasure:
           if row[0] == 'Distance between T1 and T2':
             new_dict ={'P1':row[1],'P2':row[2]}
             dict_from_csv['Distance between T1 and T2'].append(new_dict)
-          # elif  row[0] == 'Mid point':
-          #   new_dict ={'P1':row[1],'P2':row[2]}
-          #   dict_from_csv['Mid point'].append(new_dict)
-          else:
+          elif row[0] == 'Distance point line':
             new_dict ={'P1':row[1],'P2':row[2]}
             dict_from_csv['Distance point line'].append(new_dict)
     
     self.dist_dic_measurment=dict_from_csv
-    self.FillTab(self.dist_dic_measurment)     
+    self.CreateTableDict(self.dist_dic_measurment)
+    self.FillTab()
+    
 
   def SelectedLandmark(self):
     for row in self.big_list:
@@ -900,13 +933,104 @@ class TabMeasure:
       if self.status_cb[cb] != state:
         self.UpdateLmSelect(cb,state)
     
-    print(self.status_cb)
+    # print(self.status_cb)
 
-  def UpdateLmSelect(self,cbid,state):
-    for cb in self.status_cb.keys():
-      cb.setChecked(state)
-      self.status_cb[cb] = state
+  def UpdateLmSelect(self,cb,state):#value
+    cb.setCheckState(state)
+    self.status_cb[cb] = state
 
+  def OnComputeCB(self):
+    list_distance = []
+    for type_measurment,lst_measurment in self.dist_dic_measurment.items():
+      for dic_measurment in lst_measurment:
+        if type_measurment == 'Distance between T1 and T2' :
+          point1 = dic_measurment['P1']
+          point2 =  dic_measurment['P2']
+          delta = computeDistance(point1,point2)
+          list_distance.append(delta)
+    # print(list_distance)
+    return list_distance
+
+  def OnComboBoxComputeExport(self,idx):
+    if idx == 1:
+      self.OnComputeCB
+
+
+
+class Point:
+  def __init__(self,name,coord):
+    self.name = name
+    self.coord = coord
+
+class Line:
+  def __init__(self,point1,point2):
+    self.point1 = point1
+    self.point2 = point2
+
+class MeasurePointToPoint:
+  def __init__(self,point1,point2,type_m):
+    self.point1 = point1
+    self.point2 = point2
+    self.type_m = type_m
+
+class MeasurePointToLine:
+  def __init__(self,point,line,type_m):
+    self.point = point
+    self.line = line
+    self.type_m = type_m
+
+class TabLine:
+  def __init__(self,measurement):
+    self.measurement = measurement
+    self.widget = {}
+    self.checkBoxItem = qt.QTableWidgetItem().setCheckState(False)
+
+  def gen_widget(self):
+    list_row = []
+    type_measurment_label = qt.QTableWidgetItem(measurement.type_m)
+    list_row.append(type_measurment_label)
+    
+    if measurement.type_m == 'Distance between 2 point'
+      P1_item = qt.QTableWidgetItem(measurement.point1)
+      P2_item = qt.QTableWidgetItem(measurement.point2)
+      list_row.append(P1_item,P2_item)
+    
+    else:
+      P1_item = qt.QTableWidgetItem(measurement.point)
+      P1_item = qt.QTableWidgetItem(measurement.line)
+      list_row.append(P1_item,P2_item)
+
+    self.widget[checkBoxItem] = list_row 
+  
+class TabManager:
+  def __init__(self,lst_measurement,tableWidget):
+    self.lst_measurement = lst_measurement
+    self.tableWidget = tableWidget
+  
+  def generate_table(self):
+    columnLabels = ["check box","type of measurement","point 1", "point 2"]
+    self.tableWidget.setColumnCount(len(columnLabels))
+    self.tableWidget.setHorizontalHeaderLabels(columnLabels)
+    self.tableWidget.resizeColumnsToContents()
+    self.tableWidget.setRowCount(len(self.lst_measurement))
+
+    for measurement in self.lst_measurement:
+      line = TabLine(measurement)
+      lin.gen_widget()
+      widget_line = line.widget
+      self.lst_tab_lines.append(widget_line)
+
+    for row in range(len(self.lst_measurement)):
+      for col in range(len(columnLabels)):
+        if col == 0 :
+          self.tableWidget.setItem(row,col,self.lst_tab_lines[row].keys())
+        else:
+          self.tableWidget.setItem(row,col,self.lst_tab_lines[row].values()[col-1])    
+
+
+
+  
+    
 
 
 
@@ -1021,13 +1145,9 @@ def GetAllLandmarks(dir_path):
 
   return All_landmarks
 
-DistanceResult = collections.namedtuple("DistanceResult", ("delta", "norm"))
-def computeDistance(point1, point2) -> DistanceResult:
+def computeDistance(point1, point2):
     delta = np.abs(np.subtract(point2,point1))
-    return DistanceResult(
-        delta,
-        np.linalg.norm(delta),
-    )
+    return delta   
 
 
     # # -------------------------- Gen layout angle ---------------------------
