@@ -325,11 +325,11 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.pushButton_DataFolder_T2.connect('clicked(bool)',self.onSearchFolderButton_T2)
 
     # display of all the different measurment
-    self.table_view = TableView(self.ui.tableWidget)
+    self.table_view = TableView(self.ui)
     self.ui.verticalLayout_2.addWidget(self.table_view.widget)
 
     # layout to add measurment to the tab
-    self.tab_manager = TabManager(self.ui.tableWidget,self.ui)
+    self.tab_manager = TabManager(self.ui)
     self.ui.verticalLayout_3.addWidget(self.tab_manager.widget)
     
     # selection of the landmarks
@@ -640,9 +640,9 @@ class LMTab:
     self.Fulltab(False)
 
 class TableView:
-  def __init__(self,tableWidget) -> None:
-    # self.lineEditLandPathT2 = lineEditLandPathT2
-    self.tableWidget = tableWidget
+  def __init__(self,ui) -> None:
+   # self.lineEditLandPathT2 = lineEditLandPathT2
+    self.ui = ui
     self.widget = qt.QWidget()
     self.layout = qt.QVBoxLayout(self.widget)
 
@@ -651,34 +651,34 @@ class TableView:
     self.LM_tab_widget.minimumSize = qt.QSize(100,200)
     self.LM_tab_widget.maximumSize = qt.QSize(800,400)
     self.LM_tab_widget.setMovable(True)
-
     self.layout.addWidget(self.LM_tab_widget)
-   
+    self.current_tab = self.LM_tab_widget.currentIndex
     
 
     # -------------------------- Gen Tab ---------------------------
-    # lst_tab = ["Distance","Angle"]
-    tab = "Distance"
+    lst_tab = ["Distance","Angle"]
+    # tab = "Distance"
+    self.dict_tab = {}
+    for tab in lst_tab: 
+      tableWidget = qt.QTableWidget()
+      new_widget = qt.QWidget()
+      vb = qt.QVBoxLayout(new_widget)
+      scr_box = qt.QScrollArea()
+      vb.addWidget(scr_box)
 
-    # for tab in lst_tab:   
-    self.new_widget = qt.QWidget()
-    self.vb = qt.QVBoxLayout(self.new_widget)
-    scr_box = qt.QScrollArea()
-    self.vb.addWidget(scr_box)
-
-    wid = qt.QWidget()
-    self.vb2 = qt.QVBoxLayout()
-    wid.setLayout(self.vb2)
-    
-    self.vb2.addWidget(self.tableWidget)
-    
-    scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    scr_box.setWidgetResizable(True)
-    scr_box.setWidget(wid)
-    
-    self.LM_tab_widget.insertTab(-1,self.new_widget,tab)
-
+      wid = qt.QWidget()
+      vb2 = qt.QVBoxLayout()
+      wid.setLayout(vb2)
+      
+      vb2.addWidget(tableWidget)
+      
+      scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+      scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+      scr_box.setWidgetResizable(True)
+      scr_box.setWidget(wid)
+      
+      self.LM_tab_widget.insertTab(-1,new_widget,tab)
+      self.dict_tab[tab] = tableWidget
 
   def Clear(self):
     self.LM_tab_widget.clear()
@@ -740,10 +740,10 @@ class TabLine:
       self.lst_widget.append(L_item)
 
 class TabManager:
-  def __init__(self,tableWidget,ui):
-    self.tableWidget = tableWidget
-    self.delete_button = qt.QPushButton('Delete')
+  def __init__(self,ui):
     self.ui = ui
+    # self.ui.tableWidget = tableWidget
+    self.delete_button = qt.QPushButton('Delete')
     self.ui.verticalLayout_2.addWidget(self.delete_button)
     self.widget = qt.QWidget()
     self.layout = qt.QVBoxLayout(self.widget)
@@ -753,19 +753,25 @@ class TabManager:
     self.lst_measurement = []
 
     # -------------------------- Gen layout add line ---------------------------
-    self.lst_type_meas = ["none","Distance between 2 points","Distance point line"]
+    
     self.hb_add  = qt.QHBoxLayout()
     self.type_measur_combobox = qt.QComboBox()
-    # self.type_measur_combobox.setEditable(True)
     self.label = qt.QLabel("Type of measurement")
     self.hb_add.addWidget(self.label)
     self.hb_add.addWidget(self.type_measur_combobox)
-    self.type_measur_combobox.addItems(self.lst_type_meas)
-    self.layout.addLayout(self.hb_add)
+    current_tab = TableView.current_tab
+    if current_tab == 0:
+      self.lst_type_meas = ["none","Distance between 2 points","Distance point line"]
+      self.type_measur_combobox.addItems(self.lst_type_meas)
+      self.layout.addLayout(self.hb_add)
+      self.new_widget_1,self.combo_box_1,self.combo_box_2,self.add_button = WidgetPP(self.layout)
+      self.new_widget_2,self.combo_box_1_PL,self.combo_box_2_PL,self.combo_box_3_PL,self.add_button_PL= WidgetPL(self.layout)
+    else:
+      self.lst_type_meas = ["none","Angle between 2 lines"]
+      self.type_measur_combobox.addItems(self.lst_type_meas)
+      self.layout.addLayout(self.hb_add)
 
-    self.new_widget_1,self.combo_box_1,self.combo_box_2,self.add_button = WidgetPP(self.layout)
-    self.new_widget_2,self.combo_box_1_PL,self.combo_box_2_PL,self.combo_box_3_PL,self.add_button_PL= WidgetPL(self.layout)
-    
+
     # -------------------------- Import/Export measurment ---------------------------
     self.hb_ie = qt.QHBoxLayout()
     self.label_ie = qt.QLabel("Import/Export measurement")
@@ -777,6 +783,7 @@ class TabManager:
    
     self.import_widget,self.file_import_button,self.import_line,self.import_button = WidgetImport(self.layout)
     self.export_widget,self.folder_export_button,self.export_line,self.line_edit,self.export_button = WidgetExport(self.layout)
+    
 
     # # -------------------------- Compute/Export results ---------------------------
     # self.hb_ce = qt.QHBoxLayout()
@@ -804,13 +811,13 @@ class TabManager:
 
 
   def generate_table(self):
-    self.tableWidget.clearContents()
+    self.ui.tableWidget.clearContents()
     self.lst_tab_lines = []
     columnLabels = ["check box","type of measurement","point 1", "point 2 / Line"]
-    self.tableWidget.setColumnCount(len(columnLabels))
-    self.tableWidget.setHorizontalHeaderLabels(columnLabels)
-    self.tableWidget.resizeColumnsToContents()
-    self.tableWidget.setRowCount(len(self.lst_measurement))
+    self.ui.tableWidget.setColumnCount(len(columnLabels))
+    self.ui.tableWidget.setHorizontalHeaderLabels(columnLabels)
+    self.ui.tableWidget.resizeColumnsToContents()
+    self.ui.tableWidget.setRowCount(len(self.lst_measurement))
     # print(self.lst_measurement)
     for measurement in self.lst_measurement:
       tab_line = TabLine(measurement)
@@ -820,7 +827,7 @@ class TabManager:
     # print(self.lst_tab_lines)
     for row in range(len(self.lst_tab_lines)):
       for col in range(len(columnLabels)):
-        self.tableWidget.setItem(row,col,self.lst_tab_lines[row].lst_widget[col])
+        self.ui.tableWidget.setItem(row,col,self.lst_tab_lines[row].lst_widget[col])
 
   def DisplayLayout(self,idx):
     if idx == 2:
@@ -998,15 +1005,6 @@ class TabManager:
 
   def GenMeasurementCSV(self):
     csv_columns = ["Landmarks selected","Type of measurement","Patient", "R-L Component","A-P Component","S-I Component","3D Distance"]
-    # dict_data = []
-    # for dict_compute in self.lst_compute_dst:
-    #   if dict_compute["Type of measurement"] == "Distance between 2 points":
-    #     dict_csv = {"Landmarks selected":f"{measurement.point1.name}/{measurement.point2.name}","Type of measurement":measurement.type_m,"Patient":jsonfile,"R-L Component":measurement.r_l,"A-P Component":measurement.a_p,"S-I Component":measurement.s_i,"3D Distance":measurement.norm}
-    #   else :
-    #     dict_csv = {"Landmarks selected":f"{measurement.point.name}/{measurement.line.name}","Type of measurement":measurement.type_m,"Patient":jsonfile,"R-L Component":measurement.r_l,"A-P Component":measurement.a_p,"S-I Component":measurement.s_i,"3D Distance":measurement.norm}
-      
-    #   dict_data.append(dict_csv)
-
     # dict_data = self.dic_measurment
     full_path = self.ui.export_measurement_line.text +'/'+ self.ui.file_measurement_edit.text
     # print(full_path)

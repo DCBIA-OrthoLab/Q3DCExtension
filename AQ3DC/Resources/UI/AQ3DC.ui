@@ -94,11 +94,11 @@
       </size>
      </property>
      <property name="text">
-      <string>CollapsibleButton</string>
+      <string>measurement</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <item row="0" column="0" colspan="2">
-       <layout class="QVBoxLayout" name="verticalLayout_5">
+       <layout class="QVBoxLayout" name="Layout_tableview">
         <property name="leftMargin">
          <number>10</number>
         </property>
@@ -138,9 +138,6 @@
              <string/>
             </property>
            </widget>
-          </item>
-          <item>
-           <widget class="QTableWidget" name="tableWidget"/>
           </item>
          </layout>
         </item>
