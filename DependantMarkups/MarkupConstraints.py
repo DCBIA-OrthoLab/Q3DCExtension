@@ -2,6 +2,7 @@ import abc
 import collections
 import contextlib
 import json
+import math
 import unittest
 import weakref
 
@@ -102,17 +103,22 @@ class MarkupConstraintsLogic(
         VTKSuppressibleObservationMixin.__init__(self)
 
         self._constraints = {}
-        self._dependencies = weakref.WeakKeyDictionary()
-        self._cached = weakref.WeakKeyDictionary()
+
+        self._dependant = collections.defaultdict(set)
+
+        self._nodes = collections.defaultdict(set)
+
+        # self._dependencies = weakref.WeakKeyDictionary()
+        # self._cached = weakref.WeakKeyDictionary()
 
     def _updateDependencies(self):
-        self._dependencies.clear()
+        self._dependant.clear()
+        self._nodes.clear()
 
         for tgt, (kind, deps) in self._constraints.items():
-            for dep in deps + [tgt]:
-                if dep not in self._dependencies:
-                    self._dependencies[dep.node] = set()
-                self._dependencies[dep.node].add(tgt)
+            for dep in deps:
+                self._nodes[dep.node].add(dep)  # defaultdict(set)
+                self._dependant[dep].add(tgt)  # defaultdict(set)
 
         events = (
             slicer.vtkMRMLMarkupsNode.PointAddedEvent,
@@ -121,14 +127,14 @@ class MarkupConstraintsLogic(
         )
 
         self.removeObservers()
-
-        for node in self._dependencies:
+        nodes = {dep.node for dep in self._dependant}
+        for node in nodes:
             for event in events:
                 self.addObserver(
                     node,
                     event,
                     self.onNodeModify,
-                    priority=100.0,
+                    priority=100.0
                 )
 
     @classmethod
@@ -140,19 +146,36 @@ class MarkupConstraintsLogic(
         return decorator
 
     def onNodeModify(self, node, event):
-        for tgt in self._dependencies[node]:
-            kind, deps = self._constraints[tgt]
+        vnan = vtk.vtkVector3d(math.nan, math.nan, math.nan)
 
-            unchanged = all(
-                dep in self._cached and np.allclose(dep.position, self._cached[dep])
-                for dep in deps + [tgt]
-            )
+        to_check = self._nodes[node]
+        # todo filter unchanged points
+        to_check = set(to_check)
 
-            for dep in deps + [tgt]:
-                self._cached[dep] = dep.position
+        with self.suppress(node):
+            while to_check:
+                dep = to_check.pop()
 
-            if not unchanged:
-                self.CONSTRAINTS[kind](tgt, deps)
+                for tgt in self._dependant[dep]:
+                    kind, deps = self._constraints[tgt]
+                    apply = self.CONSTRAINTS[kind]
+                    apply(tgt, deps)
+
+                    to_check.add(tgt)
+
+        # for tgt in self._dependencies[node]:
+        #     kind, deps = self._constraints[tgt]
+        #
+        #     unchanged = all(
+        #         dep in self._cached and np.allclose(dep.position, self._cached[dep])
+        #         for dep in deps + [tgt]
+        #     )
+        #
+        #     for dep in deps + [tgt]:
+        #         self._cached[dep] = dep.position
+        #
+        #     if not unchanged:
+        #         self.CONSTRAINTS[kind](tgt, deps)
 
     def delConstraint(
         self,
