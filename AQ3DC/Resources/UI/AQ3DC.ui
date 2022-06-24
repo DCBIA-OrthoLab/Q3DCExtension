@@ -97,7 +97,7 @@
       </size>
      </property>
      <property name="text">
-      <string>measurement</string>
+      <string>Measurement</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <item row="0" column="0" colspan="2">
