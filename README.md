@@ -13,10 +13,8 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 The license file was added at revision 6cc3ad4 on 2020-12-10, but you may consider that the license applies to all prior revisions as well.
 
-## File Formats
+## Q3DC Markup Placement
 
-Q3DC allows users to define midpoint and projection constraints on points in a Slicer Fiducial list. Saving the Markups with the usual Slicer save dialog will preserve those connections. See [landmarkDescription.md][landmarkDescription] for more information on how MRML attributes are used to do this.
+Markup Placement features are being ported to the [SlicerMarkupConstraints][constraints] extension; Developers should see that project for more details on the landmark datastructure.
 
-Q3DC also allows users to export computed measurements to CSV files. Note that these files do not encode any of the midpoint and projection constraints as the Markups list does; they only contain the computed measurements in the same tabular format as is displayed in the Q3DC UI.
-
-[landmarkDescription]: ./docs/landmarkDescription.md
+[constraints]: https://github.com/KitwareMedical/SlicerMarkupConstraints
