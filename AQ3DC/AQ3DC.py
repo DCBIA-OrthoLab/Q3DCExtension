@@ -10,6 +10,7 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import csv
 from PySide2.QtCore import Qt
+import json
 # slicer.app.pythonConsole().clear()
 #
 # AQ3DC
@@ -34,69 +35,6 @@ except:
   import xlsxwriter
   from PySide2.QtCore import Qt
 
-def JawLandmarks(landmarks_dir):
-  dic_patient = {} 
-  dic_time = {}
-  normpath = os.path.normpath("/".join([landmarks_dir,'**','']))
-  
-  for jsonfile in sorted(glob.iglob(normpath, recursive=True)):
-    # print(jsonfile)
-    if os.path.isfile(jsonfile) and True in [ext in jsonfile for ext in [".json"]]:
-      num_patient= os.path.basename(jsonfile).split("_")[2][1:]
-      # print(num_patient)
-      time = os.path.basename(jsonfile).split("_")[1]
-      if "_L." in jsonfile:
-        if num_patient in dic_patient.keys():
-          if time in dic_time.keys():
-            dic_time[time]['path_landmark_L'] = jsonfile
-            dic_patient[num_patient] = dic_time
-          else :
-            dic_time[time] = {'path_landmark_L' : jsonfile}
-            dic_patient[num_patient] = dic_time
-        else:
-          dic_time[time] = {'path_landmark_L' : jsonfile}
-          dic_patient[num_patient] = dic_time
-      else :
-        if num_patient in dic_patient.keys():
-          if time in dic_time.keys():
-            dic_time[time]['path_landmark_U'] = jsonfile
-            dic_patient[num_patient] = dic_time
-          else :
-            dic_time[time] = {'path_landmark_U' : jsonfile}
-            dic_patient[num_patient] = dic_time
-        else:
-          dic_time[time] = {'path_landmark_U' : jsonfile}
-          dic_patient[num_patient] = dic_time
-  
-  # print(dic_patient)\
-  list_tooth = []
-  list_type_tooth = []
-  for obj in dic_patient.items():
-    obj=obj[1]    
-    for patient_t in obj.items():
-      time = patient_t[0]
-      dic_path_patient = patient_t[1]
-      # print(dic_path_patient)
-      # print(dic_path_patient.items())
-      for path_patient in dic_path_patient.items():
-        # print('path_patient :',path_patient)
-        json_file = pd.read_json(path_patient[1])
-        markups = json_file.loc[0,'markups']
-        controlPoints = markups['controlPoints']
-        for i in range(len(controlPoints)):
-          label = controlPoints[i]["label"]#.split("-")[1]
-          tooth = label[:3]
-          type_land = label[3:]
-          if tooth not in list_tooth:
-            list_tooth.append(tooth)
-          if type_land not in list_type_tooth:
-            list_type_tooth.append(type_land)
-          
-          
-  return list_tooth,list_type_tooth
-list_tooth,list_type_tooth = JawLandmarks('/home/luciacev-admin/Desktop/AQ3DC_data/renamed_data/T1')
-# print(list_tooth,list_type_tooth)
-
 GROUPS_LANDMARKS = {
   'Cranial Base/Vertebra' : ['Ba', 'S', 'N', 'RPo', 'LPo', 'RFZyg', 'LFZyg', 'C2', 'C3', 'C4'],
 
@@ -109,91 +47,6 @@ GROUPS_LANDMARKS = {
   "Landmarks type" : ['CL','CB','O','DB','MB','R','RIP','OIP']
 
 }
-
-def ReadFolder(landmarks_dir_T1,landmarks_dir_T2):
-  dic_patient = {} 
-  dic_time = {}
-  dic_tooth = {}
-  normpath_T1 = os.path.normpath("/".join([landmarks_dir_T1,'**','']))
-  normpath_T2 = os.path.normpath("/".join([landmarks_dir_T2,'**','']))
-  lst_normpath = [normpath_T1,normpath_T2]
-  
-  for normpath in lst_normpath:
-    for jsonfile in sorted(glob.iglob(normpath, recursive=True)):
-      # print(jsonfile)
-      if os.path.isfile(jsonfile) and True in [ext in jsonfile for ext in [".json"]]:
-        num_patient= os.path.basename(jsonfile).split("_")[2][1:]
-        # print(num_patient)
-        time = os.path.basename(jsonfile).split("_")[1]
-        if "_L." in jsonfile:
-          if num_patient in dic_patient.keys():
-            if time in dic_time.keys():
-              dic_time[time]['path_landmark_L'] = jsonfile
-              dic_patient[num_patient] = dic_time
-            else :
-              dic_time[time] = {'path_landmark_L' : jsonfile}
-              dic_patient[num_patient] = dic_time
-          else:
-            dic_time[time] = {'path_landmark_L' : jsonfile}
-            dic_patient[num_patient] = dic_time
-        else :
-          if num_patient in dic_patient.keys():
-            if time in dic_time.keys():
-              dic_time[time]['path_landmark_U'] = jsonfile
-              dic_patient[num_patient] = dic_time
-            else :
-              dic_time[time] = {'path_landmark_U' : jsonfile}
-              dic_patient[num_patient] = dic_time
-          else:
-            dic_time[time] = {'path_landmark_U' : jsonfile}
-            dic_patient[num_patient] = dic_time
-  
-  # print(dic_patient)\
-  list_label = []
-  for obj in dic_patient.items():
-    obj=obj[1]    
-    for patient_t in obj.items():
-      time = patient_t[0]
-      dic_path_patient = patient_t[1]
-      # print(dic_path_patient)
-      # print(dic_path_patient.items())
-      for path_patient in dic_path_patient.items():
-        # print('path_patient :',path_patient)
-        json_file = pd.read_json(path_patient[1])
-        markups = json_file.loc[0,'markups']
-        controlPoints = markups['controlPoints']
-        for i in range(len(controlPoints)):
-          label = controlPoints[i]["label"]#.split("-")[1]
-          if label not in list_label:
-            list_label.append(label)
-          tooth = label[:3]
-          # print(tooth)
-          type_land = label[3:]
-          position = controlPoints[i]["position"]
-          if tooth not in dic_tooth.keys():
-            dic_tooth[tooth] = {}
-          if type_land not in dic_tooth[tooth]:
-            dic_tooth[tooth][type_land] = {}
-          
-          dic_tooth[tooth][type_land][time] = position
-  # print(list_label)
-  return dic_tooth
-
-
-
-def compute_distance_T1T2(dic_tooth,type):
-  dic_distance = {}
-  for landmark in dic_tooth.items():
-    land = landmark[1]
-    name = landmark[0]
-    point_T1 = np.array(land[type]['T1'])
-    point_T2 = np.array(land[type]['T2'])
-    distance = computeDistance(point_T2,point_T1)
-    if name not in dic_distance.keys(): 
-      dic_distance[name] = {}
-    dic_distance[name] = distance
-  print(dic_distance)
-  return dic_distance
 
 
 class AQ3DC(ScriptedLoadableModule):
@@ -270,7 +123,6 @@ def registerSampleData():
     nodeNames='AQ3DC2'
   )
   
-
 #
 # AQ3DCWidget
 #
@@ -347,9 +199,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.tab_manager = TabManager(self.ui,self.table_view)
     self.ui.verticalLayout_3.addWidget(self.tab_manager.widget)
     
+    self.MP_Widget = MidPointWidget(self.ui,self.tab_manager)
+      
     # selection of the landmarks
-    self.lm_tab = LMTab(self.tab_manager)
+    self.lm_tab = LMTab(self.tab_manager,self.MP_Widget)
     self.ui.verticalLayout_1.addWidget(self.lm_tab.widget)
+
  
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
@@ -362,9 +217,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.surface_folder = surface_folder
       self.ui.lineEditLandPathT1.setText(self.surface_folder)
       
-      patients_lst_T1,patients_dict_T1 = CreateDicPatients(self.surface_folder)
+      patients_lst_T1,patients_dict_T1,lst_files_T1 = CreateDicPatients(self.surface_folder)
       self.tab_manager.patients_lst_T1 = patients_lst_T1
       self.tab_manager.patients_dict_T1 = patients_dict_T1
+      self.MP_Widget.patients_lst_T1 = patients_lst_T1
+      self.MP_Widget.patients_dict_T1 = patients_dict_T1
+      self.MP_Widget.lst_files_T1 = lst_files_T1
       # print(self.patients_lst_T1)
 
       lm_group = GetLandmarkGroup(GROUPS_LANDMARKS)
@@ -380,7 +238,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.surface_folder_2 = surface_folder
       self.ui.lineEditLandPathT2.setText(self.surface_folder_2)
       
-      patients_lst_T2,patients_dict_T2 = CreateDicPatients(self.surface_folder_2)
+      patients_lst_T2,patients_dict_T2,lst_files_T2 = CreateDicPatients(self.surface_folder_2)
       self.tab_manager.patients_lst_T2 = patients_lst_T2
       self.tab_manager.patients_dict_T2 = patients_dict_T2
       # print(self.patients_lst_T2)
@@ -511,8 +369,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 class LMTab:
-  def __init__(self,tab_manager) -> None:
+  def __init__(self,tab_manager,MP_Widget) -> None:
     self.tab_manager = tab_manager
+    self.MP_Widget = MP_Widget
     self.widget = qt.QWidget()
     layout = qt.QVBoxLayout(self.widget)
 
@@ -533,9 +392,7 @@ class LMTab:
     self.LM_tab_widget.clear()
 
   def FillTab(self,lm_dic):
-    # print('lm_dic :',lm_dic)
     self.lm_group_dic = lm_dic.copy()
-    # self.lm_group_dic["All"] = []
     self.check_box_dic = {}
     self.lm_cb_dic = {}
     for group,lm_lst in self.lm_group_dic.items():
@@ -544,13 +401,11 @@ class LMTab:
           if lm not in self.lm_status_dic.keys():
             for lm_type in lm_dic['Landmarks type']:
               self.lm_status_dic[lm+lm_type] = False
-              # self.lm_group_dic["All"].append(lm+lm_type)
               
       elif group != "Landmarks type" and group != "Dental":
         for lm in lm_lst:
           if lm not in self.lm_status_dic.keys():
             self.lm_status_dic[lm] = False
-            # self.lm_group_dic["All"].append(lm)
 
     for group,lm_lst in self.lm_group_dic.items():
       lst_wid = []
@@ -558,17 +413,12 @@ class LMTab:
         new_cb = qt.QCheckBox(lm)
         self.check_box_dic[new_cb] = lm
         lst_wid.append(new_cb)
-      # print(self.check_box_dic)
       if group == "Dental":
         new_lm_tab = self.GenNewTab(lst_wid,'horizontal')
       else:
         new_lm_tab = self.GenNewTab(lst_wid,'vertical')
       self.LM_tab_widget.insertTab(0,new_lm_tab,group)
     self.LM_tab_widget.currentIndex = 0
-
-    # print('self.lm_group_dic :',self.lm_group_dic)
-    # print('lm_dic :',lm_dic)
-    # print('self.check_box_dic :',self.check_box_dic)
 
     for cb,lm in self.check_box_dic.items():
       if lm not in self.lm_cb_dic.keys():
@@ -583,7 +433,6 @@ class LMTab:
         cb.connect("toggled(bool)", self.CheckBox)
 
   def CheckBox(self, caller=None, event=None):
-    # print('CheckBox ',self.check_box_dic)
     for cb,lm in self.check_box_dic.items():
       if self.lm_cb_dic[lm][0].checkState():
         state = True
@@ -593,14 +442,11 @@ class LMTab:
         self.UpdateLmSelect(lm,state)
 
     self.tab_manager.GetLmListManager(self.lm_status_dic)
-    # print(self.lm_status_dic)
+    self.MP_Widget.GetLmList(self.lm_status_dic)
 
   def UpdateDentalLm(self):
     selected_type_lst = []
-    # print(self.lm_cb_dic)
-    
     for lm in self.lm_group_dic["Landmarks type"]:
-      # print(self.lm_cb_dic[lm_type])
       if self.lm_cb_dic[lm][0].checkState():
         selected_type_lst.append(lm)
       else:
@@ -617,6 +463,7 @@ class LMTab:
           self.lm_status_dic[lm+typ] = state
         else:
           self.lm_status_dic[lm+typ] = False
+    # print(self.lm_status_dic)
 
     for group,lst_lm in self.lm_group_dic.items():
       if group not in ["Landmarks type","Dental"]:
@@ -629,7 +476,8 @@ class LMTab:
             self.UpdateLmSelect(lm,state)
           
     self.tab_manager.GetLmListManager(self.lm_status_dic)
-   
+    self.MP_Widget.GetLmList(self.lm_status_dic)
+
   def GenNewTab(self,widget_lst,orientation):
     new_widget = qt.QWidget()
     vb = qt.QVBoxLayout(new_widget)
@@ -639,7 +487,6 @@ class LMTab:
     if orientation == 'horizontal':
       wid = qt.QWidget()
       hb2 = qt.QHBoxLayout(wid)
-      # print(widget_lst)
       for widget in widget_lst:
         hb2.addWidget(widget)
       wid.setLayout(hb2)
@@ -676,14 +523,16 @@ class LMTab:
   def Fulltab(self,state):
     idx = self.LM_tab_widget.currentIndex
     group = self.LM_tab_widget.tabText(idx)
-    if group in ["Landmarks type","Dental"]:
+    if group == "Landmarks type":
       for typ in self.lm_group_dic["Landmarks type"]:
-        self.lm_cb_dic[typ][0].setChecked(state)       
+        self.lm_cb_dic[typ][0].setChecked(state)
+
+    elif group == "Dental" :      
       for dent in self.lm_group_dic["Dental"]:
         self.lm_cb_dic[dent][0].setChecked(state)
-
-    for lm in self.lm_group_dic[group]:
-      self.UpdateLmSelect(lm,state)
+    else :
+      for lm in self.lm_group_dic[group]:
+        self.UpdateLmSelect(lm,state)
 
   def SelectTab(self):
     self.Fulltab(True)
@@ -691,26 +540,194 @@ class LMTab:
   def ClearTab(self):
     self.Fulltab(False)
 
+class MidPointWidget:
+  def __init__(self,ui,tab_manager):
+    self.patients_lst_T1 = []
+    self.patients_dict_T1 = {}
+    self.lst_files_T1 = []
+    self.ui = ui
+    self.tab_manager = tab_manager
+
+    # self.widget_mp = qt.QWidget()
+    hb = self.ui.horizontalLayout_2
+    self.label_P1_intro = qt.QLabel('Compute midpoint:')
+    self.label_P1_intro.setFixedWidth(140)
+    self.label_P1 = qt.QLabel('  P1 :')
+    self.label_P1.setFixedWidth(30)
+    self.label_P2 = qt.QLabel('  P2 :')
+    self.label_P2.setFixedWidth(30)
+    self.combo_box_mp_1 = qt.QComboBox()
+    self.combo_box_mp_2 = qt.QComboBox()
+    self.PB_compute_midpoint = qt.QPushButton("Compute Mid Point")
+    widget_lst = [self.label_P1_intro,self.label_P1,self.combo_box_mp_1,self.label_P2,self.combo_box_mp_2,self.PB_compute_midpoint]
+    for widget in widget_lst:
+      hb.addWidget(widget)
+    self.PB_compute_midpoint.connect('clicked()',self.Compute)
+
+
+  def GetLmList(self,lm_status_dic):
+    self.combo_box_mp_1.clear()
+    self.combo_box_mp_2.clear()
+    
+    self.list_lm = []
+    for landmark,state in lm_status_dic.items():
+      if state == True:
+        self.list_lm.append(landmark)
+    # print(self.list_lm)
+    self.combo_box_mp_1.addItems(self.list_lm)
+    self.combo_box_mp_2.addItems(self.list_lm)
+  
+  def Compute(self):
+    self.P1_name = self.combo_box_mp_1.currentText
+    self.P2_name = self.combo_box_mp_2.currentText
+    self.lst_all_midpoint = []
+    for self.patient in self.patients_lst_T1:
+      self.midpoint_lst = []
+      self.out_path = self.ui.lineEditLandPathT1.text+f'/MidPoints_P{self.patient}.json'
+      print(self.out_path)
+      self.P1_pos = self.patients_dict_T1[self.patient][self.P1_name]
+      self.P2_pos = self.patients_dict_T1[self.patient][self.P2_name]
+      self.ComputeMidPoint(np.array(self.P1_pos),np.array(self.P2_pos))
+      self.GenControlePoint()
+      self.WriteJson()
+    
+    self.FillTab()
+  
+  def FillTab(self):
+    self.check_box_dic = {}
+    self.lm_cb_dic = {}
+    group = 'Midpoint'
+    lst_wid = []
+    for dic in self.lst_all_midpoint:
+      new_cb = qt.QCheckBox(dic['label'])
+      self.check_box_dic[new_cb] = dic['label']
+      lst_wid.append(new_cb)
+
+    new_lm_tab = self.GenNewTab(lst_wid)
+    self.LM_tab_widget.insertTab(-1,new_lm_tab,group)
+    # self.LM_tab_widget.currentIndex = 0
+
+    for cb,lm in self.check_box_dic.items():
+      if lm not in self.lm_cb_dic.keys():
+        self.lm_cb_dic[lm] = [cb]
+      else:
+        self.lm_cb_dic[lm].append(cb)
+    
+    for cb,lm in self.check_box_dic.items(): 
+      cb.connect("toggled(bool)", self.CheckBox)
+
+  def CheckBox(self, caller=None, event=None):
+    for cb,lm in self.check_box_dic.items():
+      if self.lm_cb_dic[lm][0].checkState():
+        state = True
+      else:
+        state = False
+      if self.lm_status_dic[lm] != state:
+        self.UpdateLmSelect(lm,state)
+
+    self.tab_manager.GetLmListManager(self.lm_status_dic)
+    self.GetLmList(self.lm_status_dic)
+  
+  def UpdateLmSelect(self,lm_id,state):
+    for cb in self.lm_cb_dic[lm_id]:
+      cb.setChecked(state)
+    self.lm_status_dic[lm_id] = state
+  
+  def GenNewTab(self,widget_lst):
+    new_widget = qt.QWidget()
+    vb = qt.QVBoxLayout(new_widget)
+    scr_box = qt.QScrollArea()
+    vb.addWidget(scr_box)
+    
+    wid = qt.QWidget()
+    vb2 = qt.QVBoxLayout(wid)
+    for widget in widget_lst:
+      vb2.addWidget(widget)
+    wid.setLayout(vb2)
+
+    scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
+    scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
+    scr_box.setWidgetResizable(True)
+    scr_box.setWidget(wid)
+
+    return new_widget
+
+
+  def GenControlePoint(self):
+    controle_point = {
+      "id": str(1),
+      "label": f'Mid_{self.P1_name}-{self.P2_name}_P{self.patient}',
+      "description": "",
+      "associatedNodeID": "",
+      "position": [float(self.mp[0]), float(self.mp[1]), float(self.mp[2])],
+      "orientation": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+      "selected": True,
+      "locked": True,
+      "visibility": True,
+      "positionStatus": "preview"
+    }
+    self.midpoint_lst.append(controle_point)
+    self.lst_all_midpoint.append(controle_point)
+
+  def WriteJson(self)
+        {
+            "type": "Fiducial",
+            "coordinateSystem": "LPS",
+            "locked": false,
+            "labelFormat": "%N-%d",
+            "controlPoints": self.midpoint_lst,
+            "measurements": [],
+            "display": {
+                "visibility": false,
+                "opacity": 1.0,
+                "color": [0.4, 1.0, 0.0],
+                "selectedColor": [1.0, 0.5000076295109484, 0.5000076295109484],
+                "activeColor": [0.4, 1.0, 0.0],
+                "propertiesLabelVisibility": false,
+                "pointLabelsVisibility": true,
+                "textScale": 3.0,
+                "glyphType": "Sphere3D",
+                "glyphScale": 1.0,
+                "glyphSize": 5.0,
+                "useGlyphScale": true,
+                "sliceProjection": false,
+                "sliceProjectionUseFiducialColor": true,
+                "sliceProjectionOutlinedBehindSlicePlane": false,
+                "sliceProjectionColor": [1.0, 1.0, 1.0],
+                "sliceProjectionOpacity": 0.6,
+                "lineThickness": 0.2,
+                "lineColorFadingStart": 1.0,
+                "lineColorFadingEnd": 10.0,
+                "lineColorFadingSaturation": 1.0,
+                "lineColorFadingHueOffset": 0.0,
+                "handlesInteractive": false,
+                "snapMode": "toVisibleSurface"
+            }
+        }
+    ]
+    }
+    with open(self.out_path, 'w', encoding='utf-8') as f:
+      json.dump(file, f, ensure_ascii=False, indent=4)
+    f.close
+    print('file saved')
+  def ComputeMidPoint(self,p1,p2):
+    self.mp = (p1 + p2) / 2
 
 class TableView:
   def __init__(self,ui) -> None:
-   # self.lineEditLandPathT2 = lineEditLandPathT2
     self.ui = ui
     self.widget = qt.QWidget()
     self.layout = qt.QVBoxLayout(self.widget)
 
     self.LM_tab_widget = qt.QTabWidget()
-    # self.LM_tab_widget.connect('currentChanged(int)',self.Test)
     self.LM_tab_widget.minimumSize = qt.QSize(100,200)
     self.LM_tab_widget.maximumSize = qt.QSize(800,400)
     self.LM_tab_widget.setMovable(True)
     self.layout.addWidget(self.LM_tab_widget)
-    # self.current_tab = self.LM_tab_widget.currentIndex
     
 
     # -------------------------- Gen Tab ---------------------------
     lst_tab = ["Distance","Angle"]
-    # tab = "Distance"
     self.dict_tab = {}
     for idx,tab in enumerate(lst_tab): 
       tableWidget = qt.QTableWidget()
@@ -736,11 +753,9 @@ class TableView:
   def Clear(self):
     self.LM_tab_widget.clear()
 
-
 class Point:
-  def __init__(self,name,coord=''):
+  def __init__(self,name):
     self.name = name
-    # self.coord = coord
     self.position = []
     self.group = self.GetTypeLandmark()
 
@@ -761,10 +776,11 @@ class Line:
     # self.position = np.array(self.point1.position) - np.array(self.point2.position)
 
 class MeasurePointToPoint:
-  def __init__(self,point1,point2,type_m):
+  def __init__(self,point1,point2,type_m,time):
     self.point1 = point1
     self.point2 = point2
     self.type_m = type_m
+    self.time = time
     self.r_l_sign_meaning = ""
     self.a_p_sign_meaning = ""
     self.s_i_sign_meaning = ""
@@ -775,10 +791,11 @@ class MeasurePointToPoint:
     print(self.point1.name,self.point2.name,self.r_l,self.a_p,self.s_i,self.norm)
 
 class MeasurePointToLine:
-  def __init__(self,point,line,type_m):
+  def __init__(self,point,line,type_m,time):
     self.point = point
     self.line = line
     self.type_m = type_m
+    self.time = time
     # self.dict_patients = {}
     self.r_l_sign_meaning = ""
     self.a_p_sign_meaning = ""
@@ -805,13 +822,17 @@ class MeasureDifPlT1T2:
     self.a_p = self.measurement_T2.a_p - self.measurement_T1.a_p
     self.s_i = self.measurement_T2.s_i - self.measurement_T1.s_i
     self.norm = self.measurement_T2.norm - self.measurement_T1.norm
-
+    self.r_l = round(self.r_l,3)
+    self.a_p = round(self.a_p,3)
+    self.s_i = round(self.s_i,3)
+    self.norm = round(self.norm,3)
 
 class MeasureAngles:
-  def __init__(self,line1,line2,type_m):
+  def __init__(self,line1,line2,type_m,time):
     self.line1 = line1
     self.line2 = line2
     self.type_m = type_m
+    self.time = time
     self.yaw_sign_meaning = ""
     self.pitch_sign_meaning = ""
     self.roll_sign_meaning = ""
@@ -933,16 +954,13 @@ class TabManager:
 
   def TabSelected(self,idx):
     self.active_tab = idx
-    # print(self.active_tab)
     if self.active_tab == 0:
       self.DWidget.WidgetSetHidden(False)
       self.AWidget.WidgetSetHidden(True)
-      # self.DWidget.type_measur_combobox.connect('currentIndexChanged(int)', self.DWidget.DisplayWidget)
 
     else:
       self.DWidget.WidgetSetHidden(True)
       self.AWidget.WidgetSetHidden(False)
-      # self.AWidget.type_measur_combobox.connect('currentIndexChanged(int)', self.AWidget.DisplayWidget)    
 
   def DisplayImportExportLayout(self,idx):
     if idx == 0:
@@ -971,11 +989,7 @@ class TabManager:
         state = tab_line.checkBoxItem.checkState()
         if state == 2:
           self.AWidget.lst_measurement_angles.remove(tab_line.measurement)
-      self.AWidget.generate_table_angles()
-      
-    # print(self.DWidget.lst_measurement_dist)
-    # print(self.DWidget.lst_tab_lines_d)
-    # print(self.AWidget.lst_measurement_angles)
+      self.AWidget.generate_table_angles()    
 
   def OnExportFolder(self):
     self.export_folder = qt.QFileDialog.getExistingDirectory(self.widget,"Select folder")
@@ -1021,13 +1035,7 @@ class TabManager:
         df_angl = pd.DataFrame(lst_data_angl,index=list(range(len(lst_data_angl))),columns=list(lst_data_angl[0].keys()))
         df_angl.to_excel(writer,sheet_name="Angle between 2 lines",index=False)
 
-    print("Export done")
-
-    # with open(full_path, 'w') as csvfile:
-      # writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-      # writer.writeheader()
-      # for data in lst_data_dist:
-      #   writer.writerow(data)
+    # print("Export done")
 
   def OnImportFile(self):
     self.import_file = qt.QFileDialog.getOpenFileName(self.widget,"Select file")
@@ -1044,7 +1052,6 @@ class TabManager:
       if idx == 0:
         for idx_row,row in enumerate(ws.iter_rows()):
           if idx_row != 0:
-            # print(row[0].value,row[1].value,row[2].value)
             data_type_of_measurment = row[0].value
             point1 = Point(row[1].value)
             point2 = Point(row[2].value)
@@ -1087,11 +1094,10 @@ class TabManager:
               measurement = MeasureDifAngleT1T2(measurement_T1,measurement_T2,data_type_of_measurment)
               self.AWidget.lst_measurement_angles.append(measurement)
       
-    # print(self.DWidget.lst_measurement_dist)
-    # print(self.AWidget.lst_measurement_angles)
+
     self.DWidget.generate_table_distances()
     self.AWidget.generate_table_angles()
-    print("Import done")
+    # print("Import done")
 
   def OnSaveMeasurementFolder(self):
     self.export_measurement_folder = qt.QFileDialog.getExistingDirectory(self.widget,"Select folder")
@@ -1138,7 +1144,7 @@ class TabManager:
             col_idx = df.columns.get_loc(column)
             writer.sheets["Measurement"].set_column(col_idx, col_idx, column_width)
       self.ui.MeasurementSavedLabel.text = '  MEASUREMENTS SAVED !!'  
-      print('------------------- SAVE MEASUREMENT -------------------')
+      # print('------------------- SAVE MEASUREMENT -------------------')
 
   
 class DistanceWidget:
@@ -1239,18 +1245,6 @@ class DistanceWidget:
 
   def StateT1T2(self):
     self.state_check_box_T1_T2 = self.check_box_T1_T2.checkState()
-    print(self.index)
-    # if self.index == 0:
-    #   if self.state_check_box_T1_T2 == 2:
-    #     self.widget_pl_T2.setHidden(True)
-    #   else:
-    #     self.widget_pl_T2.setHidden(True)
-    # else:
-    #   if self.state_check_box_T1_T2 == 2:
-    #     self.widget_pl_T2.setHidden(False)
-    #   else:
-    #     self.widget_pl_T2.setHidden(True)
-    
     if self.state_check_box_T1_T2 == 2:
       if self.index == 0:
         self.widget_pl_T2.setHidden(True)
@@ -1262,19 +1256,10 @@ class DistanceWidget:
       else:
         self.widget_pl_T2.setHidden(True)
 
-    # print(self.state_check_box_T1_T2)
     if self.state_check_box_T1_T2 == 2:
       if self.parent.ui.lineEditLandPathT2.text == '':
         warningMessage('Missing T2 folder')
-        # self.state_check_box_T1_T2 = 0
         self.check_box_T1_T2.setCheckState(Qt.Unchecked)
-
-        # print("Error")
-        # msg = qt.QMessageBox()
-        # msg_txt = "Missing T2 folder : \n"
-        # msg.setText(msg_txt)
-        # msg.setWindowTitle("Error")
-        # msg.exec_()
 
   def WidgetSetHidden(self,hidden):
     self.distance_widget.setHidden(hidden)
@@ -1298,8 +1283,7 @@ class DistanceWidget:
         self.widget_pl_T2.setHidden(False)
       else:
         self.widget_pl_T2.setHidden(True)
-
-      
+ 
   def GetLmList(self,lm_status_dic):
     self.combo_box_pp_1.clear()
     self.combo_box_pp_2.clear()
@@ -1317,7 +1301,6 @@ class DistanceWidget:
       if state == True:
         self.list_lm.append(landmark)
 
-    # print('list_lm :',self.list_lm)
     self.combo_box_pp_1.addItems(self.list_lm)
     self.combo_box_pp_2.addItems(self.list_lm)
     self.combo_box_pl_1.addItems(self.list_lm)
@@ -1336,9 +1319,9 @@ class DistanceWidget:
       point1 = Point(data_cb_1)
       point2 = Point(data_cb_2)
       if self.state_check_box_T1_T2 == 2:
-        measurement = MeasurePointToPoint(point1,point2,data_type_of_measurment+' T1 T2')
+        measurement = MeasurePointToPoint(point1,point2,data_type_of_measurment+' T1 T2','T1/T2')
       else:
-        measurement = MeasurePointToPoint(point1,point2,data_type_of_measurment)
+        measurement = MeasurePointToPoint(point1,point2,data_type_of_measurment,'T1')
 
       self.lst_measurement_dist.append(measurement)
       self.generate_table_distances()
@@ -1357,26 +1340,23 @@ class DistanceWidget:
         point_T2 = Point(data_cb_1_T2)
         line_T1 = Line(Point(data_cb_2_T1),Point(data_cb_3_T1))
         line_T2 = Line(Point(data_cb_2_T2),Point(data_cb_3_T2))
-        # print(data_type_of_measurment+' T1',data_type_of_measurment+' T2',data_type_of_measurment+' dif T1 T2')
-        measurement_T1 = MeasurePointToLine(point_T1,line_T1,data_type_of_measurment+' T1')
-        measurement_T2 = MeasurePointToLine(point_T2,line_T2,data_type_of_measurment+' T2')
+        time = 'T1/T2'
+        measurement_T1 = MeasurePointToLine(point_T1,line_T1,data_type_of_measurment+' T1','T1')
+        measurement_T2 = MeasurePointToLine(point_T2,line_T2,data_type_of_measurment+' T2','T2')
         measurement_dif_T1T2 = MeasureDifPlT1T2(measurement_T1,measurement_T2,data_type_of_measurment+' dif T1 T2')
-        # print(measurement_T1,measurement_T2,measurement_dist_T1T2.)
         self.lst_measurement_dist.append(measurement_T1)
         self.lst_measurement_dist.append(measurement_T2)
         self.lst_measurement_dist.append(measurement_dif_T1T2)
         self.generate_table_distances()
-      # print('lst_measurement_dist :',self.lst_measurement_dist)
       else:
         data_cb_1 = self.combo_box_pl_1.currentText
         data_cb_2 = self.combo_box_pl_2.currentText
         data_cb_3 = self.combo_box_pl_3.currentText
         point = Point(data_cb_1)
         line = Line(Point(data_cb_2),Point(data_cb_3))
-        measurement = MeasurePointToLine(point,line,data_type_of_measurment)
+        measurement = MeasurePointToLine(point,line,data_type_of_measurment,'T1')
         self.lst_measurement_dist.append(measurement)
         self.generate_table_distances()
-      # print('lst_measurement_dist :',self.lst_measurement_dist)
 
   def generate_table_distances(self):
     self.lst_tab_lines_d = []
@@ -1386,13 +1366,10 @@ class DistanceWidget:
     self.parent.table_view.dict_tab[0].setHorizontalHeaderLabels(columnLabels)
     self.parent.table_view.dict_tab[0].resizeColumnsToContents()
     self.parent.table_view.dict_tab[0].setRowCount(len(self.lst_measurement_dist))
-    # print('lst_measurement_dist :' , self.lst_measurement_dist)
     for measurement in self.lst_measurement_dist:
       tab_line = TabLine(measurement)
       tab_line.gen_widget()
-      # widget_line = tab_line.widget
       self.lst_tab_lines_d.append(tab_line)
-    # print('lst_tab_lines :',self.lst_tab_lines_d)
     for row in range(len(self.lst_tab_lines_d)):
       for col in range(len(columnLabels)):
        self.parent.table_view.dict_tab[0].setItem(row,col,self.lst_tab_lines_d[row].lst_widget[col])
@@ -1403,24 +1380,23 @@ class DistanceWidget:
         dict_patient_measurement = {}
         if measurement.type_m in ['Distance between 2 points','Distance between 2 points'+' T1 T2'] :
           measurement.point1.position = patients_dict_T1[self.parent.patient][measurement.point1.name]
-          print(measurement.point1.name, ':', measurement.point1.position)
-          if self.state_check_box_T1_T2 == 2:
+          # print(measurement.point1.name, ':', measurement.point1.position)
+          if measurement.time == 'T1/T2':
             measurement.point2.position = patients_dict_T2[self.parent.patient][measurement.point2.name]
-            print(measurement.point2.name, ':', measurement.point2.position)
+            # print(measurement.point2.name, ':', measurement.point2.position)
           else:
             measurement.point2.position = patients_dict_T1[self.parent.patient][measurement.point2.name]
-            print(measurement.point2.name, ':', measurement.point2.position)
+            # print(measurement.point2.name, ':', measurement.point2.position)
 
           measurement.compute()
-          # SignMeaningDist(measurement)
           SignManager(measurement)
 
           dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
           dict_patient_measurement["Type of measurement"] = measurement.type_m
           dict_patient_measurement["Landmark"] = measurement.point1.name + '-' + measurement.point2.name
-          dict_patient_measurement["R-L Component"] = str(measurement.r_l)+'  '+measurement.r_l_sign_meaning
-          dict_patient_measurement["A-P Component"] = str(measurement.a_p)+'  '+measurement.a_p_sign_meaning
-          dict_patient_measurement["S-I Component"] = str(measurement.s_i)+'  '+measurement.s_i_sign_meaning
+          dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+          dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+          dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
           dict_patient_measurement["3D Distance"] = measurement.norm
           dict_patient_measurement["Yaw Component"] = 'x'
           dict_patient_measurement["Pitch Component"] = 'x'
@@ -1428,8 +1404,7 @@ class DistanceWidget:
           self.lst_compute_dst_pp.append(dict_patient_measurement)
 
         elif measurement.type_m in ['Distance point line','Distance point line T1','Distance point line T2']:
-          # if measurement.point.name and measurement.line.point1.name and measurement.line.point2.name in self.parent.lst_label:
-          if measurement.type_m in ['Distance point line','Distance point line T1']:
+          if measurement.time == 'T1':
             measurement.point.position = patients_dict_T1[self.parent.patient][measurement.point.name]
             measurement.line.point1.position = patients_dict_T1[self.parent.patient][measurement.line.point1.name]
             measurement.line.point2.position = patients_dict_T1[self.parent.patient][measurement.line.point2.name]
@@ -1439,15 +1414,14 @@ class DistanceWidget:
             measurement.line.point2.position = patients_dict_T2[self.parent.patient][measurement.line.point2.name]
           
           measurement.compute()
-          # SignMeaningDist(measurement)
           SignManager(measurement)
 
           dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
           dict_patient_measurement["Type of measurement"] = measurement.type_m
           dict_patient_measurement["Landmark"] = measurement.point.name + '-' + measurement.line.name
-          dict_patient_measurement["R-L Component"] = str(measurement.r_l)+'  '+measurement.r_l_sign_meaning
-          dict_patient_measurement["A-P Component"] = str(measurement.a_p)+'  '+measurement.a_p_sign_meaning
-          dict_patient_measurement["S-I Component"] = str(measurement.s_i)+'  '+measurement.s_i_sign_meaning
+          dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+          dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+          dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
           dict_patient_measurement["3D Distance"] = measurement.norm
           dict_patient_measurement["Yaw Component"] = 'x'
           dict_patient_measurement["Pitch Component"] = 'x'
@@ -1464,15 +1438,14 @@ class DistanceWidget:
 
 
           measurement.compute()
-          # SignMeaningDist(measurement)
           SignManager(measurement)
 
           dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
           dict_patient_measurement["Type of measurement"] = measurement.type_m
           dict_patient_measurement["Landmark"] = measurement.point1.name + '-' + measurement.line1.name+'/'+measurement.point2.name + '-' + measurement.line2.name
-          dict_patient_measurement["R-L Component"] = str(measurement.r_l)+'  '+measurement.r_l_sign_meaning
-          dict_patient_measurement["A-P Component"] = str(measurement.a_p)+'  '+measurement.a_p_sign_meaning
-          dict_patient_measurement["S-I Component"] = str(measurement.s_i)+'  '+measurement.s_i_sign_meaning
+          dict_patient_measurement["R-L Component"] = str(measurement.r_l)
+          dict_patient_measurement["A-P Component"] = str(measurement.a_p)
+          dict_patient_measurement["S-I Component"] = str(measurement.s_i)
           dict_patient_measurement["3D Distance"] = measurement.norm
           dict_patient_measurement["Yaw Component"] = 'x'
           dict_patient_measurement["Pitch Component"] = 'x'
@@ -1546,14 +1519,14 @@ class AnglesWidget:
     hb = qt.QHBoxLayout(self.widget_angle_T2)
     self.label_T2 = qt.QLabel('T2 :')
     self.label_T2.setFixedWidth(40)
-    self.label_angle_P1_T2 = qt.QLabel('P1 :')
-    self.label_angle_P1_T2.setFixedWidth(40)
-    self.label_angle_P2_T2 = qt.QLabel('P2 :')
-    self.label_angle_P2_T2.setFixedWidth(40)
-    self.label_angle_P3_T2 = qt.QLabel('P3 :')
-    self.label_angle_P3_T2.setFixedWidth(40)
-    self.label_angle_P4_T2 = qt.QLabel('P4 :')
-    self.label_angle_P4_T2.setFixedWidth(40)
+    self.label_angle_P1_T2 = qt.QLabel('  P1 :')
+    self.label_angle_P1_T2.setFixedWidth(30)
+    self.label_angle_P2_T2 = qt.QLabel('  P2 :')
+    self.label_angle_P2_T2.setFixedWidth(30)
+    self.label_angle_P3_T2 = qt.QLabel('  P3 :')
+    self.label_angle_P3_T2.setFixedWidth(30)
+    self.label_angle_P4_T2 = qt.QLabel('  P4 :')
+    self.label_angle_P4_T2.setFixedWidth(30)
     self.combo_box_1_angle_T2 = qt.QComboBox()
     self.combo_box_2_angle_T2 = qt.QComboBox()
     self.combo_box_3_angle_T2 = qt.QComboBox()
@@ -1566,18 +1539,17 @@ class AnglesWidget:
 
   def StateT1T2(self):
     self.state_check_box_T1_T2 = self.check_box_T1_T2.checkState()
-    # if self.index == 1:
-    print(self.state_check_box_T1_T2)
     if self.state_check_box_T1_T2 == 2:
-      self.widget_angle_T2.setHidden(False)
+      if self.idx == 0:
+        self.widget_angle_T2.setHidden(False)
+      else:
+        self.widget_angle_T2.setHidden(True)
     else:
       self.widget_angle_T2.setHidden(True)
-    # print(self.state_check_box_T1_T2)
     
     if self.state_check_box_T1_T2 == 2:
       if self.parent.ui.lineEditLandPathT2.text == '':
         warningMessage('Missing T2 folder')
-        # self.state_check_box_T1_T2 = 0
         self.check_box_T1_T2.setCheckState(Qt.Unchecked)
 
   def WidgetSetHidden(self,hidden):
@@ -1588,12 +1560,17 @@ class AnglesWidget:
     else:
       self.DisplayWidget(self.index)
 
-
   def DisplayWidget(self,idx): 
-      if idx == 0:
-        self.widget_angle_T1.setHidden(False) 
+    self.idx = idx   
+    if self.idx == 0:
+      self.widget_angle_T1.setHidden(False)
+      if self.state_check_box_T1_T2 == 2:
+        self.widget_angle_T2.setHidden(False)
       else:
-        self.widget_angle_T1.setHidden(True)
+        self.widget_angle_T2.setHidden(True)
+    else:
+      self.widget_angle_T1.setHidden(True)
+      self.widget_angle_T2.setHidden(True)
 
   def GetLmList(self,lm_status_dic):
     self.combo_box_1_angle_T1.clear()
@@ -1611,7 +1588,6 @@ class AnglesWidget:
       if state == True:
         self.list_lm.append(landmark)
 
-    # print('list_lm :',self.list_lm)
     self.combo_box_1_angle_T1.addItems(self.list_lm)
     self.combo_box_2_angle_T1.addItems(self.list_lm)
     self.combo_box_3_angle_T1.addItems(self.list_lm)
@@ -1638,13 +1614,12 @@ class AnglesWidget:
       line2_T1 = Line(Point(data_cb_3_T1),Point(data_cb_4_T1))
       line1_T2 = Line(Point(data_cb_1_T2),Point(data_cb_2_T2))
       line2_T2 = Line(Point(data_cb_3_T2),Point(data_cb_4_T2))
-      measurement_T1 = MeasureAngles(line1_T1,line2_T1,data_type_of_measurement+' T1')
-      measurement_T2 = MeasureAngles(line1_T2,line2_T2,data_type_of_measurement+' T2')
+      measurement_T1 = MeasureAngles(line1_T1,line2_T1,data_type_of_measurement+' T1','T1')
+      measurement_T2 = MeasureAngles(line1_T2,line2_T2,data_type_of_measurement+' T2','T2')
       measurement_dif_T1T2 = MeasureDifAngleT1T2(measurement_T1,measurement_T2,data_type_of_measurement+' dif T1 T2')
       self.lst_measurement_angles.append(measurement_T1)
       self.lst_measurement_angles.append(measurement_T2)
       self.lst_measurement_angles.append(measurement_dif_T1T2)
-      # print(self.lst_measurement_angles)
       self.generate_table_angles()
 
     else:
@@ -1654,9 +1629,8 @@ class AnglesWidget:
       data_cb_4 = self.combo_box_4_angle_T1.currentText
       line1 = Line(Point(data_cb_1),Point(data_cb_2))
       line2 = Line(Point(data_cb_3),Point(data_cb_4))
-      measurement = MeasureAngles(line1,line2,data_type_of_measurement)
+      measurement = MeasureAngles(line1,line2,data_type_of_measurement,'T1')
       self.lst_measurement_angles.append(measurement)
-      # print(self.lst_measurement_angles)
       self.generate_table_angles()
 
   def generate_table_angles(self):
@@ -1667,13 +1641,10 @@ class AnglesWidget:
     self.parent.table_view.dict_tab[1].setHorizontalHeaderLabels(columnLabels)
     self.parent.table_view.dict_tab[1].resizeColumnsToContents()
     self.parent.table_view.dict_tab[1].setRowCount(len(self.lst_measurement_angles))
-    # print('lst_measurement_angles :', self.lst_measurement_angles)
     for measurement in self.lst_measurement_angles:
       tab_line = TabLine(measurement)
       tab_line.gen_widget()
-      # widget_line = tab_line.widget
       self.lst_tab_lines_a.append(tab_line)
-    # print(self.lst_tab_lines)
     for row in range(len(self.lst_tab_lines_a)):
       for col in range(len(columnLabels)):
        self.parent.table_view.dict_tab[1].setItem(row,col,self.lst_tab_lines_a[row].lst_widget[col])
@@ -1683,20 +1654,19 @@ class AnglesWidget:
       if len(self.lst_measurement_angles)>0: 
         dict_patient_measurement = {}
         if measurement.type_m in ['Angle between 2 lines','Angle between 2 lines T1','Angle between 2 lines T2']:
-          if measurement.type_m in ['Angle between 2 lines','Angle between 2 lines T1']:
+          if measurement.time == 'T1':
             measurement.line1.point1.position = patients_dict_T1[self.parent.patient][measurement.line1.point1.name]
             measurement.line1.point2.position = patients_dict_T1[self.parent.patient][measurement.line1.point2.name]
             measurement.line2.point1.position = patients_dict_T1[self.parent.patient][measurement.line2.point1.name]
             measurement.line2.point2.position = patients_dict_T1[self.parent.patient][measurement.line2.point2.name]
                      
-          elif measurement.type_m == 'Angle between 2 lines T2':
+          else:
             measurement.line1.point1.position = patients_dict_T2[self.parent.patient][measurement.line1.point1.name]
             measurement.line1.point2.position = patients_dict_T2[self.parent.patient][measurement.line1.point2.name]
             measurement.line2.point1.position = patients_dict_T2[self.parent.patient][measurement.line2.point1.name]
             measurement.line2.point2.position = patients_dict_T2[self.parent.patient][measurement.line2.point2.name]
 
           measurement.compute()
-          # SignMeaningAngles(measurement)
           SignManager(measurement)
 
           dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
@@ -1706,9 +1676,9 @@ class AnglesWidget:
           dict_patient_measurement["A-P Component"] = 'x'
           dict_patient_measurement["S-I Component"] = 'x'
           dict_patient_measurement["3D Distance"] = 'x'
-          dict_patient_measurement["Yaw Component"] = str(measurement.yaw_angle)+'  '+measurement.yaw_sign_meaning
-          dict_patient_measurement["Pitch Component"] = str(measurement.pitch_angle)+'  '+measurement.pitch_sign_meaning
-          dict_patient_measurement["Roll Component"] = str(measurement.roll_angle)+'  '+measurement.roll_sign_meaning
+          dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))+'  '+measurement.yaw_sign_meaning
+          dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))+'  '+measurement.pitch_sign_meaning
+          dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))+'  '+measurement.roll_sign_meaning
           self.lst_compute_angles.append(dict_patient_measurement)
 
         else:  
@@ -1722,7 +1692,6 @@ class AnglesWidget:
           measurement.line2_T2.point2.position = patients_dict_T2[self.parent.patient][measurement.line2_T2.point2.name]
           
           measurement.compute()
-          # SignMeaningAngles(measurement)
           SignManager(measurement)
 
           dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
@@ -1732,10 +1701,12 @@ class AnglesWidget:
           dict_patient_measurement["A-P Component"] = 'x'
           dict_patient_measurement["S-I Component"] = 'x'
           dict_patient_measurement["3D Distance"] = 'x'
-          dict_patient_measurement["Yaw Component"] = str(measurement.yaw_angle)+'  '+measurement.yaw_sign_meaning
-          dict_patient_measurement["Pitch Component"] = str(measurement.pitch_angle)+'  '+measurement.pitch_sign_meaning
-          dict_patient_measurement["Roll Component"] = str(measurement.roll_angle)+'  '+measurement.roll_sign_meaning
+          dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))+'  '+measurement.yaw_sign_meaning
+          dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))+'  '+measurement.pitch_sign_meaning
+          dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))+'  '+measurement.roll_sign_meaning
           self.lst_compute_angles.append(dict_patient_measurement)
+
+
 
 # -------------------------- Gen layout import/export ---------------------------
 def WidgetExport(layout): 
@@ -1771,7 +1742,6 @@ def WidgetImport(layout):
 
 def GetAvailableLm(mfold,lm_group):
   All_landmarks = GetAllLandmarks(mfold)
-  # print('All_landmarks :',All_landmarks)
   available_lm = {"Other":[]}
   for lm in All_landmarks:
     if lm in lm_group.keys():
@@ -1819,10 +1789,11 @@ def GetAllLandmarks(dir_path):
 def CreateDicPatients(dir_path):
   patients_dict = {}
   patients_lst = []
+  lst_files = []
   normpath = os.path.normpath("/".join([dir_path, '**', '']))
   for jsonfile in sorted(glob.iglob(normpath, recursive=True)):
     if os.path.isfile(jsonfile) and ".json" in jsonfile:
-      # time = os.path.dirname(jsonfile)
+      lst_files.append(jsonfile)
       patient = os.path.basename(jsonfile).split('_')[0]
       if patient not in patients_lst:
         patients_lst.append(patient)
@@ -1836,7 +1807,7 @@ def CreateDicPatients(dir_path):
         position = controlPoints[i]["position"]
         patients_dict[patient][landmark_name] = position
   
-  return patients_lst,patients_dict
+  return patients_lst,patients_dict,lst_files
 
 def warningMessage(message):
     messageBox = ctk.ctkMessageBox()
@@ -1931,7 +1902,12 @@ def SignManager(measurement):
     # else:
     SignMeaningDist(measurement)
 
-  elif measurement.type_m == 'Angle between 2 lines':
+  elif measurement.type_m == 'Distance point line dif T1 T2':
+    measurement.r_l_sign_meaning = ""
+    measurement.a_p_sign_meaning = ""
+    measurement.s_i_sign_meaning = "" 
+
+  elif measurement.type_m == ['Angle between 2 lines','Angle between 2 lines T1','Angle between 2 lines T2']:
     measurement_point1_name = measurement.line1.point1.name[:3]
     measurement_point2_name = measurement.line1.point2.name[:3]
     measurement_point3_name = measurement.line2.point1.name[:3]
@@ -1940,9 +1916,13 @@ def SignManager(measurement):
       lst_measurement = [measurement_point1_name,measurement_point2_name,measurement_point3_name,measurement_point4_name]
       SignMeaningDentalAngle(measurement,lst_measurement)
     else:
-      SignMeaningAngles(measurement)
+      measurement.yaw_sign_meaning = ""
+      measurement.pitch_sign_meaning = "" 
+      measurement.roll_sign_meaning = ""
   else:
-    SignMeaningAngles(measurement)
+    measurement.yaw_sign_meaning = ""
+    measurement.pitch_sign_meaning = "" 
+    measurement.roll_sign_meaning = ""
 
 def SignMeaningDist(measurement):
   if measurement.r_l>0:
@@ -1959,22 +1939,6 @@ def SignMeaningDist(measurement):
     measurement.s_i_sign_meaning = "S" #Superior
   else:
     measurement.s_i_sign_meaning = "I" #Inferior
-
-def SignMeaningAngles(measurement):
-  if measurement.yaw_angle<0:
-    measurement.yaw_sign_meaning = "L" #Left
-  else:
-    measurement.yaw_sign_meaning = "R" #Right
-
-  if measurement.pitch_angle<0:
-    measurement.pitch_sign_meaning = "P" #Posterior
-  else:
-    measurement.pitch_sign_meaning = "A" #Anterior
-
-  if measurement.roll_angle<0:
-    measurement.roll_sign_meaning = "I" #Inferior
-  else:
-    measurement.roll_sign_meaning = "S" #Superior
 
 def SignMeaningDentalDst(measurement,lst_measurement):
   if not False in [elem in upper_right_back for elem in lst_measurement]:
