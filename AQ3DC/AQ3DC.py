@@ -1,7 +1,6 @@
 import os
 import unittest
 import logging
-# import patsy
 import vtk, qt, ctk, slicer
 import glob
 import numpy as np
@@ -9,34 +8,33 @@ import collections
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import csv
-# from PySide2.QtCore import Qt
 import json
-import pandas as pd
-import openpyxl
-from PySide2.QtCore import Qt
+# import pandas as pd
+# import openpyxl
+# from PySide2.QtCore import Qt
 
 #
 # AQ3DC
 #
-# try:
-#   import pandas as pd
-#   import openpyxl
+try:
+  import pandas as pd
+  import openpyxl
 #   import xlrd
 #   import xlsxwriter
 #   # import PyQt5
-#   from PySide2.QtCore import Qt,QtWidgets
+#   from PySide2.QtCore import Qt
 
-# except: 
-#   slicer.util.pip_install('pandas')
-#   slicer.util.pip_install('openpyxl')
+except: 
+  slicer.util.pip_install('pandas')
+  slicer.util.pip_install('openpyxl')
 #   slicer.util.pip_install('xlrd')
 #   slicer.util.pip_install('xlsxwriter')
-#   slicer.util.pip_install('PySide2')
-#   import pandas as pd
-#   import openpyxl
+  slicer.util.pip_install('PySide2')
+  import pandas as pd
+  import openpyxl
 #   import xlrd
 #   import xlsxwriter
-#   from PySide2.QtCore import Qt
+  from PySide2.QtCore import Qt
 
 GROUPS_LANDMARKS = {
   'Cranial Base/Vertebra' : ['Ba', 'S', 'N', 'RPo', 'LPo', 'RFZyg', 'LFZyg', 'C2', 'C3', 'C4'],
