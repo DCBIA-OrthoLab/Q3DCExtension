@@ -278,10 +278,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.tab_manager.patients_dict_T2 = patients_dict_T2
       self.MP_Widget.patients_lst_T2 = patients_lst_T2
       self.MP_Widget.patients_dict_T2 = patients_dict_T2
-      # print(self.patients_lst_T2)
-      # lm_group = GetLandmarkGroup(GROUPS_LANDMARKS)
-      # available_lm_T2 = GetAvailableLm(self.surface_folder_2,lm_group)
-      # print(available_lm_T2)
+
 
   def UpdateSelectTab(self):
     final_dic = {}
@@ -519,39 +516,6 @@ class LMTab:
     # self.tab_manager.GetLmListManager(self.lm_status_dic)
     # self.MP_Widget.GetLmList(self.lm_status_dic)
 
-  # def UpdateDentalLm(self):
-  #   selected_type_lst = []
-  #   for lm in self.lm_group_dic["Landmarks type"]:
-  #     if self.lm_cb_dic[lm][0].checkState():
-  #       selected_type_lst.append(lm)
-  #     else:
-  #       if lm in selected_type_lst:
-  #         selected_type_lst.remove(lm)
-  #   # print(selected_type_lst)    
-  #   for lm in self.lm_group_dic["Dental"]:      
-  #     if self.lm_cb_dic[lm][0].checkState():
-  #       state = True
-  #     else:
-  #       state = False
-  #     for typ in self.lm_group_dic["Landmarks type"]:
-  #       if typ in selected_type_lst:
-  #         # print(lm+typ)
-  #         self.lm_status_dic[lm+typ] = state
-  #       else:
-  #         self.lm_status_dic[lm+typ] = False
-  #   for group,lst_lm in self.lm_group_dic.items():
-  #     if group not in ["Landmarks type","Dental"]:
-  #       for lm in lst_lm: 
-  #         if self.lm_cb_dic[lm][0].checkState():
-  #           state = True
-  #         else:
-  #           state = False
-  #         if self.lm_status_dic[lm] != state:
-  #           self.UpdateLmSelect(lm,state)
-  #   # print(self.lm_status_dic)      
-  #   self.tab_manager.GetLmListManager(self.lm_status_dic)
-  #   self.MP_Widget.GetLmList(self.lm_status_dic)
-  
   def GenNewTab(self,widget_lst,orientation,enable = False):
     new_widget = qt.QWidget()
     vb = qt.QVBoxLayout(new_widget)
@@ -586,19 +550,6 @@ class LMTab:
     for cb in self.lm_cb_dic[lm_id]:
       cb.setChecked(state)
     self.lm_status_dic[lm_id] = state
-
-    
-  # def UpdateLmSelect(self,lm_id,state):
-  #   print(self.lm_cb_dic)
-  #   lst_group = []
-  #   for group,lst_lm in self.lm_group_dic.items():
-  #     if lm_id in lst_lm:
-  #       group_lm = group
-  #       if group_lm not in ["Landmarks type","Dental"]:
-  #         self.lm_cb_dic[lm_id].setChecked(state)
-  #       # else:
-
-  #   self.lm_status_dic[lm_id] = state
   
   def TabSelected(self,idx):
     self.active_tab = idx
@@ -831,30 +782,6 @@ class MidPointWidget:
       SaveJson(self.patients_lst_T2,self.patients_dict_T2,out_path_T2)
     self.ui.midpoint_saved_label.text = 'MIDPOINTS SAVED !!'
   
-  # def SaveJson(self):
-  #   midpoint_dic = {}
-  #   for self.patient in self.patients_lst_T1:
-  #     for mid_point in MID_POINTS:
-  #       P1_name = mid_point.split('_')[1]
-  #       P2_name = mid_point.split('_')[2]
-  #       # self.out_path = self.ui.lineEditLandPathT1.text+f'/MidPoints_P{self.patient}.json'
-  #       self.P1_pos = self.patients_dict_T1[self.patient][P1_name]
-  #       self.P2_pos = self.patients_dict_T1[self.patient][P2_name]
-  #       self.ComputeMidPoint(np.array(self.P1_pos),np.array(self.P2_pos))
-  #       controle_point = self.GenControlePoint()
-  #       if self.patient not in midpoint_dic.keys():
-  #          midpoint_dic[self.patient] = controle_point
-  #       # if mid_point not in midpoint_dic[self.patient].keys():
-  #       #   midpoint_dic[self.patient][mid_point] = controle_point
-  #   # print(midpoint_dic)
-  #   for patient,cp_lst in midpoint_dic.items():
-  #     self.WriteJson(patient,cp_lst)
-      
-  
-
-    # self.midpoint_lst.append(controle_point)
-    # self.lst_all_midpoint.append(controle_point)
-
 class TableView:
   def __init__(self,ui) -> None:
     self.ui = ui
@@ -1833,6 +1760,7 @@ class AnglesWidget:
         self.widget_angle_T2.setHidden(False)
       else:
         self.widget_angle_T2.setHidden(True)
+      self.widget_angle_T1_T2.setHidden(True)
     else:
       self.widget_angle_T1_T2.setHidden(False)
       self.widget_angle_T1.setHidden(True)
@@ -1990,6 +1918,7 @@ class AnglesWidget:
               self.lst_compute_angles.append(dict_patient_measurement)
             
         elif measurement.type_m == "Angle line T1 and line T2":
+          print(patients_dict_T1[self.parent.patient].keys())
           if all([name in patients_dict_T1[self.parent.patient].keys() for name in [measurement.line1.point1.name,measurement.line1.point2.name,measurement.line2.point1.name,measurement.line2.point2.name]]):
             if all([name in patients_dict_T2[self.parent.patient].keys() for name in [measurement.line1.point1.name,measurement.line1.point2.name,measurement.line2.point1.name,measurement.line2.point2.name]]):
           # print(measurement.line1.point1.name,measurement.line1.point2.name,measurement.line2.point1.name,measurement.line2.point2.name)
@@ -2113,9 +2042,14 @@ def GetAllLandmarks(dir_path):
       controlPoints = markups['controlPoints']
       for i in range(len(controlPoints)):
         if True in [tooth in controlPoints[i]["label"] for tooth in teeth_lst]:
-          label = controlPoints[i]["label"][3:]
-          if label not in All_landmarks:
-            All_landmarks.append(label)
+          if 'Mid' in controlPoints[i]["label"]:
+            label = controlPoints[i]["label"]
+            if label not in All_landmarks:
+              All_landmarks.append(label)
+          else:
+            label = controlPoints[i]["label"][3:]
+            if label not in All_landmarks:
+              All_landmarks.append(label)
         else :
           label = controlPoints[i]["label"]
           if label not in All_landmarks:
