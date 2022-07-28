@@ -1,11 +1,11 @@
-# AQ3DC
+# AQ3DC : Automatic Quantification for 3D Cephalometrics
 
-Authors: Baptiste Baquero, Maxime Gillot, Lucia Cevidanes, Jean-Christophe Fillion-Robin,David Allemang
+Authors: Baptiste Baquero, Maxime Gillot, Lucia Cevidanes, Jean-Christophe Fillion-Robin, David Allemang
 	
 ## What is it?
 
-This Slicer extension aims is to automatically computes lists of measurements selected by users for a single case or a whole study sample, at one or more time points. This user-friendly tool aims to decrease user time for ex-traction of quantitative image analysis features. The AQ3DC implementation is aimed at automatic computation of 3D components of the directionality of distances (Anteroposterior, Right/Left, Supeoinferior) between points, points to line, midpoint between two points or angles (Pitch, Roll and Yaw). Users are able to save in a new file the middle points created. Users will be able to analyze the results of the measurements needed in an excel file. 
-
+This Slicer extension aims is to automatically computes head measurements used in craniofacial surgery. Using placed fiducials, it allows users to compute 2D angles: Yaw, Pitch and Roll; and decompose the 3D distance (between points, points to line) into the three different components: R-L , A-P and S-I. It is possible to compute the middle point between two fiducials and export the values. It is possible to compute lists of measurements selected by users for a single case or a whole study sample, at one or more time points.
+ 
 ## File Formats
 
 AQ3DC allows users to compute all the measurements on points from .json files. Save middle points created in a .json file. Measurement list and results of all the computed measurements saved as .xlsx files.
