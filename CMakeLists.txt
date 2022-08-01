@@ -19,6 +19,7 @@ include(${Slicer_USE_FILE})
 
 #-----------------------------------------------------------------------------
 # Extension modules
+add_subdirectory(AQ3DC)
 add_subdirectory(Q3DC)
 ## NEXT_MODULE
 
