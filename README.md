@@ -35,11 +35,11 @@ The two extensions allow users to compute the same measurements. AQ3DC allows co
  
 ## File Formats
 
-AQ3DC allows users to compute all the measurements on points from .json files. Save middle points created in a .json file. Measurement list and results of all the computed measurements saved as .xlsx files. (exemple of jsonfile in [docs](https://github.com/baptistebaquero/Q3DCExtension/tree/add-AQ3DC-module/docs) : 001_T1_CB.mrk.json, 001_T1_L.mrk.json, 001_T1_U.mrk.json, 001_T2_CB.mrk.json, 001_T2_L_1.mrk.json, 002_T2_U.mrk.json).
+AQ3DC allows users to compute all the measurements on points from `.mrk.json` files. Save middle points created in a `.mrk.json` file. Measurement list and results of all the computed measurements saved as `.xlsx` files. See example `.mrk.json` files in [docs/T1](./docs/T1), [docs/T2](./docs/T2)
 
 ## Prerequisites for users
 
-The AQ3DC extension really needs consistency in the data. For each patient, at the same time point, and at different time points, if the landmarks are not named exactly the same the measurement for this patient won't be performed, and will just be skipped.
+The AQ3DC extension requires consistency in data naming. For each patient and time point, the landmark labels must be exactly the same. If an exact match of the expected label name is not found, the measurement will be skipped for that patient with the missing landmark.
 
 ## Panels and their use
 #### 1. First of all the user needs to provide the folders with all the patients and the landmarks needed for the measurements.
