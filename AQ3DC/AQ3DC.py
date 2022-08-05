@@ -182,7 +182,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # These connections ensure that we update parameter node when scene is closed
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
-    # self.deps = DependantMarkups.DependantMarkupsLogic 
 
 
     # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
