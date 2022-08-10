@@ -855,6 +855,7 @@ class MeasurePointToPoint:
   def compute(self):
     # print(self.point1.position,self.point2.position)
     self.r_l,self.a_p,self.s_i,self.norm = computeDistance(np.array(self.point1.position),np.array(self.point2.position))
+    print(self.point1.name,self.point2.name,self.r_l,self.a_p,self.s_i,self.norm)
 
 class MeasurePointToLine:
   def __init__(self,point,line,type_m):#,time):
@@ -1185,7 +1186,6 @@ class TabManager:
         self.UpdateLmSelect(cb,state)
     
   def Computations(self): 
-    print("---------------------------------------Computation-------------------------------------------------")
 
     self.DWidget.lst_compute_dst_pp.clear()
     self.DWidget.lst_compute_dst_pl.clear()
@@ -1457,7 +1457,6 @@ class DistanceWidget:
        self.parent.table_view.dict_tab[0].setItem(row,col,self.lst_tab_lines_d[row].lst_widget[col])
   
   def GenerateComputeDstLst(self,patients_lst_T1,patients_dict_T1,patients_lst_T2,patients_dict_T2):
-    print("------------------------------------------GenerateComputeDstLst-----------------------")
     if len(MID_POINTS)>0:
       out_path_T1 = self.parent.ui.lineEdit_path_folder_mp.text + '/T1'
       out_path_T2 = self.parent.ui.lineEdit_path_folder_mp.text + '/T2'
@@ -1486,19 +1485,13 @@ class DistanceWidget:
               dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.point1.name + '-' + measurement.point2.name
-              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))
-              dict_patient_measurement["R-L Meaning"] = measurement.r_l_sign_meaning
-              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))
-              dict_patient_measurement["A-P Meaning"] = measurement.a_p_sign_meaning
-              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))
-              dict_patient_measurement["S-I Meaning"] = measurement.s_i_sign_meaning
+              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
               dict_patient_measurement["3D Distance"] = measurement.norm
               dict_patient_measurement["Yaw Component"] = 'x'
-              dict_patient_measurement["Yam Meaning"] = 'x'
               dict_patient_measurement["Pitch Component"] = 'x'
-              dict_patient_measurement["Pitch Meaning"] = 'x'
               dict_patient_measurement["Roll Component"] = 'x'
-              dict_patient_measurement["Roll Meaning"] = 'x'
               self.lst_compute_dst_pp.append(dict_patient_measurement)
 
           elif measurement.type_m == 'Distance between 2 points T2':
@@ -1514,19 +1507,13 @@ class DistanceWidget:
               dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.point1.name + '-' + measurement.point2.name
-              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))
-              dict_patient_measurement["R-L Meaning"] = measurement.r_l_sign_meaning
-              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))
-              dict_patient_measurement["A-P Meaning"] = measurement.a_p_sign_meaning
-              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))
-              dict_patient_measurement["S-I Meaning"] = measurement.s_i_sign_meaning
+              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
               dict_patient_measurement["3D Distance"] = measurement.norm
               dict_patient_measurement["Yaw Component"] = 'x'
-              dict_patient_measurement["Yam Meaning"] = 'x'
               dict_patient_measurement["Pitch Component"] = 'x'
-              dict_patient_measurement["Pitch Meaning"] = 'x'
               dict_patient_measurement["Roll Component"] = 'x'
-              dict_patient_measurement["Roll Meaning"] = 'x'
               self.lst_compute_dst_pp.append(dict_patient_measurement)
 
           else:
@@ -1541,19 +1528,13 @@ class DistanceWidget:
                 dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
                 dict_patient_measurement["Type of measurement"] = measurement.type_m
                 dict_patient_measurement["Landmark"] = measurement.point1.name + '-' + measurement.point2.name
-                dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))
-                dict_patient_measurement["R-L Meaning"] = measurement.r_l_sign_meaning
-                dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))
-                dict_patient_measurement["A-P Meaning"] = measurement.a_p_sign_meaning
-                dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))
-                dict_patient_measurement["S-I Meaning"] = measurement.s_i_sign_meaning
+                dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+                dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+                dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
                 dict_patient_measurement["3D Distance"] = measurement.norm
                 dict_patient_measurement["Yaw Component"] = 'x'
-                dict_patient_measurement["Yam Meaning"] = 'x'
                 dict_patient_measurement["Pitch Component"] = 'x'
-                dict_patient_measurement["Pitch Meaning"] = 'x'
                 dict_patient_measurement["Roll Component"] = 'x'
-                dict_patient_measurement["Roll Meaning"] = 'x'
                 self.lst_compute_dst_pp.append(dict_patient_measurement)
 
         elif measurement.type_m in ['Distance point line','Distance point line T1','Distance point line T2']:
@@ -1570,19 +1551,13 @@ class DistanceWidget:
               dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.point.name + '-' + measurement.line.name
-              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))
-              dict_patient_measurement["R-L Meaning"] = measurement.r_l_sign_meaning
-              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))
-              dict_patient_measurement["A-P Meaning"] = measurement.a_p_sign_meaning
-              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))
-              dict_patient_measurement["S-I Meaning"] = measurement.s_i_sign_meaning
+              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
               dict_patient_measurement["3D Distance"] = measurement.norm
               dict_patient_measurement["Yaw Component"] = 'x'
-              dict_patient_measurement["Yam Meaning"] = 'x'
               dict_patient_measurement["Pitch Component"] = 'x'
-              dict_patient_measurement["Pitch Meaning"] = 'x'
               dict_patient_measurement["Roll Component"] = 'x'
-              dict_patient_measurement["Roll Meaning"] = 'x'
               self.lst_compute_dst_pl.append(dict_patient_measurement)
 
           else:
@@ -1597,19 +1572,13 @@ class DistanceWidget:
               dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.point.name + '-' + measurement.line.name
-              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))
-              dict_patient_measurement["R-L Meaning"] = measurement.r_l_sign_meaning
-              dict_patient_measurement["A-P Component"] = str(abs(measurement.a_p))
-              dict_patient_measurement["A-P Meaning"] = measurement.a_p_sign_meaning
-              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))
-              dict_patient_measurement["S-I Meaning"] = measurement.s_i_sign_meaning
+              dict_patient_measurement["R-L Component"] = str(abs(measurement.r_l))+'  '+measurement.r_l_sign_meaning
+              dict_patient_measurementFalse["A-P Component"] = str(abs(measurement.a_p))+'  '+measurement.a_p_sign_meaning
+              dict_patient_measurement["S-I Component"] = str(abs(measurement.s_i))+'  '+measurement.s_i_sign_meaning
               dict_patient_measurement["3D Distance"] = measurement.norm
               dict_patient_measurement["Yaw Component"] = 'x'
-              dict_patient_measurement["Yam Meaning"] = 'x'
               dict_patient_measurement["Pitch Component"] = 'x'
-              dict_patient_measurement["Pitch Meaning"] = 'x'
               dict_patient_measurement["Roll Component"] = 'x'
-              dict_patient_measurement["Roll Meaning"] = 'x'
               self.lst_compute_dst_pl.append(dict_patient_measurement)
             
         else: 
@@ -1629,18 +1598,12 @@ class DistanceWidget:
             dict_patient_measurement["Type of measurement"] = measurement.type_m
             dict_patient_measurement["Landmark"] = measurement.point1.name + '-' + measurement.line1.name+'/'+measurement.point2.name + '-' + measurement.line2.name
             dict_patient_measurement["R-L Component"] = str(measurement.r_l)
-            dict_patient_measurement["R-L Meaning"] = 'x' 
             dict_patient_measurement["A-P Component"] = str(measurement.a_p)
-            dict_patient_measurement["A-P Meaning"] = 'x' 
             dict_patient_measurement["S-I Component"] = str(measurement.s_i)
-            dict_patient_measurement["S-I Meaning"] = 'x' 
             dict_patient_measurement["3D Distance"] = measurement.norm
             dict_patient_measurement["Yaw Component"] = 'x'
-            dict_patient_measurement["Yam Meaning"] = 'x'
             dict_patient_measurement["Pitch Component"] = 'x'
-            dict_patient_measurement["Pitch Meaning"] = 'x'
             dict_patient_measurement["Roll Component"] = 'x'
-            dict_patient_measurement["Roll Meaning"] = 'x'
             self.lst_compute_dst_pl.append(dict_patient_measurement)
        
 class AnglesWidget:
@@ -1922,18 +1885,12 @@ class AnglesWidget:
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.line1.name + '-' + measurement.line2.name
               dict_patient_measurement["R-L Component"] = 'x'
-              dict_patient_measurement["R-L Meaning"] = 'x'
               dict_patient_measurement["A-P Component"] = 'x'
-              dict_patient_measurement["A-P Meaning"] = 'x'
               dict_patient_measurement["S-I Component"] = 'x'
-              dict_patient_measurement["S-I Meaning"] = 'x'
               dict_patient_measurement["3D Distance"] = 'x'
-              dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))
-              dict_patient_measurement["Yaw Meaning"] = measurement.yaw_sign_meaning
-              dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))
-              dict_patient_measurement["Pitch Meaning"] = measurement.pitch_sign_meaning
-              dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))
-              dict_patient_measurement["Roll Meaning"] = measurement.roll_sign_meaning
+              dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))+'  '+measurement.yaw_sign_meaning
+              dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))+'  '+measurement.pitch_sign_meaning
+              dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))+'  '+measurement.roll_sign_meaning
               self.lst_compute_angles.append(dict_patient_measurement)
 
           else:
@@ -1950,21 +1907,16 @@ class AnglesWidget:
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.line1.name + '-' + measurement.line2.name
               dict_patient_measurement["R-L Component"] = 'x'
-              dict_patient_measurement["R-L Meaning"] = 'x'
               dict_patient_measurement["A-P Component"] = 'x'
-              dict_patient_measurement["A-P Meaning"] = 'x'
               dict_patient_measurement["S-I Component"] = 'x'
-              dict_patient_measurement["S-I Meaning"] = 'x'
               dict_patient_measurement["3D Distance"] = 'x'
-              dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))
-              dict_patient_measurement["Yaw Meaning"] = measurement.yaw_sign_meaning
-              dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))
-              dict_patient_measurement["Pitch Meaning"] = measurement.pitch_sign_meaning
-              dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))
-              dict_patient_measurement["Roll Meaning"] = measurement.roll_sign_meaning
+              dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))+'  '+measurement.yaw_sign_meaning
+              dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))+'  '+measurement.pitch_sign_meaning
+              dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))+'  '+measurement.roll_sign_meaning
               self.lst_compute_angles.append(dict_patient_measurement)
             
         elif measurement.type_m == "Angle line T1 and line T2":
+          print(patients_dict_T1[self.parent.patient].keys())
           if all([name in patients_dict_T1[self.parent.patient].keys() for name in [measurement.line1.point1.name,measurement.line1.point2.name,measurement.line2.point1.name,measurement.line2.point2.name]]):
             if all([name in patients_dict_T2[self.parent.patient].keys() for name in [measurement.line1.point1.name,measurement.line1.point2.name,measurement.line2.point1.name,measurement.line2.point2.name]]):
           # print(measurement.line1.point1.name,measurement.line1.point2.name,measurement.line2.point1.name,measurement.line2.point2.name)
@@ -1975,22 +1927,17 @@ class AnglesWidget:
 
               measurement.compute()
               SignManager(measurement)
+
               dict_patient_measurement["Patient"] = os.path.basename(self.parent.patient).split('.')[0]
               dict_patient_measurement["Type of measurement"] = measurement.type_m
               dict_patient_measurement["Landmark"] = measurement.line1.name + '-' + measurement.line2.name
               dict_patient_measurement["R-L Component"] = 'x'
-              dict_patient_measurement["R-L Meaning"] = 'x'
               dict_patient_measurement["A-P Component"] = 'x'
-              dict_patient_measurement["A-P Meaning"] = 'x'
               dict_patient_measurement["S-I Component"] = 'x'
-              dict_patient_measurement["S-I Meaning"] = 'x'
               dict_patient_measurement["3D Distance"] = 'x'
-              dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))
-              dict_patient_measurement["Yaw Meaning"] = measurement.yaw_sign_meaning
-              dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))
-              dict_patient_measurement["Pitch Meaning"] = measurement.pitch_sign_meaning
-              dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))
-              dict_patient_measurement["Roll Meaning"] = measurement.roll_sign_meaning
+              dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))+'  '+measurement.yaw_sign_meaning
+              dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))+'  '+measurement.pitch_sign_meaning
+              dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))+'  '+measurement.roll_sign_meaning
               self.lst_compute_angles.append(dict_patient_measurement)
                      
 
@@ -2012,18 +1959,12 @@ class AnglesWidget:
             dict_patient_measurement["Type of measurement"] = measurement.type_m
             dict_patient_measurement["Landmark"] = measurement.line1_T1.name + '-' + measurement.line2_T1.name +' / ' + measurement.line1_T2.name + '-' + measurement.line2_T2.name
             dict_patient_measurement["R-L Component"] = 'x'
-            dict_patient_measurement["R-L Meaning"] = 'x'
             dict_patient_measurement["A-P Component"] = 'x'
-            dict_patient_measurement["A-P Meaning"] = 'x'
             dict_patient_measurement["S-I Component"] = 'x'
-            dict_patient_measurement["S-I Meaning"] = 'x'
             dict_patient_measurement["3D Distance"] = 'x'
-            dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))
-            dict_patient_measurement["Yaw Meaning"] = measurement.yaw_sign_meaning
-            dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))
-            dict_patient_measurement["Pitch Meaning"] = measurement.pitch_sign_meaning
-            dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))
-            dict_patient_measurement["Roll Meaning"] = measurement.roll_sign_meaning
+            dict_patient_measurement["Yaw Component"] = str(abs(measurement.yaw_angle))+'  '+measurement.yaw_sign_meaning
+            dict_patient_measurement["Pitch Component"] = str(abs(measurement.pitch_angle))+'  '+measurement.pitch_sign_meaning
+            dict_patient_measurement["Roll Component"] = str(abs(measurement.roll_angle))+'  '+measurement.roll_sign_meaning
             self.lst_compute_angles.append(dict_patient_measurement)
 
 
@@ -2063,6 +2004,7 @@ def WidgetImport(layout):
 
 def GetAvailableLm(mfold,lm_group):
   All_landmarks = GetAllLandmarks(mfold)
+  print(All_landmarks)
   available_lm = {"Other":[]}
   for lm in All_landmarks:
     if lm in lm_group.keys():
@@ -2088,6 +2030,7 @@ def GetAllLandmarks(dir_path):
   teeth_lst = []
   for jaw,lst_dental in DICO_TEETH.items():
     teeth_lst += lst_dental
+  print(teeth_lst)
   All_landmarks = []
   normpath = os.path.normpath("/".join([dir_path, '**', '']))
   for img_fn in sorted(glob.iglob(normpath, recursive=True)):
@@ -2151,6 +2094,7 @@ def reject(vec, axis):
   return vec - axis * (np.dot(vec, axis) / np.dot(axis, axis))
 
 def computeDistance(point1_coord, point2_coord):
+  print(point1_coord,point2_coord)
   delta = point2_coord - point1_coord
   norm = np.linalg.norm(delta)
 
@@ -2262,7 +2206,7 @@ def WriteJson(patient,cp_lst,out_path):
   with open(out_path+'/'+f"P{patient}_Midpoint.json", 'w', encoding='utf-8') as f:
     json.dump(file, f, ensure_ascii=False, indent=4)
   f.close
-  #print('file saved')
+  print('file saved')
 
 def SaveJson(patients_lst,patients_dict,out_path):
   midpoint_dic = {}
@@ -2287,6 +2231,7 @@ def SaveJson(patients_lst,patients_dict,out_path):
       midpoint_dic[patient] = lst_mid_point
   
   for patient,cp_lst in midpoint_dic.items():
+    print(cp_lst)
     WriteJson(patient,cp_lst,out_path)
   
 
@@ -2301,8 +2246,9 @@ lower_left_back = ['LL8','LL7','LL6','LL5','LL4','LL3']
 lower_left_front = ['LL1','LL2']
 
 def SignManager(measurement):
-  #print("function sign manager")
+  print(measurement.type_m)
   if measurement.type_m in ['Distance between 2 points T1','Distance between 2 points T2','Distance between 2 points T1 T2']:
+    print(measurement.point1.name[:3],measurement.point2.name[:3])
     if measurement.point1.name[:3] and measurement.point2.name[:3] in DICO_TEETH["Lower"]+DICO_TEETH["Upper"]:
       measurement_point1_name = measurement.point1.name[:3]
       measurement_point2_name = measurement.point2.name[:3]
@@ -2329,18 +2275,9 @@ def SignManager(measurement):
     measurement.a_p_sign_meaning = ""
     measurement.s_i_sign_meaning = "" 
 
-  elif measurement.type_m in ['Angle between 2 lines','Angle between 2 lines T1','Angle between 2 lines T2','Angle line T1 and line T2']:     
-    
-    #print("first if ")
-    #print("measurement.line1.point1.name[:3]",measurement.line1.point1.name[:3])
-    #print("measurement.line1.point2.name[:3]",measurement.line1.point2.name[:3])
-    #print("measurement.line2.point1.name[:3]",measurement.line2.point1.name[:3])
-    #print("measurement.line2.point2.name[:3]",measurement.line2.point2.name[:3])
-    #print("measurement.line1.point1.name[:3] and measurement.line1.point2.name[:3] and measurement.line2.point1.name[:3] and measurement.line2.point2.name[:3] ",measurement.line1.point1.name[:3] and measurement.line1.point2.name[:3] and measurement.line2.point1.name[:3] and measurement.line2.point2.name[:3] )
-    #print("DICO_TEETH['Lower']+DICO_TEETH['Upper']",DICO_TEETH["Lower"]+DICO_TEETH["Upper"])
- 
+  elif measurement.type_m in ['Angle between 2 lines','Angle between 2 lines T1','Angle between 2 lines T2','Angle line T1 and line T2']:
+    print('measurement in [Angle between 2 lines,Angle between 2 lines T1,Angle between 2 lines T2,Angle line T1 and line T2]')      
     if measurement.line1.point1.name[:3] and measurement.line1.point2.name[:3] and measurement.line2.point1.name[:3] and measurement.line2.point2.name[:3] in DICO_TEETH["Lower"]+DICO_TEETH["Upper"]:
-      #print("second if")
       # print('dental angles')
       # measurement_point1_name = measurement.line1.point1.name[:3]
       # measurement_point2_name = measurement.line1.point2.name[:3]
@@ -2503,7 +2440,6 @@ def SignMeaningDentalDst(measurement,lst_measurement):
       measurement.s_i_sign_meaning = "I"
 
 def SignMeaningDentalAngle(measurement,lst_measurement):
-  #print("function angle")
   if not False in [elem in upper_right_back for elem in lst_measurement]:   
     if measurement.pitch_angle>0:
       measurement.pitch_sign_meaning = "M"
