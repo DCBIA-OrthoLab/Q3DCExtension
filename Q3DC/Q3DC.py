@@ -240,6 +240,11 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
         self.tableAndExportLinePointLayout.addWidget(self.deleteLinePointRowButton)
         self.tableAndExportLinePointLayout.addLayout(self.exportLinePointLayout)
 
+        # Viewing-Aid Line Markups
+        self.synchronizeLineViewingAid(self.ui.lineLAComboBox, self.ui.lineLBComboBox)
+        self.synchronizeLineViewingAid(self.ui.line1LAComboBox, self.ui.line1LBComboBox)
+        self.synchronizeLineViewingAid(self.ui.line2LAComboBox, self.ui.line2LBComboBox)
+
         # ---------------------- Data Export -------------------------
 
         self.exportDistanceButton.connect(
@@ -335,11 +340,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
             (self.ui.fidListComboBoxlineLA.currentNodeID, self.ui.lineLAComboBox.currentText) !=
             (self.ui.fidListComboBoxlineLB.currentNodeID, self.ui.lineLBComboBox.currentText),
         ))
-
-        # todo draw line between current line selections.
-        # fidListComboBoxline1LA -> fidListComboBoxline1LB
-        # fidListComboBoxline2LA -> fidListComboBoxline2LB
-        # fidListComboBoxlineLA -> fidListComboBoxlineLB
 
     def init_anatomical_legend(self):
         if self.anatomical_legend is None:
@@ -458,6 +458,36 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
                 observers.addObserver(node, node.PointRemovedEvent, repopulate)
 
         node_combobox.connect('currentNodeChanged(vtkMRMLNode*)', onNodeChanged)
+
+    def synchronizeLineViewingAid(self, tgtA_combobox, tgtB_combobox):
+        line = slicer.mrmlScene.AddNewNodeByClass('vtkMRMLMarkupsLineNode')
+        line.CreateDefaultDisplayNodes()
+        line.HideFromEditorsOn()
+        line.LockedOn()
+        line.GetDisplayNode().PointLabelsVisibilityOff()
+        line.GetDisplayNode().PropertiesLabelVisibilityOff()
+        line.GetDisplayNode().VisibilityOff()
+
+        A = ControlPoint.new(line)
+        B = ControlPoint.new(line)
+
+        def setConstraints():
+            tgtA = tgtA_combobox.currentData
+            tgtB = tgtB_combobox.currentData
+
+            if tgtA and tgtB:
+                self.logic.constraints.setConstraint(A, 'lock', tgtA)
+                self.logic.constraints.setConstraint(B, 'lock', tgtB)
+                line.GetDisplayNode().VisibilityOn()
+            else:
+                self.logic.constraints.delConstraint(A)
+                self.logic.constraints.delConstraint(B)
+                line.GetDisplayNode().VisibilityOff()
+
+        tgtA_combobox.currentIndexChanged.connect(setConstraints)
+        tgtB_combobox.currentIndexChanged.connect(setConstraints)
+
+        return line
 
     def onAddLandmarkButtonClicked(self):
         selection = slicer.mrmlScene.GetSingletonNode('Singleton', 'vtkMRMLSelectionNode')
