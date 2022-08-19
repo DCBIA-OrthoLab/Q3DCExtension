@@ -11,6 +11,7 @@ set(EXTENSION_DESCRIPTION "This extension contains one module of the same name. 
 set(EXTENSION_ICONURL "https://raw.githubusercontent.com/DCBIA-OrthoLab/Q3DCExtension/master/Q3DC.png")
 set(EXTENSION_SCREENSHOTURLS "http://www.slicer.org/slicerWiki/index.php/File:Q3DC_Interface.png")
 set(EXTENSION_ENABLED 1)
+set(EXTENSION_DEPENDS "SlicerMarkupConstraints")
 
 #-----------------------------------------------------------------------------
 # Extension dependencies
