@@ -9,32 +9,17 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import csv
 import json
-# import pandas as pd
-# import openpyxl
-# from PySide2.QtCore import Qt
+
 
 #
 # AQ3DC
 #
 try:
   import pandas as pd
-  import openpyxl
-#   import xlrd
-#   import xlsxwriter
-#   # import PyQt5
-#   from PySide2.QtCore import Qt
 
 except: 
   slicer.util.pip_install('pandas')
-  slicer.util.pip_install('openpyxl')
-#   slicer.util.pip_install('xlrd')
-#   slicer.util.pip_install('xlsxwriter')
-  slicer.util.pip_install('PySide2')
-  import pandas as pd
-  import openpyxl
-#   import xlrd
-#   import xlsxwriter
-  from PySide2.QtCore import Qt
+
 
 GROUPS_LANDMARKS = {
   'Cranial Base/Vertebra' : ['Ba', 'S', 'N', 'RPo', 'LPo', 'RFZyg', 'LFZyg', 'C2', 'C3', 'C4'],
@@ -537,8 +522,6 @@ class LMTab:
       vb2.addStretch()
       wid.setLayout(vb2)
 
-    scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
-    scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
     scr_box.setWidgetResizable(True)
     scr_box.setWidget(wid)
     
@@ -678,8 +661,6 @@ class LMTabTeeth:
       vb2.addStretch()
       wid.setLayout(vb2)
 
-    scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-    scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOn)
     scr_box.setWidgetResizable(True)
     scr_box.setWidget(wid)
 
@@ -809,8 +790,6 @@ class TableView:
       
       vb2.addWidget(tableWidget)
       
-      scr_box.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
-      scr_box.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
       scr_box.setWidgetResizable(True)
       scr_box.setWidget(wid)
       
@@ -1068,40 +1047,49 @@ class TabManager:
   def OnExportMeasurement(self):
     csv_columns_dist = ["Type of measurement","Point 1", "Point 2 / Line"]
     csv_columns_angle = ["Type of measurement","Line 1", "Line 2"]
-    lst_data_dist_pp = []
-    lst_data_dist_pl = []
-    lst_data_angl = []
+    dic_data_dist_pp = {"Type of measurement":[],"Point 1":[],"Point 2 / Line":[]}
+    dic_data_dist_pl = {"Type of measurement":[],"Point 1":[],"Point 2 / Line":[]}
+    dic_data_angl = {"Type of measurement":[],"Line 1":[], "Line 2":[]}
+    print("self.DWidget.lst_measurement_dist :", self.DWidget.lst_measurement_dist)
+    print("self.AWidget.lst_measurement_angles :",self.AWidget.lst_measurement_angles)
     if len(self.DWidget.lst_measurement_dist)>0:
       for measurement in self.DWidget.lst_measurement_dist:
-        if measurement.type_m in ["Distance between 2 points T1",'Distance between 2 points T1 T2']:
-          dict_csv = {"Type of measurement":measurement.type_m,"Point 1":measurement.point1.name,"Point 2 / Line":measurement.point2.name}
-          lst_data_dist_pp.append(dict_csv)
+        print("measurement :",measurement)
+        print("measurement.type_m :",measurement.type_m)
+        if measurement.type_m in ["Distance between 2 points T1","Distance between 2 points T2",'Distance between 2 points T1 T2',"Distance between point line T1","Distance between point line T2"]:
+          dic_data_dist_pp['Type of measurement'].append(measurement.type_m)
+          dic_data_dist_pp['Point 1'].append(measurement.point1.name)
+          dic_data_dist_pp['Point 2 / Line'].append(measurement.point2.name)
         elif measurement.type_m == 'Distance point line dif T1 T2':
-          dict_csv = {"Type of measurement":measurement.type_m,"Point 1":measurement.point1.name+'/'+measurement.point2.name,"Point 2 / Line":measurement.line1.name+'/'+measurement.line2.name}
-          lst_data_dist_pl.append(dict_csv)
+          dic_data_dist_pl['Type of measurement'].append(measurement.type_m)
+          dic_data_dist_pl['Point 1'].append(measurement.point1.name+'/'+measurement.point2.name)
+          dic_data_dist_pl['Point 2 / Line'].append(measurement.line1.name+'/'+measurement.line2.name)
         else:
-          dict_csv = {"Type of measurement":measurement.type_m,"Point 1":measurement.point.name,"Point 2 / Line":measurement.line.name}
-          lst_data_dist_pl.append(dict_csv)
+          dic_data_dist_pl['Type of measurement'].append(measurement.type_m)
+          dic_data_dist_pl['Point 1'].append(measurement.point.name)
+          dic_data_dist_pl['Point 2 / Line'].append(measurement.line.name)
     if len(self.AWidget.lst_measurement_angles)>0:
       for measurement in self.AWidget.lst_measurement_angles:
         if measurement.type_m in ['Angle between 2 lines','Angle between 2 lines T1','Angle between 2 lines T2','Angle line T1 and line T2']:
-          dict_csv = {"Type of measurement":measurement.type_m,"Line 1":measurement.line1.name,"Line 2":measurement.line2.name}  
-          lst_data_angl.append(dict_csv)
+          dic_data_angl['Type of measurement'].append(measurement.type_m)
+          dic_data_angl['Line 1'].append(measurement.line1.name)
+          dic_data_angl['Line 2'].append(measurement.line2.name)
         else:
-          dict_csv = {"Type of measurement":measurement.type_m,"Line 1":measurement.line1_T1.name+'/'+measurement.line2_T1.name,"Line 2":measurement.line1_T2.name+'/'+measurement.line2_T2.name}  
-          lst_data_angl.append(dict_csv)
+          dic_data_angl['Type of measurement'].append(measurement.type_m)
+          dic_data_angl['Line 1'].append(measurement.line1_T1.name+'/'+measurement.line2_T1.name)
+          dic_data_angl['Line 2'].append(measurement.line1_T2.name+'/'+measurement.line2_T2.name)
 
     
     
     with pd.ExcelWriter(f"{self.export_line.text}/{self.line_edit.text}") as writer:
-      if len(lst_data_dist_pp)>0:
-        df_dist_pp = pd.DataFrame(lst_data_dist_pp,index=list(range(len(lst_data_dist_pp))),columns=list(lst_data_dist_pp[0].keys()))
+      if len(dic_data_dist_pp['Type of measurement'])>0:
+        df_dist_pp = pd.DataFrame(dic_data_dist_pp)
         df_dist_pp.to_excel(writer,sheet_name="Distance between 2 points",index=False)
-      if len(lst_data_dist_pl)>0:
-        df_dist_pl = pd.DataFrame(lst_data_dist_pl,index=list(range(len(lst_data_dist_pl))),columns=list(lst_data_dist_pl[0].keys()))
+      if len(dic_data_dist_pl['Type of measurement'])>0:
+        df_dist_pl = pd.DataFrame(dic_data_dist_pl)
         df_dist_pl.to_excel(writer,sheet_name="Distance point line",index=False)
-      if len(lst_data_angl)>0:
-        df_angl = pd.DataFrame(lst_data_angl,index=list(range(len(lst_data_angl))),columns=list(lst_data_angl[0].keys()))
+      if len(dic_data_angl['Type of measurement'])>0:
+        df_angl = pd.DataFrame(dic_data_angl)
         df_angl.to_excel(writer,sheet_name="Angle between 2 lines",index=False)
     
     self.label_export_done.text = "Export done !!"
@@ -1114,55 +1102,59 @@ class TabManager:
 
   def OnImportMeasurement(self):
     path_file = self.import_file
-    wb = openpyxl.load_workbook(path_file)
-    names_sheet = wb.sheetnames
 
-    for idx,sheet_name in enumerate(names_sheet):
-      ws = wb[sheet_name]
-      if idx == 0:
-        for idx_row,row in enumerate(ws.iter_rows()):
-          if idx_row != 0:
-            data_type_of_measurment = row[0].value
-            point1 = Point(row[1].value)
-            point2 = Point(row[2].value)
+    reader = pd.read_excel(path_file,sheet_name=None)
+    newreader={"Distance between 2 points":{"Type of measurement":[],"Point 1":[],"Point 2 / Line":[]},
+'Distance point line':{"Type of measurement":[],"Point 1":[],"Point 2 / Line":[]},
+'Angle between 2 lines':{"Type of measurement":[],"Line 1":[], "Line 2":[]}}
+    for name_sheet in reader:
+        for name_column in reader[name_sheet]:
+            for i in reader[name_sheet][name_column] :
+                newreader[name_sheet][name_column].append(i)
+
+
+    for name_sheet,sheet in newreader.items():
+        if name_sheet == "Distance between 2 points" :
+          for i in range(len(sheet["Type of measurement"])) :
+            data_type_of_measurment = sheet["Type of measurement"][i]
+            point1 = Point(sheet["Point 1"][i])
+            point2 = Point(sheet["Point 2 / Line"][i])
             measurement = MeasurePointToPoint(point1,point2,data_type_of_measurment)
             self.DWidget.lst_measurement_dist.append(measurement)
-      
-      elif idx == 1:
-        for idx_row,row in enumerate(ws.iter_rows()):
-          if idx_row != 0:
-            data_type_of_measurment = row[0].value
-            if '/' not in row[2].value:
-              point = Point(row[1].value)
-              point2 = row[2].value.split('-')[0]
-              point3 = row[2].value.split('-')[1]
-              line = Line(Point(point2),Point(point3))
-              measurement = MeasurePointToLine(point,line,data_type_of_measurment)
-              self.DWidget.lst_measurement_dist.append(measurement)
-            else:
-              measurement_T1 = self.DWidget.lst_measurement_dist[-2]
-              measurement_T2 = self.DWidget.lst_measurement_dist[-1]
-              measurement = MeasureDifPlT1T2(measurement_T1,measurement_T2,data_type_of_measurment)
-              self.DWidget.lst_measurement_dist.append(measurement)
+        
+        elif name_sheet == "Distance point line":
+          for i in range(len(sheet["Type of measurement"])) :
+              data_type_of_measurment = sheet["Type of measurement"][i]
+              if '/' not in sheet["Point 1"][i]:
+                point = Point(sheet["Point 1"][i])
+                point2 = sheet["Point 2 / Line"][i].split('-')[0]
+                point3 = sheet["Point 2 / Line"][i].split('-')[1]
+                line = Line(Point(point2),Point(point3))
+                measurement = MeasurePointToLine(point,line,data_type_of_measurment)
+                self.DWidget.lst_measurement_dist.append(measurement)
+              else:
+                measurement_T1 = self.DWidget.lst_measurement_dist[-2]
+                measurement_T2 = self.DWidget.lst_measurement_dist[-1]
+                measurement = MeasureDifPlT1T2(measurement_T1,measurement_T2,data_type_of_measurment)
+                self.DWidget.lst_measurement_dist.append(measurement)
 
-      else:
-        for idx_row,row in enumerate(ws.iter_rows()):
-          if idx_row != 0:
-            data_type_of_measurment = row[0].value
-            if '/' not in row[2].value:
-              point1 = Point(row[1].value.split('-')[0])
-              point2 = Point(row[1].value.split('-')[1])
-              point3 = Point(row[2].value.split('-')[0])
-              point4 = Point(row[2].value.split('-')[1])
-              line1 = Line(point1,point2)
-              line2 = Line(point3,point4)
-              measurement = MeasureAngles(line1,line2,data_type_of_measurment)
-              self.AWidget.lst_measurement_angles.append(measurement)
-            else:
-              measurement_T1 = self.AWidget.lst_measurement_angles[-2]
-              measurement_T2 = self.AWidget.lst_measurement_angles[-1]
-              measurement = MeasureDifAngleT1T2(measurement_T1,measurement_T2,data_type_of_measurment)
-              self.AWidget.lst_measurement_angles.append(measurement)
+        else:
+          for i in range(len(sheet["Type of measurement"])) :
+              data_type_of_measurment = sheet["Type of measurement"][i]
+              if '/' not in sheet["Line 2"][i]:
+                point1 = Point(sheet["Line 1"][i].split('-')[0])
+                point2 = Point(sheet["Line 1"][i].split('-')[1])
+                point3 = Point(sheet["Line 2"][i].split('-')[0])
+                point4 = Point(sheet["Line 2"][i].split('-')[1])
+                line1 = Line(point1,point2)
+                line2 = Line(point3,point4)
+                measurement = MeasureAngles(line1,line2,data_type_of_measurment)
+                self.AWidget.lst_measurement_angles.append(measurement)
+              else:
+                measurement_T1 = self.AWidget.lst_measurement_angles[-2]
+                measurement_T2 = self.AWidget.lst_measurement_angles[-1]
+                measurement = MeasureDifAngleT1T2(measurement_T1,measurement_T2,data_type_of_measurment)
+                self.AWidget.lst_measurement_angles.append(measurement)
       
 
     self.DWidget.generate_table_distances()
@@ -1239,7 +1231,7 @@ class DistanceWidget:
     self.type_measur_combobox.addItems(lst_type_meas)
     self.label_type_meas = qt.QLabel("Type of measurement :")
     self.label_type_meas.setFixedWidth(140)
-    self.label_T1_T2 = qt.QLabel("                  T1/T2")
+    self.label_T1_T2 = qt.QLabel("          T1/T2")
     self.label_T1_T2.setFixedWidth(110)
     self.check_box_T1_T2 = qt.QCheckBox()
     self.add_button_dist = qt.QPushButton("Add")
@@ -1331,7 +1323,7 @@ class DistanceWidget:
     if self.state_check_box_T1_T2 == 2:
       if self.parent.ui.lineEditLandPathT2.text == '':
         warningMessage('Missing T2 folder')
-        self.check_box_T1_T2.setCheckState(Qt.Unchecked)
+        self.check_box_T1_T2.setCheckState(qt.Unchecked)
 
   def WidgetSetHidden(self,hidden):
     self.distance_widget.setHidden(hidden)
@@ -1662,7 +1654,7 @@ class AnglesWidget:
     self.type_measur_combobox.addItems(self.lst_type_meas)
     self.label_type_meas = qt.QLabel("Type of measurement")
     self.label_type_meas.setFixedWidth(140)
-    self.label_T1_T2 = qt.QLabel("                  T1/T2")
+    self.label_T1_T2 = qt.QLabel("           T1/T2")
     self.label_T1_T2.setFixedWidth(110)
     self.check_box_T1_T2 = qt.QCheckBox()
     self.add_button_angl = qt.QPushButton("Add")
@@ -1768,7 +1760,7 @@ class AnglesWidget:
       
       if self.parent.ui.lineEditLandPathT2.text == '':
         warningMessage('Missing T2 folder')
-        self.check_box_T1_T2.setCheckState(Qt.Unchecked)
+        self.check_box_T1_T2.setCheckState(qt.Unchecked)
 
     else:
       if "Angle line T1 and line T2" in self.lst_type_meas:
