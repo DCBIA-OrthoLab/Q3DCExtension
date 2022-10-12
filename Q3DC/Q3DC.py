@@ -500,21 +500,32 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
         landmarks = self.ui.inputLandmarksSelector.currentNode()
 
         if model and landmarks:
-            idx = landmarks.AddControlPoint((0, 0, 0))
-            landmarks.UnsetNthControlPointPosition(idx)  # so that placement modifies this point
+            cp = ControlPoint.new(landmarks)
+
+            self.logic.constraints.setConstraint(
+                cp, 'nearest',
+                cp, self.ui.inputModelSelector.currentNode()
+            )
+
+            # idx = landmarks.AddControlPoint((0, 0, 0))
+            # landmarks.UnsetNthControlPointPosition(idx)  # so that placement modifies this point
 
             # todo should be aware of the last point placed using the legend
             try:
-                label, description = self.current_suggested_landmarks[idx]
-                landmarks.SetNthControlPointLabel(idx, label)
-                landmarks.SetNthControlPointDescription(idx, description)
+                label, description = self.current_suggested_landmarks[cp.idx]
+                cp.label = label
+                cp.description = description
             except IndexError:
                 pass
+
+            # todo should correctly set the constraint for the position.
+            #  really the constraints should probably be set by a separate PointAdded observer.
+            #  cp.node.UnsetNthControlPointPosition(cp.idx)
 
             selection.SetActivePlaceNodeID(landmarks.GetID())
             interaction.SetCurrentInteractionMode(interaction.Place)
         else:
-            # todo show error. shouldn't be possible to reach this state.
+            slicer.util.errorDisplay('You must set a model of reference and connected landmarks list.')
             pass
 
     def onDefineMidPointClicked(self):
@@ -577,29 +588,6 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
 
 
 class Q3DCLogic(ScriptedLoadableModuleLogic):
-    #     def __init__(self, interface):
-    #         self.enable_legend_labels = True
-    #         self.projectNewPoints = True
-    #
-    #     def connectedModelChangement(self):
-    #         messageBox = ctk.ctkMessageBox()
-    #         messageBox.setWindowTitle(" /!\ WARNING /!\ ")
-    #         messageBox.setIcon(messageBox.Warning)
-    #         messageBox.setText("The Markup Fiducial Node selected is curently projected on an"
-    #                            "other model, if you chose to continue the fiducials will be  "
-    #                            "reprojected, and this could impact the functioning of other modules")
-    #         messageBox.setInformativeText("Do you want to continue?")
-    #         messageBox.setStandardButtons(messageBox.No | messageBox.Yes)
-    #         choice = messageBox.exec_()
-    #         if choice == messageBox.Yes:
-    #             return True
-    #         else:
-    #             messageBox.setText(" Node not modified")
-    #             messageBox.setStandardButtons(messageBox.Ok)
-    #             messageBox.setInformativeText("")
-    #             messageBox.exec_()
-    #             return False
-
     def __init__(self):
         ScriptedLoadableModuleLogic.__init__(self)
 
