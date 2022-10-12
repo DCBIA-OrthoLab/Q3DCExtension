@@ -626,7 +626,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
         # todo respect projection
 
-        self.constraints.setConstraint(c, 'named_midpoint', a, b)
+        self.constraints.setConstraint(c, 'named_midpoint', a, b, extras=[c])
 
     def round(self, value):  # todo use numpy rounding
         return round(value, self.numberOfDecimals)
