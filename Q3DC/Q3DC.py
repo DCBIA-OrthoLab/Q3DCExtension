@@ -496,19 +496,14 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
         interaction = slicer.mrmlScene.GetSingletonNode('Singleton', 'vtkMRMLInteractionNode')
 
         # todo parameter node
-        model = self.ui.inputModelSelector.currentNode()
         landmarks = self.ui.inputLandmarksSelector.currentNode()
+        model = self.ui.inputModelSelector.currentNode()
 
-        if model and landmarks:
-            cp = ControlPoint.new(landmarks)
+        if landmarks:
+            cp = ControlPoint.new(landmarks, pos=None)
 
-            self.logic.constraints.setConstraint(
-                cp, 'nearest',
-                cp, self.ui.inputModelSelector.currentNode()
-            )
-
-            # idx = landmarks.AddControlPoint((0, 0, 0))
-            # landmarks.UnsetNthControlPointPosition(idx)  # so that placement modifies this point
+            if model:  # and on surface checked
+                self.logic.constraints.setConstraint(cp, 'nearest', cp, model)
 
             # todo should be aware of the last point placed using the legend
             try:
@@ -518,20 +513,13 @@ class Q3DCWidget(ScriptedLoadableModuleWidget, slicer.util.VTKObservationMixin):
             except IndexError:
                 pass
 
-            # todo should correctly set the constraint for the position.
-            #  really the constraints should probably be set by a separate PointAdded observer.
-            #  cp.node.UnsetNthControlPointPosition(cp.idx)
-
             selection.SetActivePlaceNodeID(landmarks.GetID())
             interaction.SetCurrentInteractionMode(interaction.Place)
         else:
-            slicer.util.errorDisplay('You must set a model of reference and connected landmarks list.')
-            pass
+            slicer.util.errorDisplay('You must set a connected landmarks list.')
 
     def onDefineMidPointClicked(self):
         # todo parameter node
-        landmarks = self.ui.inputLandmarksSelector.currentNode()
-
         self.logic.defineMidPoint(
             self.ui.inputLandmarksSelector.currentNode(),
             self.ui.landmarkComboBox1.currentData,
