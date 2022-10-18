@@ -19,7 +19,15 @@ try:
 
 except: 
   slicer.util.pip_install('pandas')
+  import pandas as pd #news people will not need to refresh the AQ3DC
 
+
+
+try :
+  #we need this package for pandas package
+  import openpyxl
+except:
+  slicer.util.pip_install('openpyxl')
 
 GROUPS_LANDMARKS = {
   'Cranial Base/Vertebra' : ['Ba', 'S', 'N', 'RPo', 'LPo', 'RFZyg', 'LFZyg', 'C2', 'C3', 'C4'],
@@ -1203,10 +1211,10 @@ class TabManager:
       with pd.ExcelWriter(f"{self.ui.export_measurement_line.text}/{self.ui.file_measurement_edit.text}") as writer:
         if len(full_lst_compute_dst)>0:
           df.to_excel(writer,sheet_name="Measurement",index=False)
-          for column in df:
-            column_width = max(df[column].astype(str).map(len).max(), len(column))
-            col_idx = df.columns.get_loc(column)
-            writer.sheets["Measurement"].set_column(col_idx, col_idx, column_width)
+          # for column in df:
+          #   column_width = max(df[column].astype(str).map(len).max(), len(column))
+          #   col_idx = df.columns.get_loc(column)
+          #   writer.sheets["Measurement"].set_column(col_idx, col_idx, column_width)
       self.ui.MeasurementSavedLabel.text = '  MEASUREMENTS SAVED !!'  
       # print('------------------- SAVE MEASUREMENT -------------------')
 
