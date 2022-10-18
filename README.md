@@ -21,7 +21,7 @@ Q3DC also allows users to export computed measurements to CSV files. Note that t
 
 [landmarkDescription]: ./docs/landmarkDescription.md
 
-# AQ3DC : Automatic Quantification for 3D Cephalometrics
+# AQ3DC : Automatic Quantification of 3D Components
 
 Authors: Baptiste Baquero, Maxime Gillot, Lucia Cevidanes, Jean-Christophe Fillion-Robin, David Allemang
 	
