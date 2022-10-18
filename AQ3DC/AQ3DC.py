@@ -50,6 +50,15 @@ MID_POINTS = []
 
 ORDER_TAB = {'Maxilla':0,'Mandible':1,'Cranial Base/Vertebra':2,"Dental":3,'Other':4,'Midpoint':5}
 
+upper_right_back = ['UR8','UR7','UR6','UR5','UR4','UR3']
+upper_right_front = ['UR1','UR2']
+upper_left_back = ['UL8','UL7','UL6','UL5','UL4','UL3']
+upper_left_front = ['UL1','UL2']
+lower_right_back = ['LR8','LR7','LR6','LR5','LR4','LR3']
+lower_right_front = ['LR1','LR2']
+lower_left_back = ['LL8','LL7','LL6','LL5','LL4','LL3']
+lower_left_front = ['LL1','LL2']
+
 
 
 '''
@@ -60,8 +69,8 @@ TODO :  next step import export measure
       put all class variable in setup with comment
 
       organize function
-      computation 
-
+      add measure Distance between 2 points T1 T2
+      error with computation angle
       
    
 '''
@@ -314,6 +323,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.ButtonExportMeasure.clicked.connect(self.ExportMeasure)
     self.ui.ButtonImportMeasure.clicked.connect(self.ImportMeasure)
     self.ui.ButtonCompute.clicked.connect(self.Computation)
+    self.ui.ButtonFolderCompute.clicked.connect(self.ComputationFolder)
 
 
 
@@ -326,12 +336,23 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                                                                                                              
     """
 
+  def ComputationFolder(self):
+    computation_folder = qt.QFileDialog.getExistingDirectory(self.parent, "Select a scan folder")
+    if computation_folder != '' :
+      self.ui.LineEditFolderComputation.setText(computation_folder)
+
+
 
   def Computation(self):
-    print(self.dic_patient_T1['1'])
-    print(self.dic_patient_T2)
-    for patient in self.dic_patient_T1:
-      patient_compute = self.logic.GenerateComputePatient(patient,self.dic_patient_T1[patient],self.dic_patient_T2[patient])
+    print(self.dic_patient_T1["P10"])
+    path = self.ui.LineEditFolderComputation.text
+    file_name = self.ui.LineEditComputationFile.text
+    if path != '' and (file_name!='.xlsx' or ''):
+      print("Computation")
+      patient_compute = self.logic.ComputeManager(self.list_measure,self.dic_patient_T1)
+      print("During computation")
+      print(patient_compute)
+      self.logic.GenMeasurementExcel(patient_compute,path,file_name)
 
 
 
@@ -1441,6 +1462,11 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
     return list_measure
 
+
+
+
+
+
   def CreateMeasure(self,type_of_measure,list_point):
 
     out = []
@@ -1519,13 +1545,110 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
 
 
-  def computeDistance(point1_coord, point2_coord):
+  def computeDistance(self,point1_coord, point2_coord):
     delta = point2_coord - point1_coord
     norm = np.linalg.norm(delta)
 
     return round(-delta[0],3),round(-delta[1],3),round(delta[2],3),round(norm,3)   
 
 
+  def reject(self,vec, axis):
+    vec = np.asarray(vec)
+    axis = np.asarray(axis)
+
+  def computeLinePoint(self,line1, line2, point):
+    if np.allclose(line1, line2, atol=1e-5):
+      delta = point - line1
+    else:
+      delta = self.reject(
+        point - line2,
+        line1 - line2,
+      )
+    norm = np.linalg.norm(delta)
+    return round(-delta[0],3),round(-delta[1],3),round(delta[2],3),round(norm,3)
+
+  def computeAngle(self,line1, line2, axis):
+    mask = [True] * 3
+    mask[axis] = False
+    line1 = line1[mask]
+    line2 = line2[mask]
+
+    norm1 = np.linalg.norm(line1)
+    norm2 = np.linalg.norm(line2)
+
+    matrix = np.array([line1, line2])
+    det = np.linalg.det(matrix)
+    radians = np.arcsin(det / norm1 / norm2)
+    return np.degrees(radians)
+
+
+  def computeAngles(self,point1, point2, point3, point4):
+    line1 = point2 - point1
+    line2 = point4 - point3
+    axes = [
+        2,  # axis=S; axial; for yaw
+        0,  # axis=R; saggital; for pitch
+        1,  # axis=A; coronal; for roll
+    ]
+    result = []
+    for axis in axes:
+      value = self.computeAngle(line1, line2, axis)
+      result.append(round(value,3))
+
+    return result[0],-result[1],-result[2]
+
+
+
+
+
+  def ComputeManager(self,list_measure,dic_patient):
+    print("Call ComputeManager")
+    list_computation = []
+    dic_patient__computation={"Patient":[],"Type of measurement":[],"Landmarks":[],"R-L Component":[],"R-L Meaning":[],"A-P Component":[],"A-P Meaning":[],"S-I Component":[],"S-I Meaning":[],
+    "3D Distance":[],"Yaw Component":[],"Yam Meaning":[],"Picth Component":[],"Pitch Meaning":[],"Roll Component":[],"Roll Meaning":[]}
+    list_title=["Type of measurement","Landmarks","R-L Component","R-L Meaning","A-P Component","A-P Meaning",
+    "S-I Component","S-I Meaning","3D Distance","Yaw Component","Yam Meaning","Picth Component","Pitch Meaning","Roll Component","Roll Meaning"]
+
+    for measure in list_measure :
+      print("measure : ",measure)
+      for patient, point in dic_patient.items() :
+        print("patient : ",patient)
+        try: 
+          measure['position'] = point
+        except KeyError:
+          print("the landmark's measure doesnt exist in this patient",patient)
+          continue
+        measure.computation()
+        measure.SignManager()
+        dic_patient__computation["Patient"].append(patient)
+        for title in list_title :
+          dic_patient__computation[title].append(measure[title])
+        print("dic_patient__computation : ", dic_patient__computation)
+      
+    print("end ConputeManager")
+    return dic_patient__computation
+        
+
+
+  def GenMeasurementExcel(self,list_computation,path,name_file):
+    print("Call GenMeasurementExcel")
+    print(list_computation)
+
+    if len(list_computation)>0:
+      df = pd.DataFrame(list_computation)
+    
+    df.to_excel(f"{path}/{name_file}")
+
+
+    # with pd.ExcelWriter(f"{path}/{name_file}") as writer:
+    #   if len(list_computation)>0:
+    #     df.to_excel(writer,sheet_name="Measurement",index=False)
+    #     for column in df:
+    #       column_width = max(df[column].astype(str).map(len).max(), len(column))
+    #       col_idx = df.columns.get_loc(column)
+    #       writer.sheets["Measurement"].set_column(col_idx, col_idx, column_width)
+    #     writer.save()
+    print('------------------- SAVE MEASUREMENT -------------------')
 
 
 
@@ -1635,7 +1758,8 @@ class Point :
       return self.position
 
   def __setitem__(self,key,value):
-    if key == "postiton":
+    if key == "position":
+      print("Point change : Position : ",value)
       self.position = value
 
   def __eq__(self, __o: object) -> bool:
@@ -1667,6 +1791,11 @@ class Line :
       if self.point1 == __o[1] and self.point2 == __o[2]:
         out = True
       return out
+
+    def __setitem__(self,key,value):
+      if key == "position":
+        self.point1["position"] = value[0]
+        self.point2["position"] = value [1]
       
 
 
@@ -1677,10 +1806,15 @@ class Measure:
 
     self.measure = measure
     self.checkbox = None
-    self.r_l_sign_meaning = ""
-    self.a_p_sign_meaning = ""
-    self.s_i_sign_meaning = ""
-    self.r_l,self.a_p,self.s_i,self.norm =0, 0 , 0 , 0
+    self.lr_sign_meaning = ""
+    self.ap_sign_meaning = ""
+    self.si_sign_meaning = ""
+    self.lr,self.ap,self.si,self.norm =0, 0 , 0 , 0
+
+
+    #for angle normaly the name of calcul should Pitch, Roll, Yam
+    #but it s not necessary in the code to distinguish the name of calcul distance and angle
+    # so lr = Pitch, Roll = ap, si = Yam. for translation
 
 
   
@@ -1710,6 +1844,7 @@ class Measure:
         return self.measure+" "+self.time
       else :
         return self.measure
+    return 'x'
 
 
   def __eq__(self, __o: object) -> bool:
@@ -1740,6 +1875,15 @@ class Distance(Measure) :
     return self.__str__()
 
   def __setitem__(self, key, value):
+    if key == 'position':
+      self.point1['position'] = value[self.point1['name']]
+      print("In Distance ")
+      print("type(self.point2line) :", type(self.point2line), "value :", value,"self.point2line['name'] :", self.point2line['name'])
+      if isinstance(self.point2line,Line):
+        self.point2line["position"] = [value[self.point2line[1]["name"]], value[self.point2line[2]["name"]]]
+      else :
+        self.point2line["postion"] = value[self.point2line['name']]
+
     Measure.__setitem__(self,key, value)
 
   def __getitem__(self, key):
@@ -1747,6 +1891,22 @@ class Distance(Measure) :
       return self.point1
     elif key == "point 2" or key == 2:
       return self.point2line
+    elif key == "Landmarks" :
+      return str(self.point1)+" & "+str(self.point2line)
+    elif key =="R-L Component":
+      return str(abs(self.lr))
+    elif key =="R-L Meaning" :
+      return self.lr_sign_meaning
+    elif key == "A-P Component" :
+      return str(abs(self.ap))
+    elif key == "A-P Meaning" :
+      return self.ap_sign_meaning
+    elif key == "S-I Component" :
+      return str(abs(self.si))
+    elif key == "S-I Meaning" :
+      return self.si_sign_meaning
+    elif key == "3D Distance":
+      return self.norm
     return Measure.__getitem__(self,key)
 
 
@@ -1784,19 +1944,152 @@ class Distance(Measure) :
     return out  
 
 
-  def compute(self):
+  def computation(self):
     if self["Type of measurement"] == "Distance between 2 points":
-      self.r_l,self.a_p,self.s_i,self.norm = AQ3DCLogic.computeDistance(np.array(self.point1["position"]),np.array(self.point2line["position"]))
+      self.lr,self.ap,self.si,self.norm = AQ3DCLogic.computeDistance(self,np.array(self.point1["position"]),np.array(self.point2line["position"]))
+    elif self["Type of measurement"] == "Distance point line" :
+      print("self.point2line[1]['position'] :",self.point2line[1]['position'])
+      self.lr,self.ap,self.si,self.norm = AQ3DCLogic.computeLinePoint(self,np.array(self.point2line[1]['position']),np.array(self.point2line[1]['position']),np.array(self.point1['position']))
 
 
 
   def SignManager(self):
-    if self["Type of measurement"] == "Distance between 2 points":
-      if self.point1 and self.point2line in DICO_TEETH["Lower"]+DICO_TEETH['Upper']:
-        lst_measurement = [ self.point1["name"],self.point2line["name"]]
+    if self.measure == 'Distance between 2 points':
+      if self.point1["name"] and self.point2line['name'] in DICO_TEETH["Lower"]+DICO_TEETH["Upper"]:
+        self.__SignMeaningDentalDst()
+      else :
+        self.__SignMeaningDist()
+
+    else :
+      self.__SignMeaningDist()
+
+
+  def __SignMeaningDist(self):
+    self.lr_sign_meaning = "L"
+    self.ap_sign_meaning = "P"
+    self.si_sign_meaning = "I"
+    if self.lr>0:
+      self.lr_sign_meaning = "R" #Right
+
+    if self.ap>0:
+      self.ap_sign_meaning = "A" #Anterior
+   
+    if self.si>0:
+      self.si_sign_meaning = "S" #Superior
+
+
+
+
+  def __SignMeaningDentalDst(self):
+    lst_measurement = [self.point1["name"],self.point2line["name"]]
+    if not False in [elem in upper_right_back for elem in lst_measurement]:
+      self.lr_sign_meaning = "L"
+      self.ap_sign_meaning = "D"
+      self.si_sign_meaning = "E"
+      if self.lr>0:
+        self.lr_sign_meaning = "B"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "M"
+
+      if self.si>0:
+        self.si_sign_meaning = "I"
+
+    elif not False in [elem in upper_right_front for elem in lst_measurement]:
+      self.lr_sign_meaning = "M"
+      self.ap_sign_meaning = "L"
+      self.si_sign_meaning = "E"
+      if self.lr>0:
+        self.lr_sign_meaning = "D"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "B"
+
+      if self.si>0:
+        self.si_sign_meaning = "I"
+
+    elif not False in [elem in upper_left_back for elem in lst_measurement]:
+      self.rl_sign_meaning = "B"
+      self.ap_sign_meaning = "D"
+      self.si_sign_meaning = "E"
+      if self.rl>0:
+        self.rl_sign_meaning = "L"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "M"
+
+      if self.si>0:
+        self.si_sign_meaning = "I"
+
+
+    elif not False in [elem in upper_left_front for elem in lst_measurement]:
+      self.si_sign_meaning = "E"
+      self.ap_sign_meaning = "L"
+      self.rl_sign_meaning = "D"
+      if self.rl>0:
+        self.rl_sign_meaning = "M"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "B"
+
+      if self.si>0:
+        self.si_sign_meaning = "I"
+
+    elif not False in [elem in lower_right_back for elem in lst_measurement]:
+      self.rl_sign_meaning = "L"
+      self.ap_sign_meaning = "D"
+      self.si_sign_meaning = "I"
+      if self.rl>0:
+        self.rl_sign_meaning = "B"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "M"
+
+      if self.si>0:
+        self.si_sign_meaning = "E"
+
+    elif not False in [elem in lower_right_front for elem in lst_measurement]:
+      self.rl_sign_meaning = "M"
+      self.ap_sign_meaning = "L"
+      self.si_sign_meaning = "I"
+      if self.rl>0:
+        self.rl_sign_meaning = "D"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "B"
+
+      if self.si>0:
+        self.si_sign_meaning = "E"
+
+
+    elif not False in [elem in lower_left_back for elem in lst_measurement]:
+      self.rl_sign_meaning = "B"
+      self.ap_sign_meaning = "D"
+      self.si_sign_meaning = "I"
+      if self.rl>0:
+        self.rl_sign_meaning = "L"       
+
+      if self.ap>0:
+        self.ap_sign_meaning = "M"
+
+      if self.si>0:
+        self.si_sign_meaning = "E"
   
 
+    elif not False in [elem in lower_left_front for elem in lst_measurement]:
+      self.rl_sign_meaning = "D"
+      self.ap_sign_meaning = "L"
+      self.si_sign_meaning = "I"
+      if self.rl>0:
+        self.rl_sign_meaning = "M"       
 
+      if self.ap>0:
+        self.ap_sign_meaning = "B"
+
+      if self.si>0:
+        self.si_sign_meaning = "E"
+
+  
 class Angle(Measure):
   def __init__(self, Line1 : Line, Line2 : Line,  measure: str,time: str =None ):
     super().__init__(time, measure)
@@ -1814,7 +2107,28 @@ class Angle(Measure):
       return self.line1
     elif key == "line 2" or key == 2:
       return self.line2
+    elif key == "Landmarks":
+      return str(self.line1)+" & "+str(self.line2)
+    elif key == "Yaw Component" :
+      return str(abs(self.lr))
+    elif key == "Yam Meaning":
+      return self.lr_sign_meaning
+    elif key == "Pitch Component":
+      return self.ap
+    elif key == "Pitch Meaning" :
+      return self.ap_sign_meaning
+    elif key == "Roll Component":
+      return str(abs(self.si))
+    elif key == "Roll Meaning":
+      return self.si_sign_meaning
     return Measure.__getitem__(self,key)
+
+
+  def __setitem__(self, key, value):
+    if key == "position" :
+      self.line1["position"] = [value[self.line1[1]["name"]],value[self.line1[2]['name']]]
+      self.line2["position"] = [value[self.line2[1]["name"]],value[self.line2[2]['name']]]
+    return super().__setitem__(key, value)
 
 
   def __iter__(self):
@@ -1852,6 +2166,125 @@ class Angle(Measure):
         out = True
     return out
       
+  def computation(self):
+    self.lr, self.ap, self.si = AQ3DCLogic.computeAngles(self,np.array(self.line1[1]['position']),np.array(self.line1[2]['position']),np.array(self.line2[1]['position']),np.array(self.line2[2]['position']))
+
+
+  def SignManager(self):
+    if self.line1[1]['name'] and self.line1[2]['name'] and self.line2[1]['name'] and self.line2[2]['name'] in  DICO_TEETH["Lower"]+DICO_TEETH["Upper"]:
+      self.__SignMeaningDentalAngle()
+
+
+
+  def __SignMeaningDentalAngle(self):
+    lst_measurement = [self.line1[1]['name'],self.line1[2]['name'],self.line2[1]['name'],self.line2[2]['name']]
+  #print("function angle")
+    if not False in [elem in upper_right_back for elem in lst_measurement]: 
+      self.lr_sign_meaning = "D"  
+      self.ap_sign_meaning = "L"
+      self.si_sign_meaning = "DR"
+      if self.lr>0:
+        self.lr_sign_meaning = "M"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "B"
+
+      if self.si>0:
+        self.si_sign_meaning = "MR"
+
+    elif not False in [elem in upper_right_front for elem in lst_measurement]:
+      self.lr_sign_meaning = "L"
+      self.ap_sign_meaning = "M"
+      self.si_sign_meaning = "DR"
+      if self.lr>0:
+        self.lr_sign_meaning = "B"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "D"
+
+      if self.si>0:
+        self.si_sign_meaning = "MR"
+
+      
+    elif not False in [elem in upper_left_back for elem in lst_measurement]:
+      self.lr_sign_meaning = "D"
+      self.ap_sign_meaning = "B"
+      self.si_sign_meaning = "MR"
+      if self.lr>0:
+        self.lr_sign_meaning = "M"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "L"
+     
+      if self.si>0:
+        self.si_sign_meaning = "DR"
+  
+    
+    elif not False in [elem in upper_left_front for elem in lst_measurement]:
+      self.lr_sign_meaning = "L"
+      self.ap_sign_meaning = "D"
+      self.si_sign_meaning = "MR"
+      if self.lr>0:
+        self.lr_sign_meaning = "B"
+    
+      if self.ap>0:
+        self.ap_sign_meaning = "M"
+       
+      if self.si>0:
+        self.si_sign_meaning = "DR"
+
+    elif not False in [elem in lower_right_back for elem in lst_measurement]:
+      self.lr_sign_meaning = "M"
+      self.ap_sign_meaning = "B"
+      self.si_sign_meaning = "DR"
+      if self.lr>0:
+        self.lr_sign_meaning = "D"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "L"
+     
+      if self.si>0:
+        self.si_sign_meaning = "MR"
+        
+    elif not False in [elem in lower_right_front for elem in lst_measurement]:
+      self.lr_sign_meaning = "B"
+      self.ap_sign_meaning = "D"
+      self.si_sign_meaning = "DR"
+      if self.lr>0:
+        self.lr_sign_meaning = "L" 
+
+      if self.ap>0:
+        self.ap_sign_meaning = "M"
+   
+      if self.si>0:
+        self.si_sign_meaning = "MR"     
+        
+    elif not False in [elem in lower_left_back for elem in lst_measurement]:   
+      self.lr_sign_meaning = "M"
+      self.ap_sign_meaning = "L"
+      self.si_sign_meaning = "MR"
+      if self.lr>0:
+        self.lr_sign_meaning = "D"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "B"
+    
+      if self.si>0:
+        self.si_sign_meaning = "DR"
+
+        
+    elif not False in [elem in lower_left_front for elem in lst_measurement]:
+      self.lr_sign_meaning = "B"
+      self.ap_sign_meaning = "M"
+      self.si_sign_meaning = "MR"
+      if self.lr>0:
+        self.lr_sign_meaning = "L"
+
+      if self.ap>0:
+        self.ap_sign_meaning = "D"
+    
+      if self.si>0:
+        self.si_sign_meaning = "DR"
 
 
 
@@ -1902,7 +2335,16 @@ class Diff2Measure(Measure):
       return self.measure1
     elif key == "measure 2" or key ==2:
       return self.measure1
+    elif key == "Landmarks" :
+      return self.measure1["Landmarks"]+" && "+self.measure2
     return super().__getitem__(key)
+
+
+  def __setitem__(self, key, value):
+    if key == "position" :
+      self.measure1['position'] = value
+      self.measure2['position'] = value
+    return super().__setitem__(key, value)
 
 
 
@@ -1912,6 +2354,24 @@ class Diff2Measure(Measure):
       if self.measure1 == __o[1] and self.measure2 == __o[2]:
         out = True
     return out
+
+
+  def compute(self):
+    self.measure1.compute()
+    self.measure2.compute()
+    self.lr = self.measure2.lr - self.measure1.lr
+    self.ap = self.measure2.ap - self.measure1.ap
+    self.si = self.measure2.si - self.measure1.si
+    self.lr = round(self.lr,3)
+    self.ap = round(self.ap,3)
+    self.si = round(self.norm,3)
+
+
+
+  def SignManager(self):
+    pass
+
+
 
 
 
