@@ -2213,7 +2213,7 @@ def GenControlePoint(P1_name,P2_name,mp):
       "selected": True,
       "locked": True,
       "visibility": True,
-      "positionStatus": "preview"
+      "positionStatus": "defined"
     }
     return controle_point
 
