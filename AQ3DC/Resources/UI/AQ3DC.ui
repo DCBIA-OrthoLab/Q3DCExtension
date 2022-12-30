@@ -91,41 +91,37 @@
        </layout>
       </item>
       <item>
-       <widget class="QTabWidget" name="TabLandmarks">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>255</height>
-         </size>
-        </property>
-        <property name="currentIndex">
-         <number>0</number>
-        </property>
-        <widget class="QWidget" name="tab_3">
-         <attribute name="title">
-          <string>Tab 1</string>
-         </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QTableView" name="tableView">
-            <attribute name="horizontalHeaderDefaultSectionSize">
-             <number>125</number>
-            </attribute>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_4">
-         <attribute name="title">
-          <string>Tab 2</string>
-         </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout_11">
-          <item>
-           <widget class="QTableView" name="tableView_2"/>
-          </item>
-         </layout>
-        </widget>
-       </widget>
+       <layout class="QHBoxLayout" name="LayoutLandmarks">
+        <item>
+         <widget class="QTabWidget" name="TabLandmarks">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>255</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <widget class="QWidget" name="tab_3">
+           <attribute name="title">
+            <string>Tab 1</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout"/>
+          </widget>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Tab 2</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <item>
+             <widget class="QTableView" name="tableView_2"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QGridLayout" name="gridLayout_8">
@@ -418,7 +414,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>5</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="PageDistance2Points">
            <layout class="QHBoxLayout" name="horizontalLayout_5">
