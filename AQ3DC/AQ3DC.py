@@ -63,7 +63,6 @@ TODO :
 
 
 
-print("-------------------------------AQ3DC---------------------------------")
 class AQ3DC(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
@@ -558,6 +557,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     status = dico_landmarks.exits(list_landmarks)
 
+
+
     index = 0
     for group , landmarks in dico_landmarks.items():
       landmark_execption=[]
@@ -855,7 +856,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     """
     out_path_T1 = os.path.join(self.ui.LineEditPathMidpoint.text ,'T1')
     out_path_T2 = os.path.join(self.ui.LineEditPathMidpoint.text,'T2')
-    # print(self.patients_lst_T1,self.patients_dict_T1)
     if not os.path.exists(out_path_T1):
       os.makedirs(out_path_T1)
     self.logic.SaveJsonMidpoint(self.list_patient_T1,self.dic_patient_T1,out_path_T1,self.GROUPS_LANDMARKS['Midpoint'])
@@ -924,7 +924,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                           True:{"Distance point line":2,"Distance between 2 points":0}},
               'TabAngle':{False:{"Angle between 2 lines":3},
                           True:{"Angle between 2 lines":4,'Angle line T1 and line T2':5}}}
-      #print("cb: ",text,", tab : ",currentTab,", indice : ",dic[currentTab][self.ui.CheckBoxT1T2.isChecked()][text])
+
       self.ui.StackedMeasure.setCurrentIndex(dic[currentTab][self.ui.CheckBoxT1T2.isChecked()][text])
 
 
@@ -979,6 +979,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     for count , value in enumerate(measure):
       b = QTableWidgetItem(value)
       dic[group].setItem(num,count+1,b)
+
+    if group == 'Angle' :
+
+      checkbox_angle_complement = QCheckBox()
+      dic[group].setCellWidget(num,4,checkbox_angle_complement)
+
+      measure['complement'] = checkbox_angle_complement
 
     measure["checkbox"] = a
     self.list_measure.append(measure)
@@ -1047,18 +1054,16 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       list_point.append(point.currentText)
 
     if page == 'PageDistance2Points' and self.ui.CheckBoxT1T2.isChecked():
-        print('oui distance point T1 T2')
         page = 'PageDistance2PointsT1T2'
     out = self.logic.CreateMeasure(dic_page2namemeasure[page],list_point)
    
 
 
 
-    print("list of measure to add ",out,page)
+
     for measure in out :
       self.AddMeasureTabMeasure(measure)
 
-    print('--'*5,"fin manage measure",'--'*5)
 
 
 
@@ -1099,7 +1104,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def connectButtonPathT1(self):
-    print('caa; button connectT1')
 
     surface_folder = qt.QFileDialog.getExistingDirectory(self.parent, "Select a scan folder")
     if surface_folder != '' :
@@ -1408,9 +1412,9 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     dic_patient ={}
     for patient , points in dic_patients_T1.items():
       try :
-        dic_patient[patient]={"T1":points,"T2":dic_patients_T2[patient]}
+        dic_patient[patient]={"T1":{landmark.upper() : value for landmark , value in points.items()},"T2":{landmark.upper() : value for landmark , value in dic_patients_T2[patient].items()}}
       except KeyError:
-        dic_patient[patient]={"T1":points}
+        dic_patient[patient]={"T1":{landmark.upper() : value for landmark , value in points.items()}}
     return dic_patient
 
 
@@ -1454,7 +1458,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         markups = json_file.loc[0,'markups']
         controlPoints = markups['controlPoints']
         for i in range(len(controlPoints)):
-          landmark_name = controlPoints[i]["label"].upper()
+          landmark_name = controlPoints[i]["label"]
           position = controlPoints[i]["position"]
           if landmark_name in patients_dict[patient]:
             print(f'This patient {patient} have many times this landmark {landmark_name}')
@@ -1470,6 +1474,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
 
 
+    print('dic patient',patients_dict['001'].keys())
     return patients_lst, patients_dict, lst_files
       
 
@@ -1545,10 +1550,12 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     for  patient , landmarks in dico.items():
         list_landmark = list_landmark.union(set(landmarks.keys()))
 
+
     for patient, landamrks in dico.items():
       dif = list_landmark.difference(set(landamrks.keys()))
       if len(dif) != 0 :
         print(f'this patient {patient} doesnat have this landmark {dif}') 
+
 
 
     list_landmark = list(list_landmark)
@@ -1866,7 +1873,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
 
     else:
-      print("pas trouver")
+      print("doesnt found")
 
 
     return out

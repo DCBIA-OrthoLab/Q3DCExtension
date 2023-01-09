@@ -58,6 +58,7 @@ class Group_landmark:
         for landmark in list_landmark:
             if self.__contains__(landmark):
                 dic_out.update(self.find(landmark))
+                # dic_out[landmark] = True
 
 
         return dic_out
@@ -126,6 +127,7 @@ class Type1:
         out = False
         if self.__contains__(landmark): 
             out = True
+
         return {landmark:out}
 
     def __iter__(self):

@@ -365,6 +365,7 @@ class Angle(Measure):
     super().__init__(time, measure)
     self.line1 = Line1
     self.line2 = Line2
+    self.complement_checkbox = None
     
   def __str__(self) -> str:
     return f"{Measure.__str__(self)} Line 1 : {self.line1} Line 2 : {self.line2}"
@@ -391,6 +392,8 @@ class Angle(Measure):
       return str(abs(self.si))
     elif key == "Roll Meaning":
       return self.si_sign_meaning
+    elif key == 'complement':
+      return self.complement_checkbox
     return Measure.__getitem__(self,key)
 
 
@@ -398,6 +401,9 @@ class Angle(Measure):
     if key == "position" :
       self.line1["position"] = value
       self.line2["position"] = value
+    elif key == 'complement' :
+      self.complement_checkbox = value
+
     return super().__setitem__(key, value)
 
 
@@ -432,7 +438,7 @@ class Angle(Measure):
   def __eq__(self, __o: object) -> bool:
     out = False 
     if Measure.__eq__(self,__o) :
-      if self.line1 == __o[1] and self.line2 == __o[2]:
+      if self.line1 == __o[1] and self.line2 == __o[2] and not self.complement_checkbox.isChecked():
         out = True
     return out
       
@@ -476,6 +482,8 @@ class Angle(Measure):
       value = self.__computeAngle(line1, line2, axis)
       result.append(round(value,3))
 
+    if self.complement_checkbox.isChecked():
+      result = [ 180- resu for resu in result]
 
     return result[0],-result[1],-result[2]
 

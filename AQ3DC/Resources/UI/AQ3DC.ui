@@ -353,6 +353,11 @@
                 <string>Line 2</string>
                </property>
               </column>
+              <column>
+               <property name="text">
+                <string>Complement Angle</string>
+               </property>
+              </column>
              </widget>
             </item>
            </layout>
