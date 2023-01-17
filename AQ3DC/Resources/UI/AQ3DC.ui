@@ -7,127 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>1825</width>
-    <height>1294</height>
+    <height>1600</height>
    </rect>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="6" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="4" column="0">
-    <widget class="QPushButton" name="applyButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="toolTip">
-      <string>Run the algorithm.</string>
-     </property>
-     <property name="text">
-      <string>Apply</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="ctkCollapsibleButton" name="CollapsibleButton">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Measurement</string>
-     </property>
-     <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0" colspan="2">
-       <layout class="QVBoxLayout" name="Layout_tableview">
-        <property name="leftMargin">
-         <number>10</number>
-        </property>
-        <property name="topMargin">
-         <number>10</number>
-        </property>
-        <property name="rightMargin">
-         <number>10</number>
-        </property>
-        <property name="bottomMargin">
-         <number>10</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="leftMargin">
-           <number>10</number>
-          </property>
-          <property name="topMargin">
-           <number>10</number>
-          </property>
-          <property name="rightMargin">
-           <number>10</number>
-          </property>
-          <property name="bottomMargin">
-           <number>10</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="leftMargin">
-           <number>10</number>
-          </property>
-          <property name="topMargin">
-           <number>10</number>
-          </property>
-          <property name="rightMargin">
-           <number>10</number>
-          </property>
-          <property name="bottomMargin">
-           <number>10</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
-     <property name="text">
+  <layout class="QVBoxLayout" name="verticalLayout_7">
+   <item>
+    <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton" native="true">
+     <property name="text" stdset="0">
       <string>Sample</string>
      </property>
-     <layout class="QFormLayout" name="formLayout_2">
-      <item row="0" column="0" colspan="2">
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="leftMargin">
          <number>10</number>
@@ -153,24 +43,24 @@
            <number>10</number>
           </property>
           <item row="1" column="2">
-           <widget class="QLineEdit" name="lineEditLandPathT2"/>
+           <widget class="QLineEdit" name="LineEditPathT2"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="ButtonImportLandmarks">
+            <property name="text">
+             <string>List Landmarks</string>
+            </property>
+           </widget>
           </item>
           <item row="0" column="0">
-           <widget class="QPushButton" name="pushButton_DataFolder_T1">
+           <widget class="QPushButton" name="ButtonPathT1">
             <property name="text">
              <string>Point list Time 1</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="pushButton_DataFolder_T2">
-            <property name="text">
-             <string>Point list Time 2</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="2">
-           <widget class="QLineEdit" name="lineEditLandPathT1">
+           <widget class="QLineEdit" name="LineEditPathT1">
             <property name="inputMask">
              <string/>
             </property>
@@ -179,35 +69,80 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0" colspan="3">
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <property name="leftMargin">
-             <number>10</number>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="ButtonPathT2">
+            <property name="text">
+             <string>Point list Time 2</string>
             </property>
-            <property name="topMargin">
-             <number>10</number>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QLineEdit" name="LineEditImportLandmarks"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string/>
             </property>
-            <property name="rightMargin">
-             <number>10</number>
-            </property>
-            <property name="bottomMargin">
-             <number>10</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           </widget>
           </item>
          </layout>
         </item>
        </layout>
       </item>
-      <item row="1" column="0" colspan="2">
-       <layout class="QGridLayout" name="gridLayout_4">
+      <item>
+       <layout class="QHBoxLayout" name="LayoutLandmarks">
+        <item>
+         <widget class="QTabWidget" name="TabLandmarks">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>255</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <widget class="QWidget" name="tab_3">
+           <attribute name="title">
+            <string>Tab 1</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout"/>
+          </widget>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Tab 2</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <item>
+             <widget class="QTableView" name="tableView_2"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout_8">
+        <item row="0" column="0">
+         <widget class="QPushButton" name="ButtonSelectTabLandmarks">
+          <property name="text">
+           <string>Select Tab</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="ButtonClearTabLandmarks">
+          <property name="text">
+           <string>Clear Tab</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="GridLayoutMidpoint">
         <property name="leftMargin">
          <number>10</number>
         </property>
@@ -220,31 +155,29 @@
         <property name="bottomMargin">
          <number>10</number>
         </property>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_add_midpoint">
+        <item row="2" column="6">
+         <widget class="QLabel" name="LabelMidpointSaved">
           <property name="text">
-           <string>Add midpoint :</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <string/>
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
-         <widget class="QComboBox" name="combo_box_mp_1"/>
+        <item row="1" column="5" colspan="2">
+         <widget class="QPushButton" name="ButtonAddMidpoint">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
         </item>
-        <item row="0" column="4">
-         <widget class="QComboBox" name="combo_box_mp_2"/>
+        <item row="2" column="5">
+         <widget class="QPushButton" name="ButtonSaveMidpoint">
+          <property name="text">
+           <string>Save</string>
+          </property>
+         </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QPushButton" name="pushButton_folder_midpoint">
-          <property name="text">
-           <string>Folder </string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="label_P1">
+         <widget class="QLabel" name="LabelP1">
           <property name="text">
            <string>P1 :</string>
           </property>
@@ -253,28 +186,31 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="3">
-         <widget class="QLabel" name="label_P2">
+        <item row="1" column="0">
+         <widget class="QLabel" name="LabelAddMidpoint">
           <property name="text">
-           <string>P2 :</string>
+           <string>Add midpoint :</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
-        <item row="1" column="5">
-         <widget class="QPushButton" name="pushButton_save_midpoint">
+        <item row="2" column="1">
+         <widget class="QPushButton" name="ButtonFolderMidpoint">
           <property name="text">
-           <string>Save</string>
+           <string>Folder </string>
           </property>
          </widget>
         </item>
-        <item row="1" column="2" colspan="3">
-         <widget class="QLineEdit" name="lineEdit_path_folder_mp"/>
+        <item row="1" column="2">
+         <widget class="QComboBox" name="CbMidpointP1"/>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_10">
+        <item row="1" column="4">
+         <widget class="QComboBox" name="CbMidpointP2"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="LabelSaveMidpoint">
           <property name="text">
            <string>Save midpoint:</string>
           </property>
@@ -283,18 +219,684 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="6">
-         <widget class="QLabel" name="midpoint_saved_label">
+        <item row="1" column="3">
+         <widget class="QLabel" name="LabelP2">
           <property name="text">
-           <string/>
+           <string>P2 :</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
-        <item row="0" column="5" colspan="2">
-         <widget class="QPushButton" name="pushButton_add_midpoint">
-          <property name="text">
-           <string>Add</string>
+        <item row="2" column="2" colspan="3">
+         <widget class="QLineEdit" name="LineEditPathMidpoint"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="ctkCollapsibleButton" name="CollapsibleButton" native="true">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="text" stdset="0">
+      <string>Measurement</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0" colspan="2">
+       <layout class="QVBoxLayout" name="Layout_tableview">
+        <property name="leftMargin">
+         <number>10</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>10</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QTabWidget" name="TabMeasure">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>250</height>
+           </size>
           </property>
+          <property name="tabPosition">
+           <enum>QTabWidget::North</enum>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <property name="tabsClosable">
+           <bool>false</bool>
+          </property>
+          <widget class="QWidget" name="TabDistance">
+           <attribute name="title">
+            <string>Distance</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <item>
+               <widget class="QTableWidget" name="TableDistance">
+                <attribute name="horizontalHeaderDefaultSectionSize">
+                 <number>124</number>
+                </attribute>
+                <column>
+                 <property name="text">
+                  <string>Check box</string>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>13</pointsize>
+                  </font>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Type of Measurement</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Point 1</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Point 2 / Line </string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="TabAngle">
+           <attribute name="title">
+            <string>Angle</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QTableWidget" name="TableAngle">
+              <attribute name="horizontalHeaderDefaultSectionSize">
+               <number>124</number>
+              </attribute>
+              <column>
+               <property name="text">
+                <string>Check box</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Type of measurement</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Line 1</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Line 2</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Complement Angle</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="ButtonDeleteMeasurement">
+          <property name="text">
+           <string>Delete</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Type of measurement :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="CbListMeasurement">
+            <item>
+             <property name="text">
+              <string>Distance point line</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Distance between 2 points</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="CheckBoxT1T2">
+            <property name="text">
+             <string>T1/T2</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="ButtonAddMeasure">
+            <property name="text">
+             <string>Add</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QStackedWidget" name="StackedMeasure">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>76</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <widget class="QWidget" name="PageDistance2Points">
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>P1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="CbD2PP1"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>P2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="CbD2PP2"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="PageDistancePointLineT1">
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>T1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>P1 :</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="CbDPLT1P1"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>L1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="CbDPLT1L1"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>L2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="CbDPLT1L2"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="PageDistancePointLineT1T2">
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <layout class="QGridLayout" name="gridLayout_3">
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>T1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="6" colspan="2">
+               <widget class="QComboBox" name="CbDPLT1T2L1T1"/>
+              </item>
+              <item row="1" column="2">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>P1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3" colspan="2">
+               <widget class="QComboBox" name="CbDPLT1T2P1T1"/>
+              </item>
+              <item row="0" column="9" colspan="2">
+               <widget class="QComboBox" name="CbDPLT1T2L2T1"/>
+              </item>
+              <item row="0" column="5">
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>L1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="5">
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>L1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3" colspan="2">
+               <widget class="QComboBox" name="CbDPLT1T2P1T2"/>
+              </item>
+              <item row="1" column="9" colspan="2">
+               <widget class="QComboBox" name="CbDPLT1T2L2T2"/>
+              </item>
+              <item row="0" column="8">
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>L2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>T2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>P1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="6" colspan="2">
+               <widget class="QComboBox" name="CbDPLT1T2L1T2"/>
+              </item>
+              <item row="1" column="8">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>L2 :</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="PageAngleBetween2LinesT1">
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <layout class="QGridLayout" name="gridLayout_4">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>T1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_18">
+                <property name="text">
+                 <string>P1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="10">
+               <widget class="QLabel" name="label_21">
+                <property name="text">
+                 <string>P4 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="8" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1P3"/>
+              </item>
+              <item row="0" column="5" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1P2"/>
+              </item>
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_19">
+                <property name="text">
+                 <string>P2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QLabel" name="label_20">
+                <property name="text">
+                 <string>P3 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="11" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1P4"/>
+              </item>
+              <item row="0" column="2" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1P1"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="PageAngleBetween2LinesT1T2">
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <layout class="QGridLayout" name="gridLayout_5">
+              <item row="1" column="7">
+               <widget class="QLabel" name="label_28">
+                <property name="text">
+                 <string>P3 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="4">
+               <widget class="QLabel" name="label_27">
+                <property name="text">
+                 <string>P2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="8" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P3T2"/>
+              </item>
+              <item row="1" column="2" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P1T2"/>
+              </item>
+              <item row="1" column="11" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P4T2"/>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_24">
+                <property name="text">
+                 <string>P1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QLabel" name="label_29">
+                <property name="text">
+                 <string>P3 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P2T1"/>
+              </item>
+              <item row="0" column="8" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P3T1"/>
+              </item>
+              <item row="0" column="10">
+               <widget class="QLabel" name="label_31">
+                <property name="text">
+                 <string>P4 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="10">
+               <widget class="QLabel" name="label_30">
+                <property name="text">
+                 <string>P4 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_23">
+                <property name="text">
+                 <string>T2:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P1T1"/>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_22">
+                <property name="text">
+                 <string>T1 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="label_25">
+                <property name="text">
+                 <string>P1:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="5" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P2T2"/>
+              </item>
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_26">
+                <property name="text">
+                 <string>P2:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="11" colspan="2">
+               <widget class="QComboBox" name="CbAB2LT1T2P4T1"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="PageAngleLineT1T2">
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <layout class="QGridLayout" name="gridLayout_6">
+              <item row="0" column="5" colspan="2">
+               <widget class="QComboBox" name="CbALT1T2L1P2"/>
+              </item>
+              <item row="0" column="9" colspan="2">
+               <widget class="QComboBox" name="CbALT1T2L2P3"/>
+              </item>
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_34">
+                <property name="text">
+                 <string>P2 :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="12" colspan="2">
+               <widget class="QComboBox" name="CbALT1T2L2P4"/>
+              </item>
+              <item row="0" column="2" colspan="2">
+               <widget class="QComboBox" name="CbALT1T2L1P1"/>
+              </item>
+              <item row="0" column="8">
+               <widget class="QLabel" name="label_36">
+                <property name="text">
+                 <string>P3:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QLabel" name="label_35">
+                <property name="text">
+                 <string>Line T2:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_32">
+                <property name="text">
+                 <string>Line T1:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_33">
+                <property name="text">
+                 <string>P1:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="11">
+               <widget class="QLabel" name="label_37">
+                <property name="text">
+                 <string>P4:</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_12">
+          <item>
+           <widget class="QLabel" name="label_38">
+            <property name="text">
+             <string>Import/Export list of measurements</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="CbImportExportMeasure">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Export list of measurements</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Import list of measurements</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QStackedWidget" name="StackedImportExport">
+          <widget class="QWidget" name="PageNone"/>
+          <widget class="QWidget" name="PageImport">
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <layout class="QGridLayout" name="gridLayout">
+              <item row="3" column="3">
+               <widget class="QPushButton" name="ButtonImportMeasure">
+                <property name="text">
+                 <string>Import Measurement</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="ButtonFileImportMeasure">
+                <property name="text">
+                 <string>File Import</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QLineEdit" name="LineEditImportMeasure"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="PageExport">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
+            <item>
+             <layout class="QGridLayout" name="gridLayout_7">
+              <item row="0" column="4">
+               <widget class="QPushButton" name="ButtonExportMeasure">
+                <property name="text">
+                 <string>Export Measurement</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="LineEditFolderExportMeasure"/>
+              </item>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="ButtonFolderExportMeasure">
+                <property name="text">
+                 <string>Folder export</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_39">
+                <property name="text">
+                 <string>Output file name</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QLineEdit" name="LineEditFileExportMeasure">
+                <property name="text">
+                 <string>measurement.xlsx</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -302,8 +904,8 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
-    <layout class="QGridLayout" name="gridLayout_3">
+   <item>
+    <layout class="QGridLayout" name="GridLayoutComputation">
      <property name="leftMargin">
       <number>10</number>
      </property>
@@ -316,32 +918,8 @@
      <property name="bottomMargin">
       <number>10</number>
      </property>
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="export_measurement_line">
-       <property name="inputMask">
-        <string/>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>File name :</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QPushButton" name="folder_save_measurement">
-       <property name="text">
-        <string>Folder name</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="4" colspan="2">
-      <widget class="QLineEdit" name="file_measurement_edit">
+      <widget class="QLineEdit" name="LineEditComputationFile">
        <property name="inputMask">
         <string/>
        </property>
@@ -350,21 +928,71 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="LabelFileName">
+       <property name="text">
+        <string>File name :</string>
+       </property>
+      </widget>
+     </item>
      <item row="6" column="3" colspan="3">
-      <widget class="QLabel" name="MeasurementSavedLabel">
+      <widget class="QLabel" name="LabelMeasurementSaved">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLineEdit" name="LineEditFolderComputation">
+       <property name="inputMask">
+        <string/>
+       </property>
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="6" column="0" colspan="3">
-      <widget class="QPushButton" name="compute_button">
+      <widget class="QPushButton" name="ButtonCompute">
        <property name="text">
         <string>Compute</string>
        </property>
       </widget>
      </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QPushButton" name="ButtonFolderCompute">
+       <property name="text">
+        <string>Folder name</string>
+       </property>
+      </widget>
+     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="ButtonApply">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="toolTip">
+      <string>Run the algorithm.</string>
+     </property>
+     <property name="text">
+      <string>Apply</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>
