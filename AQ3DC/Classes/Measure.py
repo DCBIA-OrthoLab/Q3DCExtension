@@ -14,24 +14,6 @@ lower_right_front = ['LR1','LR2']
 lower_left_back = ['LL8','LL7','LL6','LL5','LL4','LL3']
 lower_left_front = ['LL1','LL2']
 
-def check(list_landmark , tocheck):
-  nb_correct = 0
-  nb_midpoint = 0
-  for landmark in list_landmark:
-    if 'mid'.upper() in landmark.upper():
-      nb_midpoint += 1
-
-    for check in tocheck:
-
-      if  check in landmark:
-        nb_correct += 1
-
-
-  out = False
-  if nb_correct == len(list_landmark)+nb_midpoint:
-    out = True
-
-  return out
 
 
 
@@ -50,10 +32,6 @@ class Measure:
     self.si_sign_meaning = ""
     self.lr,self.ap,self.si,self.norm =0, 0 , 0 , 0
 
-
-    #for angle normaly the name of calcul should Pitch, Roll, Yam
-    #but it s not necessary in the code to distinguish the name of calcul distance and angle
-    # so lr = Pitch, Roll = ap, si = Yam. for translation
 
 
   
@@ -142,7 +120,7 @@ class Distance(Measure) :
     elif key == "point 2" or key == 2:
       return self.point2line
     elif key == "Landmarks" :
-      return str(self.point1)+" & "+str(self.point2line)
+      return str(self.point1)+" - "+str(self.point2line)
     elif key =="R-L Component":
       return str(abs(self.lr))
     elif key =="R-L Meaning" :
@@ -157,6 +135,8 @@ class Distance(Measure) :
       return self.si_sign_meaning
     elif key == "3D Distance":
       return self.norm
+    elif key == 'group':
+      return 'Distance'
     return Measure.__getitem__(self,key)
 
 
@@ -198,6 +178,16 @@ class Distance(Measure) :
       self.lr,self.ap,self.si,self.norm = self.__computeDistance(np.array(self.point1["position"]),np.array(self.point2line["position"]))
     elif "Distance point line" in self["Type of measurement"] :
       self.lr,self.ap,self.si,self.norm = self.__computeLinePoint(np.array(self.point2line[1]['position']),np.array(self.point2line[2]['position']),np.array(self.point1['position']))
+
+
+
+  def isUtilMeasure(self):
+    out = True
+
+    if self.norm == 0:
+      out = False
+
+    return out
 
   def __computeDistance(self,point1_coord, point2_coord):
     delta = point2_coord - point1_coord
@@ -282,7 +272,7 @@ class Distance(Measure) :
       self.rl_sign_meaning = "B"
       self.ap_sign_meaning = "D"
       self.si_sign_meaning = "E"
-      if self.rl>0:
+      if self.lr>0:
         self.rl_sign_meaning = "L"
 
       if self.ap>0:
@@ -296,7 +286,7 @@ class Distance(Measure) :
       self.si_sign_meaning = "E"
       self.ap_sign_meaning = "L"
       self.rl_sign_meaning = "D"
-      if self.rl>0:
+      if self.lr>0:
         self.rl_sign_meaning = "M"
 
       if self.ap>0:
@@ -309,7 +299,7 @@ class Distance(Measure) :
       self.rl_sign_meaning = "L"
       self.ap_sign_meaning = "D"
       self.si_sign_meaning = "I"
-      if self.rl>0:
+      if self.lr>0:
         self.rl_sign_meaning = "B"
 
       if self.ap>0:
@@ -322,7 +312,7 @@ class Distance(Measure) :
       self.rl_sign_meaning = "M"
       self.ap_sign_meaning = "L"
       self.si_sign_meaning = "I"
-      if self.rl>0:
+      if self.lr>0:
         self.rl_sign_meaning = "D"
 
       if self.ap>0:
@@ -336,7 +326,7 @@ class Distance(Measure) :
       self.rl_sign_meaning = "B"
       self.ap_sign_meaning = "D"
       self.si_sign_meaning = "I"
-      if self.rl>0:
+      if self.lr>0:
         self.rl_sign_meaning = "L"       
 
       if self.ap>0:
@@ -350,7 +340,7 @@ class Distance(Measure) :
       self.rl_sign_meaning = "D"
       self.ap_sign_meaning = "L"
       self.si_sign_meaning = "I"
-      if self.rl>0:
+      if self.lr>0:
         self.rl_sign_meaning = "M"       
 
       if self.ap>0:
@@ -382,7 +372,7 @@ class Angle(Measure):
       return str(self.line1)+" / "+str(self.line2)
     elif key == "Yaw Component" :
       return str(abs(self.lr))
-    elif key == "Yam Meaning":
+    elif key == "Yaw Meaning":
       return self.lr_sign_meaning
     elif key == "Pitch Component":
       return str(abs(self.ap))
@@ -394,6 +384,8 @@ class Angle(Measure):
       return self.si_sign_meaning
     elif key == 'complement':
       return self.complement_checkbox
+    elif key == 'group':
+      return 'Angle'
     return Measure.__getitem__(self,key)
 
 
@@ -402,6 +394,7 @@ class Angle(Measure):
       self.line1["position"] = value
       self.line2["position"] = value
     elif key == 'complement' :
+      print('inter complement checkbox',value)
       self.complement_checkbox = value
 
     return super().__setitem__(key, value)
@@ -446,6 +439,15 @@ class Angle(Measure):
     self.lr, self.ap, self.si = self.__computeAngles(np.array(self.line1[1]['position']),np.array(self.line1[2]['position']),np.array(self.line2[1]['position']),np.array(self.line2[2]['position']))
 
 
+  def isUtilMeasure(self):
+    out = True
+
+    if self.lr == 0 and self.ap ==0 and self.si == 0 :
+      out = False
+
+    return out
+
+
   def SignManager(self):
     if   self.isUpperLower(self.line1[1]['name']) and  self.isUpperLower(self.line1[2]['name'])  and self.isUpperLower(self.line2[1]['name']) and  self.isUpperLower(self.line2[2]['name']):
       self.__SignMeaningDentalAngle()
@@ -482,8 +484,15 @@ class Angle(Measure):
       value = self.__computeAngle(line1, line2, axis)
       result.append(round(value,3))
 
+
     if self.complement_checkbox.isChecked():
-      result = [ 180- resu for resu in result]
+      tmp_result =[]
+      for resu in result:
+        new_resu =round(180-np.absolute(resu),3)
+        tmp_result.append(new_resu)
+
+      result = tmp_result
+
 
     return result[0],-result[1],-result[2]
 
@@ -654,20 +663,24 @@ class Diff2Measure(Measure):
       return self.measure1["Landmarks"]+" && "+self.measure2["Landmarks"]
     elif isinstance(self.measure1,Distance):
       if key =="R-L Component":
-        return str((self.lr))
+        return str(abs(self.lr))
       elif key == "A-P Component" :
-        return str((self.ap))
+        return str(abs(self.ap))
       elif key == "S-I Component" :
-        return str((self.si))
+        return str(abs(self.si))
       elif key == "3D Distance":
-        return str(np.linalg.norm(np.array([self.lr,self.ap,self.si])))
+        return str(round(np.linalg.norm(np.array([self.lr,self.ap,self.si])),3))
+      elif key == 'group':
+        return 'Distance'
     elif isinstance(self.measure1,Angle):
       if key == "Yaw Component" :
-        return str((self.lr))
+        return str(abs(self.lr))
       elif key == "Pitch Component":
-        return str((self.ap))
+        return str(abs(self.ap))
       elif key == "Roll Component":
-        return str((self.si))
+        return str(abs(self.si))
+      elif key == 'group':
+        return 'Angle'
     return super().__getitem__(key)
 
 
@@ -675,6 +688,10 @@ class Diff2Measure(Measure):
     if key == "position" :
       self.measure1['position'] = value
       self.measure2['position'] = value
+    elif 'complement' == key:
+      self.measure1['complement'] = value
+      self.measure2['complement'] = value
+
     return super().__setitem__(key, value)
 
 
@@ -699,8 +716,39 @@ class Diff2Measure(Measure):
 
 
 
+  def isUtilMeasure(self):
+    out = True
+    if self.lr == 0 and self.ap == 0 and self.si == 0 :
+      out == False
+
+    return out
+
+
+
   def SignManager(self):
     #it is normal
     #we dont need to compute the meaning of measurement
     pass
 
+
+
+
+
+def check(list_landmark , tocheck):
+  nb_correct = 0
+  nb_midpoint = 0
+  for landmark in list_landmark:
+    if 'mid'.upper() in landmark.upper():
+      nb_midpoint += 1
+
+    for check in tocheck:
+
+      if  check in landmark:
+        nb_correct += 1
+
+
+  out = False
+  if nb_correct == len(list_landmark)+nb_midpoint:
+    out = True
+
+  return out

@@ -4,6 +4,7 @@ set(MODULE_NAME AQ3DC)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
+  Classes/__init__.py
   Classes/Point.py
   Classes/Line.py
   Classes/Measure.py
