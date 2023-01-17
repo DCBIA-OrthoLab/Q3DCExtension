@@ -1720,7 +1720,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
       "selected": True,
       "locked": True,
       "visibility": True,
-      "positionStatus": "preview"
+      "positionStatus": "defined"
     }
     return controle_point
 
