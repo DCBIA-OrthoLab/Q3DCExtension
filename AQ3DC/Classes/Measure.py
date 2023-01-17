@@ -394,7 +394,6 @@ class Angle(Measure):
       self.line1["position"] = value
       self.line2["position"] = value
     elif key == 'complement' :
-      print('inter complement checkbox',value)
       self.complement_checkbox = value
 
     return super().__setitem__(key, value)

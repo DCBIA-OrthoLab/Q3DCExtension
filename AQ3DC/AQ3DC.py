@@ -681,22 +681,14 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def CheckboxTabLandmarks(self):
     """funtion connect to checkbox in tablelandmark
 
-      updat list landmark checked
+      update list landmark checked
     """
 
-
-
     self.list_LandMarkCheck=[]
-    list_LandMarkCheck=[]
-    for landmark in self.GROUPS_LANDMARKS.tolist():
-      if self.dic_checkbox[landmark].checkState():
-        list_LandMarkCheck.append(landmark)
-
-    list_LandMarkCheck = self.GROUPS_LANDMARKS.fusion(list_LandMarkCheck)
-    upper_list_patient = [landmark.upper() for landmark in self.list_landmarks]
-    for landmark in list_LandMarkCheck:
-      if landmark.upper() in upper_list_patient:
+    for landmark, checkbox in self.dic_checkbox.items():
+      if checkbox.checkState():
         self.list_LandMarkCheck.append(landmark)
+
 
 
     self.ComboboxManageLandmark()
@@ -842,6 +834,11 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
     self.addLandmarksTabLandmarks('Midpoint', mid_point, True)
+    self.GROUPS_LANDMARKS['Midpoint'] = mid_point
+    self.dic_patient_T1 = self.logic.AddMidpointToPatient(self.dic_patient_T1,P1, P2)
+    if len(self.dic_patient_T2) > 0 :
+      self.dic_patient_T2 = self.logic.AddMidpointToPatient(self.dic_patient_T2,P1, P2)
+
 
 
 
@@ -1148,8 +1145,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.list_patient_T1, self.dic_patient_T1, lst_files = self.logic.CreateDicPatient(surface_folder)
 
 
-      self.list_landmarks, self.GROUPS_LANDMARKS = self.logic.CheckAllPatientSameLm( self.dic_patient_T1 ,self.GROUPS_LANDMARKS)
-      self.ManageTabLandmarks(self.list_landmarks, self.GROUPS_LANDMARKS)
+      self.list_landmarks_exist, self.GROUPS_LANDMARKS = self.logic.CheckAllPatientSameLm( self.dic_patient_T1 ,self.GROUPS_LANDMARKS)
+      self.ManageTabLandmarks(self.list_landmarks_exist, self.GROUPS_LANDMARKS)
 
 
 
@@ -2013,7 +2010,48 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
 
 
+  def AddMidpointToPatient(self,dic_patient : dict , landmark1 : str, landmark2 : str):
+    """
+    Add midpoint for each patient
 
+    Args:
+        dic_patient (dict): dic_patient 
+                            dict = {'patient1':{'landmark1':[0,1,0],'landmark2':[0,4,4],...},
+                                        .
+                                        .
+                                    'patientn':{'landmark1':[1,1,0],'landmark2':[0,5,4],...}}
+        landmark1 (str): _description
+        landmark2 (str): _description_
+
+    Returns:
+        dict: _description_
+                  dict = {'patient1':{'landmark1':[0,1,0],'landmark2':[0,4,4],'Mid_landmark1_landmark2':[x,x,x],...},
+                      .
+                      .
+                  'patientn':{'landmark1':[1,1,0],'landmark2':[0,5,4],'Mid_landmark1_landmark2':[x,x,x],...}}
+    """
+    for patient , landmark in dic_patient.items():
+      try :
+        p1 = landmark[landmark1]
+        p2 = landmark[landmark2]
+      except KeyError as key:
+        print(f'Warning midpoint, dont found landmark {key} for this patient {patient}')
+        continue
+
+
+      try:
+        p = list((np.array(p1)+np.array(p2))/2)
+      except :
+        print(f'Warning compute midpoint error, patient : {patient}, landmarks : {landmark1} {landmark2}')
+        continue
+
+      dic_patient[patient][f'Mid_{landmark1}_{landmark2}'] = p
+
+
+
+    return dic_patient
+
+      
 
 
     
