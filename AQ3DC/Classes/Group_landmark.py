@@ -1,9 +1,7 @@
-
-from dataclasses import dataclass
 import pandas as pd
 import itertools
 
-@dataclass(init=False)
+
 class Group_landmark:
     """
     Manage list landmark usefull for user
@@ -61,59 +59,51 @@ class Group_landmark:
 
 
     """
-    
 
-
-    def __init__(self,path_listlandmarks) -> None:
-        self.group_landmark  = dict()
+    def __init__(self, path_listlandmarks) -> None:
+        self.group_landmark = dict()
         reader = pd.read_excel(path_listlandmarks)
-        header_before = 'b suisv' #random str
+        header_before = "b suisv"  # random str
 
-        for header in reader.keys() :
+        for header in reader.keys():
 
             if header_before in header:
 
-                header2=header.split('-')[1]
+                header2 = header.split("-")[1]
                 Type = self.group_landmark[header_before]
-                tmplist= []
+                tmplist = []
                 for landmark in reader[header].tolist():
-                    if isinstance(landmark,str):
+                    if isinstance(landmark, str):
                         tmplist.append(landmark)
-                self.group_landmark[header_before] = Type.add({header2:tmplist})
+                self.group_landmark[header_before] = Type.add({header2: tmplist})
 
-
-            else :
+            else:
                 header_before = header
                 tmplist = []
                 for landmark in reader[header].tolist():
-                    if isinstance(landmark,str):
+                    if isinstance(landmark, str):
                         tmplist.append(landmark)
 
                 self.group_landmark[header] = MyList(tmplist)
 
-        
     def __repr__(self):
-        return f'{self.group_landmark}'
+        return f"{self.group_landmark}"
 
-
-    def __contains__(self,landmark):
-        out = False 
+    def __contains__(self, landmark):
+        out = False
         for landmarks in self.group_landmark.values():
             if landmark in landmarks:
                 out = True
                 break
-        
+
         return out
 
-
-
-
-    def exits(self,list_landmark):
+    def existsInDict(self, list_landmark):
         """return a dict with key the name of landmark and whth value False or True according to if landmark is in group landmark
 
-        exists is different that __contain__.
+        exitsInDict is different that __contain__.
         Exemple : __contain__('LL6O') == True
-                exists(['LL6O']) == {'LL6' : True, 'O' : True}
+                exitsInDict(['LL6O']) == {'LL6' : True, 'O' : True}
 
         Args:
             list_landmark (list): landmkar's list
@@ -121,18 +111,16 @@ class Group_landmark:
         Returns:
             dict: return a dict with key the name of landmark and in value False or True according to if landmark is in group landmark
         """
-        dic_out = {key : False for key in self.tolist() }
+        dic_out = {key: False for key in self.tolist()}
 
         for landmark in list_landmark:
             if self.__contains__(landmark):
-                dic_out.update(self.find(landmark))
-
+                dic_out.update(self.existInDict(landmark))
 
         return dic_out
 
-
-    def find(self,landmark):
-        """ find function is the same methode that exists but with str input and not list
+    def existInDict(self, landmark: str):
+        """ find function is the same methode that existsInDict but with str input and not list
 
         Args:
             landmark (str): _description_
@@ -143,14 +131,9 @@ class Group_landmark:
         out = {landmark: False}
         for type in self.group_landmark.values():
             if landmark in type:
-                out = type.find(landmark)
+                out = type.existInDict(landmark)
                 break
         return out
-
-
-
-
-
 
     def tolist(self):
         out_list = []
@@ -159,19 +142,14 @@ class Group_landmark:
 
         return out_list
 
-
-
-    def __setitem__(self,key,value):
-        if isinstance(value,list):
-            self.group_landmark[key]= MyList(value)
-        elif isinstance(value,str):
+    def __setitem__(self, key, value):
+        if isinstance(value, list):
+            self.group_landmark[key] = MyList(value)
+        elif isinstance(value, str):
             self.group_landmark[key].set(value)
 
-
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         return self.group_landmark[key]
-
-
 
     def items(self):
         """_summary_
@@ -181,121 +159,80 @@ class Group_landmark:
         """
         return self.group_landmark.items()
 
-    
-    def fusion(self,list_landmark):
-        for landmarks in self.group_landmark.values():
-            if isinstance(landmarks,MyDict):
-                landmarks.fusion(list_landmark)
 
-        return list_landmark
-
-
-
-
-@dataclass(repr=True)
 class MyList:
-    suffix : list
+    def __init__(self, suffix: list) -> None:
+        self.suffix = suffix
 
+    def add(self, dic):
+        return MyDict(suffix=self.suffix, prefix=dic)
 
-    def add(self,dic):
-        return MyDict(suffix = self.suffix, prefix = dic)
-
-    def __contains__(self,landmark):
+    def __contains__(self, landmark):
         return landmark.upper() in [lm.upper() for lm in self.suffix]
 
-    def find(self,landmark):
+    def existInDict(self, landmark):
         out = False
-        if self.__contains__(landmark): 
+        if self.__contains__(landmark):
             out = True
 
-        return {landmark:out}
+        return {landmark: out}
 
     def __iter__(self):
         self.iter = -1
         return self
 
     def __next__(self):
-        if self.iter +1 >= len(self.suffix):
+        if self.iter + 1 >= len(self.suffix):
             raise StopIteration
-        self.iter +=1
+        self.iter += 1
         return self.suffix[self.iter]
 
-    def set(self,value):
+    def set(self, value):
         self.suffix.append(value)
-
 
     def tolist(self):
         return self.suffix
 
 
-
-@dataclass(repr=True)
 class MyDict(MyList):
-    prefix : dict
+    def __init__(self, suffix: list, prefix: dict) -> None:
+        super().__init__(suffix)
+        self.prefix = prefix
 
+    def __contains__(self, landmark):
 
-    def __contains__(self,landmark) :
-        
         out = False
-        pre , suf = self.decomp(landmark)
-        if not None in (pre,suf) :
+        pre, suf = self.decomp(landmark)
+        if not None in (pre, suf):
             out = True
         return out
 
-    def decomp(self,landmark : str):
+    def decomp(self, landmark: str):
         pre = None
         suf = None
         for prefix in list(itertools.chain.from_iterable(self.prefix.values())):
-            if prefix.upper()  == landmark[:len(prefix)].upper():
-                for suffix in self.suffix :
-                    if suffix.upper() == landmark[len(prefix):].upper():
+            if prefix.upper() == landmark[: len(prefix)].upper():
+                for suffix in self.suffix:
+                    if suffix.upper() == landmark[len(prefix) :].upper():
                         pre = prefix.upper()
                         suf = suffix.upper()
                         break
         return pre, suf
 
-    def find(self,landmark):
-        pre, suf  = self.decomp(landmark)
-        out = {landmark : False}
-        if not None in (pre , suf):
-            out = {pre:True,suf:True}
+    def existInDict(self, landmark: str):
+        pre, suf = self.decomp(landmark)
+        out = {landmark: False}
+        if not None in (pre, suf):
+            out = {pre: True, suf: True}
 
         return out
 
-    def add(self,dic):
-        copy  = self.prefix
-        copy.update(dic)
-        return MyDict(prefix = copy,suffix=self.suffix)
+    def add(self, dic):
+        self.prefix.update(dic)
+        return self
 
-    def get(self):
+    def separateTopresuf(self):
         return self.prefix.copy(), self.suffix.copy()
 
     def tolist(self):
-
         return self.suffix + list(itertools.chain.from_iterable(self.prefix.values()))
-
-
-    def fusion(self,list_landmark : list):
-        dic = {'prefix':list(),'suffix':list()}
-        for landmark in list_landmark:
-            for suf in self.suffix:
-                if landmark == suf:
-                    dic['suffix'].append(landmark)
-                    continue
-
-            for pre in list(itertools.chain.from_iterable(self.prefix.values())):
-                if landmark == pre :
-                    dic['prefix'].append(landmark)
-
-        for suf in dic['suffix']:
-            list_landmark.remove(suf)
-        for pre in dic['prefix'] :
-            list_landmark.remove(pre)
-            for suf in dic['suffix'] :
-                
-                list_landmark.append(pre+suf)
-
-        return list_landmark
-
-        
-
