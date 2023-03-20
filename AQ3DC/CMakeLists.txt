@@ -8,7 +8,7 @@ set(MODULE_PYTHON_SCRIPTS
   Classes/Point.py
   Classes/Line.py
   Classes/Measure.py
-  Classes/Group_Landmark.py
+  Classes/Group_landmark.py
   )
 
 set(MODULE_PYTHON_RESOURCES

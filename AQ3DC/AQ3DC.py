@@ -1173,7 +1173,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                             f"For this file {jsonfile} this landmark {landmark_name} are not good "
                         )
 
-        return patients_lst, patients_dict
+        return patients_lst, patients_dict  #remove lsit patient
 
     def compareT1T2(self, dic_patinetT1: dict, dic_patientT2: dict):
         """Check if patient T1 and T2 have the same landmark, and the same patient
