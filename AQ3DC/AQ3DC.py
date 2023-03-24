@@ -448,7 +448,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             index += 1
 
         self.list_LandMarkCheck = []
-        self.ComboboxManageLandmark()
+        self.UpdateComboboxLandmarks()
 
     def addTabWidget(self, i, dico, parent):
         """add TabWidget if the group need 2 TabWidget
@@ -512,7 +512,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.dic_Checkbox2Landmark[check] = [landmark, status, group]
         self.dic_Landmark2Checkbox[landmark] = [check, status]
         self.dic_checkbox[landmark] = check
-        check.connect("toggled(bool)", self.CheckboxTabLandmarks)
+        check.connect("toggled(bool)", partial(self.toggle_checkbox,landmark))
         self.dic_Group2Layout[group][0].addWidget(check)
 
     def manageStackedWidgetLandmark(self):
@@ -525,25 +525,30 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.TabLandmarks.currentIndex
             ].setHidden(False)
 
-    def CheckboxTabLandmarks(self):
-        """funtion connect to checkbox in tablelandmark
+
+
+
+
+    def toggle_checkbox(self,landmark,enabled):
+        """function connect to checkbox in tablelandmark
 
       update list landmark checked
     """
+        if enabled :
+            self.list_LandMarkCheck.append(landmark)
+        else :
+            self.list_LandMarkCheck.remove(landmark)
 
-        self.list_LandMarkCheck = []
-        for landmark, checkbox in self.dic_checkbox.items():
-            if checkbox.checkState():
-                self.list_LandMarkCheck.append(landmark)
+        
+        self.UpdateComboboxLandmarks()
 
-        self.ComboboxManageLandmark()
-
-    def ComboboxManageLandmark(self):
-        """manage landmark in each combo box 
+    def UpdateComboboxLandmarks(self):
+        """Update Combobox containing landmarks
     """
+        enable_landmark = self.logic.getEnabledLandmarks(self.list_LandMarkCheck, self.GROUPS_LANDMARKS)
         for Cb in self.list_CbLandmark:
             Cb.clear()
-            Cb.addItems(self.list_LandMarkCheck)
+            Cb.addItems(enable_landmark)
 
 
     
@@ -595,7 +600,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if self.dic_Landmark2Checkbox[landmark][1]:
                 self.dic_Landmark2Checkbox[landmark][0].setChecked(status)
 
-        self.ComboboxManageLandmark()
+        self.UpdateComboboxLandmarks()
 
 
 #==========================================================================================================================================================================
@@ -1841,6 +1846,28 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
         return dic_patient
 
+    def getEnabledLandmarks(self,markups_node : list,Group_Landmark : Group_landmark):
+        """
+        
+        Args:
+            markups_node (list): list label selected
+            Group_Landmark (Group_landmark): Landmark can existe 
+
+        Returns:
+            
+        """
+
+        labels = []
+
+
+        for landmark1 in markups_node:
+            if landmark1 in Group_Landmark:
+               labels.append(landmark1)
+            for landmark2 in markups_node:
+                if landmark1+landmark2 in Group_Landmark:
+                    labels.append(landmark1+landmark2)
+
+        return labels
 
 #
 # AQ3DCTest
