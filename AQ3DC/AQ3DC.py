@@ -177,15 +177,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # in batch mode, without a graphical user interface.
         self.logic = AQ3DCLogic()
 
-        self.addObserver(
-            slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose
-        )
-        self.addObserver(
-            slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose
-        )
 
         # Make sure parameter node is initialized (needed for module reload)
-        self.initializeParameterNode()
 
         # need initialise the tab measurement
         # if we dont do this, if user add a measure without click on tabmeasurement or chekcbox. we get an issue
@@ -256,6 +249,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # landmark available on tab landmark
         # example of the group are given in Group_landmark class
         self.GROUPS_LANDMARKS : Group_landmark
+
+        #midpoint create by the user
+        self.mid_point = []
 
         # init self.group landmark
         self.ImportLandmarks(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
@@ -618,6 +614,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.addLandmarksTabLandmarks("Midpoint", mid_point, True)
         self.GROUPS_LANDMARKS["Midpoint"] = mid_point
+        self.mid_point.append((P1,P2))
         self.dic_patient_T1 = self.logic.AddMidpointToPatient(
             self.dic_patient_T1, P1, P2
         )
@@ -648,7 +645,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.SaveMidpoint(
             self.dic_patient_T1,
             out_path_T1,
-            self.GROUPS_LANDMARKS["Midpoint"],
+            self.mid_point,
         )
         if self.ui.LineEditPathT2.text != "":
             if not os.path.exists(out_path_T2):
@@ -656,7 +653,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.SaveMidpoint(
                 self.dic_patient_T2,
                 out_path_T2,
-                self.GROUPS_LANDMARKS["Midpoint"],
+                self.mid_point,
             )
 
     
@@ -867,10 +864,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         )
         if surface_folder != "":
             self.ui.LineEditPathT1.setText(surface_folder)
-            (
-                self.list_patient_T1,
-                self.dic_patient_T1
-            ) = self.logic.CreateDicPatient(surface_folder)
+            
+            self.dic_patient_T1 = self.logic.CreateDictPatient(surface_folder)
 
             (
                 self.list_landmarks_exist,
@@ -890,10 +885,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             )
             if surface_folder != "":
                 self.ui.LineEditPathT2.setText(surface_folder)
-                (
-                    self.lst_patient_T2,
-                    self.dic_patient_T2
-                ) = self.logic.CreateDicPatient(surface_folder)
+                
+                self.dic_patient_T2  = self.logic.CreateDictPatient(surface_folder)
                 self.logic.compareT1T2(self.dic_patient_T1, self.dic_patient_T2)
 
     def onSceneStartClose(self, caller, event):
@@ -911,108 +904,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if self.parent.isEntered:
             self.initializeParameterNode()
 
-    def initializeParameterNode(self):
-        """
-    Ensure parameter node exists and observed.
-    """
-        # Parameter node stores all user choices in parameter values, node selections, etc.
-        # so that when the scene is saved and reloaded, these settings are restored.
-
-        self.setParameterNode(self.logic.getParameterNode())
-
-        # Select default input nodes if nothing is selected yet to save a few clicks for the user
-        if not self._parameterNode.GetNodeReference("InputVolume"):
-            firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass(
-                "vtkMRMLScalarVolumeNode"
-            )
-            if firstVolumeNode:
-                self._parameterNode.SetNodeReferenceID(
-                    "InputVolume", firstVolumeNode.GetID()
-                )
-
-    def setParameterNode(self, inputParameterNode):
-        """
-    Set and observe parameter node.
-    Observation is needed because when the parameter node is changed then the GUI must be updated immediately.
-    """
-
-        if inputParameterNode:
-            self.logic.setDefaultParameters(inputParameterNode)
-
-        # Unobserve previously selected parameter node and add an observer to the newly selected.
-        # Changes of parameter node are observed so that whenever parameters are changed by a script or any other module
-        # those are reflected immediately in the GUI.
-        if self._parameterNode is not None:
-            self.removeObserver(
-                self._parameterNode,
-                vtk.vtkCommand.ModifiedEvent,
-                self.updateGUIFromParameterNode,
-            )
-        self._parameterNode = inputParameterNode
-        if self._parameterNode is not None:
-            self.addObserver(
-                self._parameterNode,
-                vtk.vtkCommand.ModifiedEvent,
-                self.updateGUIFromParameterNode,
-            )
-
-        # Initial GUI update
-        self.updateGUIFromParameterNode()
-
-    def updateGUIFromParameterNode(self, caller=None, event=None):
-        """
-    This method is called whenever parameter node is changed.
-    The module GUI is updated to show the current state of the parameter node.
-    """
-
-        if self._parameterNode is None or self._updatingGUIFromParameterNode:
-            return
-
-        # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
-        self._updatingGUIFromParameterNode = True
-
-        # Update node selectors and sliders
-        # self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
-        # self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-        # self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
-        # self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
-        # self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
-
-        # Update buttons states and tooltips
-
-        # All the GUI updates are done
-        self._updatingGUIFromParameterNode = False
-
-    def updateParameterNodeFromGUI(self, caller=None, event=None):
-        """
-    This method is called when the user makes any change in the GUI.
-    The changes are saved into the parameter node (so that they are restored when the scene is saved and loaded).
-    """
-
-        if self._parameterNode is None or self._updatingGUIFromParameterNode:
-            return
-
-        wasModified = (
-            self._parameterNode.StartModify()
-        )  # Modify all properties in a single batch
-
-        self._parameterNode.SetNodeReferenceID(
-            "InputVolume", self.ui.inputSelector.currentNodeID
-        )
-        self._parameterNode.SetNodeReferenceID(
-            "OutputVolume", self.ui.outputSelector.currentNodeID
-        )
-        self._parameterNode.SetParameter(
-            "Threshold", str(self.ui.imageThresholdSliderWidget.value)
-        )
-        self._parameterNode.SetParameter(
-            "Invert", "true" if self.ui.invertOutputCheckBox.checked else "false"
-        )
-        self._parameterNode.SetNodeReferenceID(
-            "OutputVolumeInverse", self.ui.invertedOutputSelector.currentNodeID
-        )
-
-        self._parameterNode.EndModify(wasModified)
 
     def warningMessage(self, message):
         messageBox = ctk.ctkMessageBox()
@@ -1104,13 +995,13 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 }
         return dic_patient
 
-    def CreateDicPatient(self, folder_path: str) -> tuple[list, dict]:
+    def CreateDictPatient(self, folder_path: str) -> dict:
 
         """
         From Folder path create dictionnary with position landmarks for each patient
 
     Read each json file in the folder (recursively). 
-    CreateDicPatient can recognize multiple files belonging to the same patient, with the pattern at the beginning of the file name, it takes the pattern before the first '_' to search for another existing one.
+    CreateDictPatient can recognize multiple files belonging to the same patient, with the pattern at the beginning of the file name, it takes the pattern before the first '_' to search for another existing one.
         example:
                 file name            patient
             - P1_hdgiopghod.json    ->  P1
@@ -1128,8 +1019,6 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         folder_path (str):  folder path containing json file
 
     Returns:
-        list : list of patients 
-              list = [ 'patient 1','patient 2','patient 3',..,'patient n']
         dict : dict with num of patient and all landmark link patient
               dict = {patient 1 : {landmarks1 : [0 , 0, 0], landmarks2 : [0 , 0, 0], ... },
                                     .
@@ -1178,7 +1067,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                             f"For this file {jsonfile} this landmark {landmark_name} are not good "
                         )
 
-        return patients_lst, patients_dict  #remove lsit patient
+        return patients_dict 
 
     def compareT1T2(self, dic_patinetT1: dict, dic_patientT2: dict):
         """Check if patient T1 and T2 have the same landmark, and the same patient
@@ -1197,20 +1086,26 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     """
 
         # compare landmark patient T1 and T2
+        dif_landmark = {}
         for patientT1, landmarks in dic_patinetT1.items():
             if set(landmarks) != set(dic_patientT2[patientT1]):
                 dif = set(landmarks) - set(dic_patientT2[patientT1])
                 dif.union(set(dic_patientT2[patientT1]) - set(landmarks))
+                dif_landmark[patientT1] = dif 
                 print(
                     f"T1 and T2 of this patient {patientT1} doesnt have the same landmark, landmark dif {dif}"
                 )
 
         # compare the name patient T1 and T2
+        dif_patient = None
         if set(dic_patinetT1.keys()) != set(dic_patientT2.keys()):
             dif = set(dic_patinetT1.keys()) - set(dic_patientT2.keys())
             dif.union(set(dic_patientT2.keys()) - set(dic_patinetT1.keys()))
+            dif_patient = dif_landmark
             print(f"T1 and T2 doesnt have the same patient, dif patient {dif}")
+        return dif_landmark , dif_patient 
 
+    
     def UpdateGroupLandmark(self, dict_patient: dict, all_landmarks: Group_landmark) -> tuple[list,Group_landmark]:
         """
     Add in goup_landmark  midpoints and landmark not existing in group_landmark, but existing in dict_patient.
@@ -1258,7 +1153,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         return list_landmark, all_landmarks
 
     def SaveMidpoint(
-        self, patients_dict: dict, out_path: str, midpoints: list
+        self, patients_dict: dict, out_path: str, midpoints: list[list]
     ):
         """
     Write json file for each patient containing midpoint passed in argurmment
@@ -1271,7 +1166,8 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     '29':{"A":[0,3,5],"B":[3,6,2],...}
                   }
         out_path (str): the path folder where the midpoint will be save
-        midpoints (list): list midpoint 
+        midpoints (list[list]): list midpoint 
+            list = [['A','UL6O'],['R2RM','LL6O']] -> Mid_A_UL6O, Mid_R2RM_LL6O
     """
 
         midpoint_dic = {}
@@ -1279,8 +1175,8 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         for patient in patients_dict.keys():
             lst_mid_point = []
             for mid_point in midpoints:
-                P1_name = mid_point.split("_")[1]
-                P2_name = mid_point.split("_")[2]
+                P1_name = mid_point[0]
+                P2_name = mid_point[1]
                 if P1_name and P2_name in patients_dict[patient]:
                     try:
                         P1_pos = patients_dict[patient][P1_name]
@@ -1305,7 +1201,18 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 midpoint_dic[patient] = lst_mid_point
 
         for patient, cp_lst in midpoint_dic.items():
+            if os.path.exists(os.path.join(out_path,f"{patient}_Midpoint.json")) :
+                cp_lst = self.MergeJsonFile(os.path.join(out_path,f"{patient}_Midpoint.json"),cp_lst)
+            
             self.WriteJson(f"{patient}_Midpoint", cp_lst, out_path)
+
+
+    def MergeJsonFile(self, file_name : str, list_controle_point : list ):
+        with open(file_name) as f :
+            data = json.load(f)
+        list_controle_point += data['markups'][0]['controlPoints']
+
+        return list_controle_point
 
     def WriteJson(self, file_name: str, list_controle_point: list, folder: str):
         """Write json file containing landmarks
@@ -1611,7 +1518,6 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     """
 
         out = []
-        print('in create measure',type_of_measure, list_landmark)
 
         if type_of_measure == "Angle between 2 lines T1":
 
@@ -1691,8 +1597,6 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             out.append(T1measure)
             out.append(T2measure)
 
-        else:
-            print("doesnt found")
 
         return out
 
@@ -1784,9 +1688,8 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                         f"Dont write this measure {measure} for this patient {patient} because is useless measure"
                     )
                     continue
-
-        print("end ConputeManager")
         return dic_patient__computation
+    
 
     def WriteMeasurementExcel(self, dic_patient__computation : dict, path : str, name_file : str):
         """Create excel file with result of computation
@@ -1802,7 +1705,6 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
             df.to_excel(os.path.join(path, name_file))
 
-        print("------------------- SAVE MEASUREMENT -------------------")
 
     def AddMidpointToPatient(self, dic_patient: dict, landmark1: str, landmark2: str):
         """
@@ -1889,60 +1791,184 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
-    def setUp(self):
+    def setUp(self,path):
         """ Do whatever is needed to reset the state - typically a scene clear will be enough.
     """
-        slicer.mrmlScene.Clear()
+       
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        print(f'path temp {path}')
+
+        temp_path = os.path.join(path ,'temp.zip')
+        import urllib, shutil, zipfile
+        url = 'https://github.com/HUTIN1/Q3DCExtension/releases/download/v1.0.0/Testing.zip'
+        with urllib.request.urlopen(url) as response, open(temp_path, 'wb') as out_file:
+            length = response.info().get("Content-Length")
+            if length:
+                length = int(length)
+                blocksize = max(4096, length // 100)
+                read = 0
+                while True:
+                    buffer = response.read(blocksize)
+                    if not buffer:
+                        break
+                    read += len(buffer)
+                    out_file.write(buffer)
+            shutil.copyfileobj(response, out_file)
+
+        with zipfile.ZipFile(temp_path, "r") as zip:
+            zip.extractall(path)
+
+
 
     def runTest(self):
         """Run as few or as many tests as needed here.
     """
-        self.setUp()
-        self.test_AQ3DC1()
+        
+       
 
-    def test_AQ3DC1(self):
-        """ Ideally you should have several levels of tests.  At the lowest level
-    tests should exercise the functionality of the logic with different inputs
-    (both valid and invalid).  At higher levels your tests should emulate the
-    way the user would interact with your code and confirm that it still works
-    the way you intended.
-    One of the most important features of the tests is that it should alert other
-    developers when their changes will have an impact on the behavior of your
-    module.  For example, if a developer removes a feature that you depend on,
-    your test should break so they know that the feature is needed.
-    """
+        tmp_folder = os.path.join(slicer.util.tempDirectory())
 
-        self.delayDisplay("Starting the test")
 
-        # Get/create input data
+        self.setUp(tmp_folder)
+        # try :
 
-        import SampleData
 
-        registerSampleData()
-        inputVolume = SampleData.downloadSample("AQ3DC1")
-        self.delayDisplay("Loaded test data set")
+        list_landmark_exist_groundthruth = ['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS', 'Mid_RPo_LPo', 'Mid_UR6R_UL6R', 'LLCo',
+                                    'LR1R', 'LR6R', 'Mid_UR1R_UL1R', 'UL1O', 'LL6O', 'LPCo', 'Mid_UR1O_UL1O', 'RPo', 'UL6O', 
+                                    'Pog', 'Mid_RGo_LGo', 'Mid_LMCo_LLCo', 'Mid_UR4O_UL4O', 'RMCo', 'UR1O', 'Mid_ROr_LOr', 'UL1R', 
+                                    'RCo', 'LL1R', 'LL6R', 'LPo', 'RLCo', 'UR4O', 'Mid_LR6R_LL6R', 'Mid_UR6O_UL6O', 'LR6MB', 'ANS', 
+                                    'Mid_RCo_LCo', 'B', 'Mid_RACo_RPCo', 'UL6R', 'Mid_LACo_LPCo', 'RGo', 'LGo', 'LAF', 'LCo', 'UR6O', 
+                                    'LR6O', 'LACo', 'A', 'RAF', 'Mid_LR1R_LL1R','RSig', 'LL1O', 'UL4O', 'RPF', 
+                                    'Gn', 'LR1O', 'Mid_RMCo_RLCo', 'UR6MB', 'LPF', 'LAE', 'LSig', 'UR1R', 'S', 'Mid_LR1O_LL1O', 'Mid_LR6O_LL6O', 
+                                    'LL6MB', 'Me', 'UL6MB', 'UR6R', 'LMCo']
 
-        inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(inputScalarRange[0], 0)
-        self.assertEqual(inputScalarRange[1], 695)
+        self.delayDisplay(' Test Creation Dictionnary Patient')
+        patient_T1 , patient_T2 = self.TestCreateDictPatient(tmp_folder,list_landmark_exist_groundthruth)
 
-        outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-        threshold = 100
 
-        # Test the module logic
+        self.delayDisplay(' Test Create Measure')
+        list_measure = self.TestCreateMeasure()
 
+        self.delayDisplay(' Test Compute Measure')
+        compute = self.TestComputeMeasure(patient_T1,patient_T2,list_measure)
+
+        self.delayDisplay(' Test Write Measure')
+        self.TestWriteMeasure(compute,tmp_folder)
+
+        self.delayDisplay(' Test Import Export')
+        self.TestImportExport(tmp_folder,list_measure)
+
+        self.delayDisplay(' Test Midpoint')
+        self.TestMidpoint(tmp_folder,patient_T1,patient_T2,list_landmark_exist_groundthruth+['Mid_RPCo_LOr','Mid_Mid_RACo_RPCo_LMCo'])
+
+
+        # except AssertionError :
+        #     self.delayDisplay(f' Test Failed')
+        #     return
+
+
+        self.delayDisplay(' Tests Passed')
+
+
+    def TestCreateDictPatient(self,folder : str,landmark_exist : list) -> tuple[dict,dict]:
+
+        widget = AQ3DCWidget()
+        
+        logic = AQ3DCLogic()
+        group_landmark = Group_landmark(widget.resourcePath("name_landmark.xlsx"))
+        patient_T1 = logic.CreateDictPatient(os.path.join(folder,'T1'))
+        patient_T2 = logic.CreateDictPatient(os.path.join(folder,'T2'))
+
+        dif_landmark , dif_patient = logic.compareT1T2(patient_T1,patient_T2)
+        assert dif_landmark == {} and dif_patient == None
+
+        list_landmark_exist, group_landmark = logic.UpdateGroupLandmark(patient_T1,group_landmark)
+        list_landmark_exist, group_landmark = logic.UpdateGroupLandmark(patient_T2,group_landmark)
+
+        list_landmark_exist.sort()
+        landmark_exist.sort()
+
+        assert list_landmark_exist== landmark_exist, f'ground truth : {landmark_exist} \n \n landmark list create : {list_landmark_exist} \n \n  difference : {list(set(landmark_exist).difference(set(list_landmark_exist)))+ list(set(list_landmark_exist).difference(set(landmark_exist))) }'
+
+
+        return patient_T1, patient_T2
+    
+
+    def TestCreateMeasure(self) -> list[Measure]:
+        logic = AQ3DCLogic()
+        measure_to_create = {'Angle between 2 lines T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS'],
+                            'Angle line T1 and line T2':['RPCo', 'LOr', 'Ba', 'N'],
+                            'Distance point line T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr'],
+                            'Distance between 2 points T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS']}
+                
+
+        list_measure = []
+        for measure , landmarks in measure_to_create.items():
+            list_measure = list_measure + logic.CreateMeasure(measure,landmarks)
+
+
+        return list_measure
+
+    def TestComputeMeasure(self,patient_T1 : dict ,patient_T2 : dict,list_measure : list[Measure]):
         logic = AQ3DCLogic()
 
-        # Test algorithm with non-inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, True)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], threshold)
+        cat_patient = logic.CatPatientT1T2(patient_T1,patient_T2)
+        compute = logic.ComputeMeasure(list_measure,cat_patient)
 
-        # Test algorithm with inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, False)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], inputScalarRange[1])
+        return compute
 
-        self.delayDisplay("Test passed")
+    def TestWriteMeasure(self,compute : list[Measure],folder : str ):
+        logic = AQ3DCLogic()
+
+        logic.WriteMeasurementExcel(compute,folder,'computatation_test.xlsx')
+
+        reader_computation_test = pd.read_excel(os.path.join(folder,'computatation_test.xlsx'), sheet_name=None)
+        reader_grounthruth = pd.read_excel(os.path.join(folder,'computatation_groundtruth.xlsx'), sheet_name=None)
+        for key in reader_computation_test['Sheet1'].keys():
+            assert reader_computation_test['Sheet1'][key].to_dict() == reader_grounthruth['Sheet1'][key].to_dict(), f'test : {reader_computation_test["Sheet1"][key].to_dict()} \n ground truth {reader_grounthruth["Sheet1"][key].to_dict()}'
+
+
+
+
+
+    def TestImportExport(self,folder : str ,list_measure : list[Measure]):
+        logic = AQ3DCLogic()
+
+        #Test Import Export Measure
+        logic.ExportMeasure(os.path.join(folder,'ExportMeasure.xlsx'),list_measure)
+        import_measure = logic.ImportMeasure(os.path.join(folder,'ExportMeasure.xlsx'))
+
+        #compare import measure and list measure 
+        for measure in import_measure :
+            assert measure in list_measure, f'measure {measure} \n \n  list_measure {list_measure}'
+        
+        for measure in list_measure:
+            assert measure in import_measure,  f'measure {measure} \n \n  import_measure {import_measure}'
+
+
+
+
+    def TestMidpoint(self,folder,patient_T1 : dict ,patient_T2 : dict,list_landmark_check : str):
+        logic = AQ3DCLogic()
+        # list_midpoint = ['Mid_RPCo_LOr','Mid_Mid_RACo_RPCo_LMCo']
+        list_midpoint = [['RPCo','LOr'],['Mid_RACo_RPCo','LMCo']]
+        for midpoint in list_midpoint :
+            landmark1 = midpoint[0]
+            landmark2 = midpoint[1]
+            patient_T1 = logic.AddMidpointToPatient(patient_T1,landmark1,landmark2)
+
+            computation_midpoint_function = patient_T1['01'][f'Mid_{landmark1}_{landmark2}']
+            compution_midpoint = list((np.array(patient_T1['01'][landmark1]) + np.array( patient_T1['01'][landmark2])) / 2)
+            assert computation_midpoint_function == compution_midpoint, f'function : {computation_midpoint_function}, \n manually : {compution_midpoint}' 
+
+        logic.SaveMidpoint(patient_T1,os.path.join(folder,'T1'),list_midpoint)
+        logic.SaveMidpoint(patient_T2,os.path.join(folder,'T2'),list_midpoint)
+
+
+        patient_T1 , patient_T2 = self.TestCreateDictPatient(folder,list_landmark_check)
+        
+
+
+

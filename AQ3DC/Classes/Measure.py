@@ -396,7 +396,7 @@ class Angle(Measure):
             if (
                 self.line1 == __o[1]
                 and self.line2 == __o[2]
-                and not self.complement_checkbox.isChecked()
+                and (self.complement_checkbox is None or  self.complement_checkbox.isChecked())
             ):
                 out = True
         return out
@@ -460,7 +460,7 @@ class Angle(Measure):
             value = self.__computeAngle(line1, line2, axis)
             result.append(round(value, 3))
 
-        if self.complement_checkbox.isChecked():
+        if self.complement_checkbox is not None and self.complement_checkbox.isChecked():
             tmp_result = []
             for resu in result:
                 new_resu = round(180 - np.absolute(resu), 3)
@@ -598,13 +598,15 @@ class Diff2Measure(Measure):
         out = f"{Measure.__str__(self)} {self.T1PL1}/{self.T2PL1} {self.T1PL2}/{self.T2PL2}"
         return out
 
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
     def __getitem__(self, key):
         if key == "measure 1" or key == 1:
             return self.measure1
         elif key == "measure 2" or key == 2:
-            return self.measure1
+            return self.measure2
         elif key == "Landmarks":
             return self.measure1["Landmarks"] + " && " + self.measure2["Landmarks"]
         elif isinstance(self.measure1, Distance):
