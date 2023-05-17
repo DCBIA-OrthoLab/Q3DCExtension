@@ -4,12 +4,20 @@ set(MODULE_NAME AQ3DC)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
+  Classes/__init__.py
+  Classes/Point.py
+  Classes/Line.py
+  Classes/Measure.py
+  Classes/Group_landmark.py
   )
 
 set(MODULE_PYTHON_RESOURCES
   Resources/Icons/${MODULE_NAME}.png
   Resources/UI/${MODULE_NAME}.ui
+  Resources/name_landmark.xlsx
   )
+
+
 
 #-----------------------------------------------------------------------------
 slicerMacroBuildScriptedModule(
