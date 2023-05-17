@@ -742,12 +742,12 @@ class MidPointWidget:
     self.AQ3DCWidget.lm_tab.Clear()
     self.P1_name = self.ui.combo_box_mp_1.currentText
     self.P2_name = self.ui.combo_box_mp_2.currentText
-    # mid_point = 'Mid_'+self.P1_name+'_'+self.P2_name
-    MID_POINTS.append([self.P1_name,self.P2_name])
+    mid_point = 'Mid_'+self.P1_name+'_'+self.P2_name
+    MID_POINTS.append(mid_point)
     dic_lm = self.AQ3DCWidget.available_lm
-    dic_lm['Midpoint'] = getMidpoint(MID_POINTS)
+    dic_lm['Midpoint'] = MID_POINTS
     if len(MID_POINTS) > 0 :
-      GROUPS_LANDMARKS['Midpoint'] = getMidpoint(MID_POINTS)
+      GROUPS_LANDMARKS['Midpoint'] = MID_POINTS
     
     lm_status_dic_copy = self.AQ3DCWidget.lm_tab.lm_status_dic.copy()
     # print(lm_status_dic_copy)
@@ -2272,11 +2272,10 @@ def SaveJson(patients_lst,patients_dict,out_path):
   for patient in patients_lst:
     lst_mid_point = []
     for mid_point in MID_POINTS:
-      P1_name = mid_point[0]
-      P2_name = mid_point[1]
+      P1_name = mid_point.split('_')[1]
+      P2_name = mid_point.split('_')[2]
       # print(P1_name)
       if P1_name and P2_name in patients_dict[patient]:
-        print(f'patient : {patient}, P1 name {P1_name}, and P2 name {P2_name}')
         P1_pos = patients_dict[patient][P1_name]
         P2_pos = patients_dict[patient][P2_name]
         mp = ComputeMidPoint(np.array(P1_pos),np.array(P2_pos))
@@ -2627,13 +2626,6 @@ def SignMeaningDentalAngle(measurement,lst_measurement):
     else:
       measurement.yaw_sign_meaning = "MR"
 
-
-
-def getMidpoint(midpoint_list):
-  out = []
-  for midpoint in midpoint_list:
-    out.append(f'Mid_{midpoint[0]}_{midpoint[1]}')
-  return out
 
 
 #
