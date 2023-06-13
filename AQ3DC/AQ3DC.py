@@ -39,7 +39,7 @@ try:
 
 except:
     slicer.util.pip_install("pandas")
-    import pandas as pd  # news people will not need to refresh the AQ3DC
+    import pandas as pd  # news users will not need to refresh the AQ3DC for the first 
 
 
 try:
@@ -49,6 +49,13 @@ except:
     slicer.util.pip_install("openpyxl")
     import openpyxl
 
+"""
+TODO:
+    -change __setitem__ of lines, point and measure (very bad names, very confusing)
+    -remove str in getitem component of measure, because in excel file is impossible to use the number to make calcul
+    - make protection to have the same patient in T1 and T2
+
+"""
 
 class AQ3DC(ScriptedLoadableModule):
     """Uses ScriptedLoadableModule base class, available at:
@@ -182,7 +189,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # need initialise the tab measurement
         # if we dont do this, if user add a measure without click on tabmeasurement or chekcbox. we get an issue
-        self.manageCblistMeasurement()
+        self.UpdateComboboxListMeasurement()
 
         # ====================================================================================================================================
         # Variable
@@ -254,50 +261,51 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.mid_point = []
 
         # init self.group landmark
-        self.ImportLandmarks(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
+        self.SelectFolderImportMeasurement(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
 
         # ==============================================================================================================================================================
         # Widget conect
         # ==============================================================================================================================================================
 
         # self.ui.TabLandmarks.clear()
-        self.ui.TabMeasure.currentChanged.connect(self.manageCblistMeasurement)
-        self.ui.CbListMeasurement.activated.connect(self.managepage)
-        self.ui.CheckBoxT1T2.toggled.connect(self.manageCblistMeasurement)
-        self.ui.ButtonPathT1.clicked.connect(self.connectButtonPathT1)
-        self.ui.ButtonPathT2.clicked.connect(self.connectButtonPathT2)
-        self.ui.ButtonImportLandmarks.clicked.connect(self.ImportLandmarks)
-        self.ui.ButtonSelectTabLandmarks.clicked.connect(self.SelectAllLandmarks)
-        self.ui.ButtonClearTabLandmarks.clicked.connect(self.ClearAllLandmarks)
+        self.ui.TabMeasure.currentChanged.connect(self.UpdateComboboxListMeasurement)
+        self.ui.CbListMeasurement.activated.connect(self.ManageDisplayComboboxMeasurement)
+        self.ui.CheckBoxT1T2.toggled.connect(self.UpdateComboboxListMeasurement)
+        self.ui.ButtonPathT1.clicked.connect(self.SelectFolderT1Patient)
+        self.ui.ButtonPathT2.clicked.connect(self.SelectFolderT2Patients)
+        self.ui.ButtonImportLandmarks.clicked.connect(self.SelectFolderImportMeasurement)
+        self.ui.ButtonSelectTabLandmarks.clicked.connect(self.CheckAllLandmarks)
+        self.ui.ButtonClearTabLandmarks.clicked.connect(self.DecheckAllLandmark)
         self.ui.ButtonAddMidpoint.clicked.connect(self.AddMidpoint)
-        self.ui.ButtonFolderMidpoint.clicked.connect(self.FolderMidpoint)
+        self.ui.ButtonFolderMidpoint.clicked.connect(self.SelectFolderSaveMidpoint)
         self.ui.ButtonSaveMidpoint.clicked.connect(self.SaveMidpoint)
-        self.ui.ButtonAddMeasure.clicked.connect(self.ManageMeasure)
-        self.ui.ButtonDeleteMeasurement.clicked.connect(self.RemoveMeasureTabMeasure)
+        self.ui.ButtonAddMeasure.clicked.connect(self.CreateMeasurement)
+        self.ui.ButtonDeleteMeasurement.clicked.connect(self.DeleteMeasurement)
         self.ui.CbImportExportMeasure.activated.connect(
-            self.ManageStakedImportExportMeasure
+            self.ManageDisplayImportExportMeasurementPage
         )
-        self.ui.ButtonFolderExportMeasure.clicked.connect(self.FolderExportMeasure)
-        self.ui.ButtonFileImportMeasure.clicked.connect(self.FileImportMeasure)
-        self.ui.ButtonExportMeasure.clicked.connect(self.ExportMeasure)
-        self.ui.ButtonImportMeasure.clicked.connect(self.ImportMeasure)
-        self.ui.ButtonCompute.clicked.connect(self.Computation)
-        self.ui.ButtonFolderCompute.clicked.connect(self.ComputationFolder)
-        self.ui.TabLandmarks.currentChanged.connect(self.manageStackedWidgetLandmark)
+        self.ui.ButtonFolderExportMeasure.clicked.connect(self.SelectFolderExportMeasurement)
+        self.ui.ButtonFileImportMeasure.clicked.connect(self.SelectFolderImportMeasurement)
+        self.ui.ButtonExportMeasure.clicked.connect(self.ExportMeasurement)
+        self.ui.ButtonImportMeasure.clicked.connect(self.ImportMeasurement)
+        self.ui.ButtonCompute.clicked.connect(self.SaveComputationMeasuement)
+        self.ui.ButtonFolderCompute.clicked.connect(self.SelectFolderComputeMeasure)
+        self.ui.TabLandmarks.currentChanged.connect(self.ManageStackedLandmark)
 
         self.ui.TableAngle.horizontalHeader().sectionDoubleClicked.connect(
-            partial(self.ChechAllCheckbox, "Angle")
+            partial(self.SelectAllMeasurement, "Angle")
         )
         self.ui.TableDistance.horizontalHeader().sectionDoubleClicked.connect(
-            partial(self.ChechAllCheckbox, "Distance")
+            partial(self.SelectAllMeasurement, "Distance")
         )
 
 #==========================================================================================================================================================
 # Computation
 #==========================================================================================================================================================
 
-    def ComputationFolder(self):
-        """Ask user, which folder he want to put his result
+
+    def SelectFolderComputeMeasure(self):
+        """Ask user, which folder he want to compute his result
     Display window to selecte the folder
     Display folder's path in LineEditFolderComputation
 
@@ -309,26 +317,26 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if computation_folder != "":
             self.ui.LineEditFolderComputation.setText(computation_folder)
 
-    def Computation(self):
+    def SaveComputationMeasuement(self):
         """
     Compute measurement 
 
     Call by ButtonCompute
     """
-
         path = self.ui.LineEditFolderComputation.text
         file_name = self.ui.LineEditComputationFile.text
         if path != "" and (file_name != ".xlsx" or ""):
             # concatenate patient T1 and T2
-            dic_patient = self.logic.CatPatientT1T2(
+            dic_patient = self.logic.ConcatenateT1T2Patient(
                 self.dic_patient_T1, self.dic_patient_T2
             )
 
             # compute all measure
-            patient_compute = self.logic.ComputeMeasure(self.list_measure, dic_patient)
+            patient_compute = self.logic.ComputeMeasurement(self.list_measure, dic_patient)
 
             # write measure
             self.logic.WriteMeasurementExcel(patient_compute, path, file_name)
+            # self.logic.WriteMeasurementExcel2(test, path, file_name)
 
 
 
@@ -336,7 +344,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 # Export/Import List Measurement
 #====================================================================================================================================================================
 
-    def ManageStakedImportExportMeasure(self):
+    def ManageDisplayImportExportMeasurementPage(self):
         """
     Manage Interface if user want export list of measurement or export
     
@@ -350,7 +358,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         choice = self.ui.CbImportExportMeasure.currentText
         self.ui.StackedImportExport.setCurrentIndex(dic[choice])
 
-    def FolderExportMeasure(self):
+    def SelectFolderExportMeasurement(self):
         """Ask to user, which foler he want to put his measurement file,
         Display window to select folder
         Display folder's path in LineEditFolderExportMeasure
@@ -363,7 +371,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if measure_folder != "":
             self.ui.LineEditFolderExportMeasure.setText(measure_folder)
 
-    def ExportMeasure(self):
+    def ExportMeasurement(self):
         """Export Measure
 
       call by ButtonExportMeasure
@@ -372,11 +380,11 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         measure_folder = self.ui.LineEditFolderExportMeasure.text
         if name_file != "" and measure_folder != "":
 
-            self.logic.ExportMeasure(
+            self.logic.ExportMeasurement(
                 measure_folder + "/" + name_file, self.list_measure
             )
 
-    def FileImportMeasure(self):
+    def SelectFolderImportMeasurement(self):
         """Ask to user, Which folder he want to put his measurement file,
         Display window to select folder
         Display path folder in LineEditImportMeasure
@@ -387,14 +395,14 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if file_measure != "":
             self.ui.LineEditImportMeasure.setText(file_measure)
 
-    def ImportMeasure(self):
+    def ImportMeasurement(self):
         """Import Measure
 
     ButtonImportMeasure
     """
-        list_measure = self.logic.ImportMeasure(self.ui.LineEditImportMeasure.text)
+        list_measure = self.logic.ImportMeasurement(self.ui.LineEditImportMeasure.text)
         for measure in list_measure:
-            self.AddMeasureTabMeasure(measure)
+            self.AddMeasurementToTabMeasurement(measure)
 
 
     
@@ -423,31 +431,31 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for group, landmarks in dico_landmarks.items():
 
             # create tab
-            self.addGroupTabLandmarks(self.ui.TabLandmarks, group, index)
+            self.AddTabLandmarks(self.ui.TabLandmarks, group, index)
 
             if not isinstance(landmarks, MyDict):
                 # if landmarks need only one tab to be display
                 for landmark in landmarks:
-                    self.addLandmarksTabLandmarks(group, landmark, status[landmark])
+                    self.AddLandmarkToTabLandmarks(group, landmark, status[landmark])
 
             else:
                 # to display 2 tab landmark
                 prefix, suffix = landmarks.separateTopresuf()
                 for suf in suffix:
-                    self.addLandmarksTabLandmarks(group, suf, status[suf])
+                    self.AddLandmarkToTabLandmarks(group, suf, status[suf])
 
-                self.addTabWidget(index, prefix, group)
+                self.AddQTabWidgetToTabLandmark(index, prefix, group)
                 for key, values in prefix.items():
                     for value in values:
-                        self.addLandmarksTabLandmarks(key + group, value, status[value])
+                        self.AddLandmarkToTabLandmarks(key + group, value, status[value])
 
             index += 1
 
         self.list_LandMarkCheck = []
-        self.UpdateComboboxLandmarks()
+        self.UpdateAllLandmarks()
 
-    def addTabWidget(self, i, dico, parent):
-        """add TabWidget if the group need 2 TabWidget
+    def AddQTabWidgetToTabLandmark(self, i, dico, parent):
+        """add QTabWidget if the group need 2 TabWidget
 
     Args:
         i (int): index
@@ -461,9 +469,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.exeption_display_group_landmark[i] = new_tabwidget
 
         for group in dico.keys():
-            self.addGroupTabLandmarks(new_tabwidget, group, i, parent=parent)
+            self.AddTabLandmarks(new_tabwidget, group, i, parent=parent)
 
-    def addGroupTabLandmarks(
+    def AddTabLandmarks(
         self, tabWidget: QTabWidget, group: str, index: int, parent: str = ""
     ):
         """Add a new Tab in tabWidget
@@ -495,7 +503,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.dic_Group2Layout[group + parent] = [layout2, scr_box]
 
-    def addLandmarksTabLandmarks(self, group: str, landmark: str, status: bool):
+    def AddLandmarkToTabLandmarks(self, group: str, landmark: str, status: bool):
         """Add landmark in tab
 
       Args:
@@ -508,10 +516,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.dic_Checkbox2Landmark[check] = [landmark, status, group]
         self.dic_Landmark2Checkbox[landmark] = [check, status]
         self.dic_checkbox[landmark] = check
-        check.connect("toggled(bool)", partial(self.toggle_checkbox,landmark))
+        check.connect("toggled(bool)", partial(self.ToggleCheckboxLandmark,landmark))
         self.dic_Group2Layout[group][0].addWidget(check)
 
-    def manageStackedWidgetLandmark(self):
+    def ManageStackedLandmark(self):
         """ manage the 2 tab widget
     """
         for tablandmark in self.exeption_display_group_landmark.values():
@@ -521,11 +529,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.TabLandmarks.currentIndex
             ].setHidden(False)
 
-
-
-
-
-    def toggle_checkbox(self,landmark,enabled):
+    def ToggleCheckboxLandmark(self,landmark,enabled):
         """function connect to checkbox in tablelandmark
 
       update list landmark checked
@@ -533,15 +537,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if enabled :
             self.list_LandMarkCheck.append(landmark)
         else :
-            self.list_LandMarkCheck.remove(landmark)
+            self.list_LandMarkCheck.remove(landmark)   
+        self.UpdateAllLandmarks()
 
-        
-        self.UpdateComboboxLandmarks()
-
-    def UpdateComboboxLandmarks(self):
+    def UpdateAllLandmarks(self):
         """Update Combobox containing landmarks
     """
-        enable_landmark = self.logic.getEnabledLandmarks(self.list_LandMarkCheck, self.GROUPS_LANDMARKS)
+        enable_landmark = self.logic.GetEnableLandmarks(self.list_LandMarkCheck, self.GROUPS_LANDMARKS)
         for Cb in self.list_CbLandmark:
             Cb.clear()
             Cb.addItems(enable_landmark)
@@ -552,7 +554,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 # Landmark
 #=========================================================================================================================================
 
-    def ImportLandmarks(self, path_listlandmarks=None):
+    def SelectFolderImportMeasurement(self, path_listlandmarks=None):
         """
     Ask user, which excel file is use for group landmark
     add landmark in the tablandmarks and update combo box with all landmark
@@ -574,16 +576,16 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             )
             self.ManageTabLandmarks(list_landmarks, self.GROUPS_LANDMARKS)
 
-            self.manageCblistMeasurement()
+            self.UpdateComboboxListMeasurement()
 
-    def SelectAllLandmarks(self):
-        self.TabSelectLandmarks(True)
+    def CheckAllLandmarks(self):
+        self.SetCheckStateCurrentTabLandmakrs(True)
 
-    def ClearAllLandmarks(self):
-        self.TabSelectLandmarks(False)
+    def DecheckAllLandmark(self):
+        self.SetCheckStateCurrentTabLandmakrs(False)
 
-    def TabSelectLandmarks(self, status: bool):
-        """Check or decheck all checkbox enable in tanlandmark open in utilisator interface
+    def SetCheckStateCurrentTabLandmakrs(self, status: bool):
+        """Check or decheck all checkbox enable in tablandmark open in utilisator interface
 
     Args:
         status (bool): True -> check all checkbox in tablandmark open
@@ -596,7 +598,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if self.dic_Landmark2Checkbox[landmark][1]:
                 self.dic_Landmark2Checkbox[landmark][0].setChecked(status)
 
-        self.UpdateComboboxLandmarks()
+        self.UpdateAllLandmarks()
 
 
 #==========================================================================================================================================================================
@@ -612,7 +614,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         mid_point = "Mid_" + P1 + "_" + P2
         self.GROUPS_LANDMARKS["Midpoint"] = mid_point
 
-        self.addLandmarksTabLandmarks("Midpoint", mid_point, True)
+        self.AddLandmarkToTabLandmarks("Midpoint", mid_point, True)
         self.GROUPS_LANDMARKS["Midpoint"] = mid_point
         self.mid_point.append((P1,P2))
         self.dic_patient_T1 = self.logic.AddMidpointToPatient(
@@ -623,7 +625,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.dic_patient_T2, P1, P2
             )
 
-    def FolderMidpoint(self):
+    def SelectFolderSaveMidpoint(self):
         """Ask user, which folder he want to save midpoint
       Display the folder chose
 
@@ -661,11 +663,11 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 # Measurement
 #===============================================================================================================
 
-    def managepage(self):
+    def ManageDisplayComboboxMeasurement(self):
         """_summary_
       Manage StackedMeasure to display the good page in function TabMeasure, CheckboxT1T2 and ComboBox
 
-      This function is called by self.ui.CbListMeasurement and self.manageCbListMeasurement
+      This function is called by self.ui.CbListMeasurement and self.UpdateComboboxListMeasurement
       """
         text = self.ui.CbListMeasurement.currentText
         currentTab = self.ui.TabMeasure.currentWidget().name
@@ -684,10 +686,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             dic[currentTab][self.ui.CheckBoxT1T2.isChecked()][text]
         )
 
-    def manageCblistMeasurement(self):
+    def UpdateComboboxListMeasurement(self):
         """_summary_
     Manage items in CbListMeasurement in function TabMeasure and CheckboxT1T2
-    And update StackedMeasure with self.managepage
+    And update StackedMeasure with self.ManageDisplayComboboxMeasurement
 
     This function is calld by TabMeasure and CheckBoxT1T2
     """
@@ -703,16 +705,14 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if self.ui.CheckBoxT1T2.isChecked() == True:
                 self.ui.CbListMeasurement.addItem("Angle line T1 and line T2")
             self.ui.CbListMeasurement.addItem("Angle between 2 lines")
-        self.managepage()
+        self.ManageDisplayComboboxMeasurement()
 
-    def AddMeasureTabMeasure(self, measure : Union[Angle,Distance,Diff2Measure]):
+    def AddMeasurementToTabMeasurement(self, measure : Union[Angle,Distance,Diff2Measure]):
         """Add new measure in tabmeasure
 
     Args:
         measure (Measure): new measure to add
     """
-    
-
         for allmeasure in self.list_measure:
 
             if allmeasure == measure:
@@ -743,7 +743,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         measure["checkbox"] = a
         self.list_measure.append(measure)
 
-    def ChechAllCheckbox(self, group, column):
+    def SelectAllMeasurement(self, group, column):
         if column == 0:
             list_checkbox = []
             for mea in self.list_measure:
@@ -753,7 +753,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             for checkbox in list_checkbox:
                 checkbox.setChecked(True)
 
-    def RemoveMeasureTabMeasure(self):
+    def DeleteMeasurement(self):
         """
     Remove all measurement with checkbox checked
 
@@ -779,7 +779,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for idremove in row_remove:
             self.list_measure.pop(idremove)
 
-    def ManageMeasure(self):
+    def CreateMeasurement(self):
         """
     call by ButtonAddMeasure
 
@@ -825,14 +825,23 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             ],
         }
 
-        dic_page2namemeasure = {
-            "PageDistancePointLineT1": "Distance point line T1",
-            "PageDistancePointLineT1T2": "Distance point line T1 T2",
-            "PageAngleBetween2LinesT1": "Angle between 2 lines T1",
-            "PageAngleBetween2LinesT1T2": "Angle between 2 lines T1 T2",
-            "PageDistance2Points": "Distance between 2 points T1",
-            "PageDistance2PointsT1T2": "Distance between 2 points T1 T2",
-            "PageAngleLineT1T2": "Angle line T1 and line T2",
+        dic_page2namemeasure_T1= {
+            "PageDistancePointLineT1": ["Distance point line T1"],
+            "PageAngleBetween2LinesT1": ["Angle between 2 lines T1"],
+            "PageDistance2Points": ["Distance between 2 points T1"]
+        }
+
+        dic_page2namemeasure_T1T2 = {
+            "PageDistancePointLineT1": ["Distance point line T1","Distance point line T2"],
+            "PageAngleBetween2LinesT1": ["Angle between 2 lines T1","Angle between 2 lines T2"],
+            "PageDistance2Points": ["Distance between 2 points T1","Distance between 2 points T2"]
+        }
+
+        dic_page2namemeasure_checkbox = {
+            "PageDistancePointLineT1T2": ["Distance point line T1 T2"],
+            "PageAngleBetween2LinesT1T2": ["Angle between 2 lines T1 T2"],
+            "PageDistance2Points": ["Distance between 2 points T1 T2"],
+            "PageAngleLineT1T2": ["Angle line T1 and line T2"]
         }
 
         page = self.ui.StackedMeasure.currentWidget().name
@@ -840,13 +849,20 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for point in dic_page2combobox[page]:
             list_point.append(point.currentText)
 
+        
         if page == "PageDistance2Points" and self.ui.CheckBoxT1T2.isChecked():
             page = "PageDistance2PointsT1T2"
-        out = self.logic.CreateMeasure(dic_page2namemeasure[page], list_point)
+        
+        dict_page_to_namemeasure = dic_page2namemeasure_T1
+        if self.ui.LineEditPathT2.text != '':
+            dict_page_to_namemeasure = dic_page2namemeasure_T1T2
+            if self.ui.CheckBoxT1T2.isChecked():
+                dict_page_to_namemeasure = dic_page2namemeasure_checkbox
+        out = self.logic.CreateMeasurement(dict_page_to_namemeasure[page], list_point)
         print('out',out)
 
         for measure in out:
-            self.AddMeasureTabMeasure(measure)
+            self.AddMeasurementToTabMeasurement(measure)
 
     """
    ___    _     _                   
@@ -857,7 +873,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                                     
   """
 
-    def connectButtonPathT1(self):
+    def SelectFolderT1Patient(self):
+        """ Open window allow user to choose folder with T1 patients' information. 
+        """
 
         surface_folder = qt.QFileDialog.getExistingDirectory(
             self.parent, "Select a scan folder"
@@ -875,7 +893,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             )
             self.ManageTabLandmarks(self.list_landmarks_exist, self.GROUPS_LANDMARKS)
 
-    def connectButtonPathT2(self):
+
+    def SelectFolderT2Patients(self):
+        """ Open window allow user to choose folder with T1 patients' information. 
+        """
         if self.dic_patient_T1 == None:
             self.warningMessage("Missing T1 folder")
         else:
@@ -887,7 +908,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.ui.LineEditPathT2.setText(surface_folder)
                 
                 self.dic_patient_T2  = self.logic.CreateDictPatient(surface_folder)
-                self.logic.compareT1T2(self.dic_patient_T1, self.dic_patient_T2)
+                self.logic.CompareT1T2(self.dic_patient_T1, self.dic_patient_T2)
+
+                (self.list_landmarks_exist,
+                    self.GROUPS_LANDMARKS,
+                ) = self.logic.UpdateGroupLandmark(self.dic_patient_T2, self.GROUPS_LANDMARKS)
+                self.ManageTabLandmarks(self.list_landmarks_exist, self.GROUPS_LANDMARKS)
 
     def onSceneStartClose(self, caller, event):
         """
@@ -950,7 +976,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         if not parameterNode.GetParameter("Invert"):
             parameterNode.SetParameter("Invert", "false")
 
-    def CatPatientT1T2(self, dic_patients_T1: dict, dic_patients_T2: dict):
+    def ConcatenateT1T2Patient(self, dic_patients_T1: dict, dic_patients_T2: dict):
         """ Concatenate dic patient T1 and dic patient T2
         Can concatenate if dic_patient_T2 is avoid
 
@@ -1038,6 +1064,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     patients_lst.append(patient)
                 if patient not in patients_dict:
                     patients_dict[patient] = {}
+                # print(f'json file {jsonfile}')
                 json_file = pd.read_json(jsonfile)
                 markups = json_file.loc[0, "markups"]
                 controlPoints = markups["controlPoints"]
@@ -1069,7 +1096,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
         return patients_dict 
 
-    def compareT1T2(self, dic_patinetT1: dict, dic_patientT2: dict):
+    def CompareT1T2(self, dic_patinetT1: dict, dic_patientT2: dict):
         """Check if patient T1 and T2 have the same landmark, and the same patient
 
     Display in the terminal difference between T1 and T2
@@ -1146,9 +1173,16 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 list_midlandmarks.append(landmark)
             elif not landmark in all_landmarks:
                 list_otherlandmarks.append(landmark)
+        if "Other" in all_landmarks.keys():
+            all_landmarks["Other"] += list_otherlandmarks
+        else :
+            all_landmarks["Other"] = list_otherlandmarks
 
-        all_landmarks["Other"] = list_otherlandmarks
-        all_landmarks["Midpoint"] = list_midlandmarks
+        if "Midponts" in all_landmarks.keys():
+            all_landmarks["Midpoint"]+= list_midlandmarks
+        else :
+            all_landmarks["Midpoint"] = list_midlandmarks
+        all_landmarks["Midpoint"] += list_midlandmarks
 
         return list_landmark, all_landmarks
 
@@ -1189,7 +1223,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                             f"Save Midpoint, Warning this patient : {patient}, landmark : {mid_point}, it s not save. Please verify your folder"
                         )
                         continue
-                    controle_point = self.GenControlePoint(
+                    controle_point = self.GenerateControlePoint(
                         f"Mid_{P1_name}_{P2_name}", midpoint_position
                     )
                     lst_mid_point.append(controle_point)
@@ -1202,12 +1236,11 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
         for patient, cp_lst in midpoint_dic.items():
             if os.path.exists(os.path.join(out_path,f"{patient}_Midpoint.json")) :
-                cp_lst = self.MergeJsonFile(os.path.join(out_path,f"{patient}_Midpoint.json"),cp_lst)
+                cp_lst = self.MergeJsonControlePoint(os.path.join(out_path,f"{patient}_Midpoint.json"),cp_lst)
             
             self.WriteJson(f"{patient}_Midpoint", cp_lst, out_path)
 
-
-    def MergeJsonFile(self, file_name : str, list_controle_point : list ):
+    def MergeJsonControlePoint(self, file_name : str, list_controle_point : list ):
         with open(file_name) as f :
             data = json.load(f)
         list_controle_point += data['markups'][0]['controlPoints']
@@ -1286,7 +1319,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         mp = (p1 + p2) / 2
         return mp
 
-    def GenControlePoint(self, label: str, position: Union[list , np.ndarray]):
+    def GenerateControlePoint(self, label: str, position: Union[list , np.ndarray]):
         """Generate ControlePoint readable by slicer
 
     Args:
@@ -1297,7 +1330,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         dict: Controle point
     """
         controle_point = {
-            "id": str(1),
+            "id": str(1), 
             "label": label,
             "description": "",
             "associatedNodeID": "",
@@ -1310,9 +1343,18 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         }
         return controle_point
 
-    def ExportMeasure(self, path_file: str, measures: list):
+    def ExportMeasurement(self, path_file: str, measures: list):
         """ Write an excel with measures listed in measures (args)
-
+       # elif key == "Yaw Component":
+        #     return float(self.lr)
+        # elif key == "Yaw Meaning":
+        #     return self.lr_sign_meaning
+        # elif key == "Pitch Component":
+        #     return float(self.ap)
+        # elif key == "Pitch Meaning":
+        #     return self.ap_sign_meaning
+        # elif key == "Roll Component":
+        #     return float(self.si)
         Create 3 pages in excel file: Distane between 2 points, Distance point line and Angle between 2 lines
         excel example:
             page Distane between 2 points:
@@ -1392,7 +1434,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     writer, sheet_name="Angle between 2 lines", index=False
                 )
 
-    def ImportMeasure(self, path_file: str):
+    def ImportMeasurement(self,path_file : str) :
         """From path of the excel file create list measures
 
         excel example:
@@ -1496,19 +1538,19 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                             sheet["Line 2"][i].split("-")[1],
                         ]
 
-                measures = self.CreateMeasure(
-                    sheet["Type of measurement"][i], list_point
+                measures = self.CreateMeasurement(
+                    [sheet["Type of measurement"][i]], list_point
                 )
                 for measure in measures:
                     list_measure.append(measure)
 
         return list_measure
 
-    def CreateMeasure(self, type_of_measure: str, list_landmark: list):
+    def CreateMeasurement(self, type_of_measure: list, list_landmark: list):
         """ Create Measure
 
     Args:
-        type_of_measure (str): name of measure
+        type_of_measure (list): name of measure
         list_landmark (list): list landmark
             example:
                 list = [ROr,LOr,LPo,C2] the size depend of the measure
@@ -1516,95 +1558,113 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     Returns:
         list: list = [measure , measure , measure] the size depend of measure is for T1 or T2
     """
+        print(f'type of measure {type_of_measure}')
 
         out = []
 
-        if type_of_measure == "Angle between 2 lines T1":
+        if "Angle between 2 lines T1" in type_of_measure:
 
             L1 = Line(Point(list_landmark[0], "T1"), Point(list_landmark[1], "T1"))
             L2 = Line(Point(list_landmark[2], "T1"), Point(list_landmark[3], "T1"))
-            measure = Angle(L1, L2, type_of_measure[:-3], "T1")
+            measure = Angle(L1, L2, "Angle between 2 lines", "T1")
             out.append(measure)
 
-        elif type_of_measure == "Angle between 2 lines T1 T2":
+        if "Angle between 2 lines T2" in type_of_measure:
+
+            L1 = Line(Point(list_landmark[0], "T2"), Point(list_landmark[1], "T2"))
+            L2 = Line(Point(list_landmark[2], "T2"), Point(list_landmark[3], "T2"))
+            measure = Angle(L1, L2, "Angle between 2 lines", "T2")
+            out.append(measure)
+
+        if "Angle between 2 lines T1 T2" in type_of_measure :
             T1L1 = Line(Point(list_landmark[0], "T1"), Point(list_landmark[1], "T1"))
             T2L1 = Line(Point(list_landmark[2], "T2"), Point(list_landmark[3], "T2"))
             T1L2 = Line(Point(list_landmark[4], "T1"), Point(list_landmark[5], "T1"))
             T2L2 = Line(Point(list_landmark[6], "T2"), Point(list_landmark[7], "T2"))
 
-            measure1 = Angle(T1L1, T1L2, type_of_measure[:-6], "T1")
-            measure2 = Angle(T2L1, T2L2, type_of_measure[:-6], "T2")
+            measure1 = Angle(T1L1, T1L2, "Angle between 2 lines", "T1")
+            measure2 = Angle(T2L1, T2L2, "Angle between 2 lines", "T2")
             measure_dif = Diff2Measure(measure1, measure2)
 
-            out.append(measure1)
-            out.append(measure2)
             out.append(measure_dif)
 
-        elif type_of_measure == "Angle line T1 and line T2":
+        if "Angle line T1 and line T2" in type_of_measure :
             LT1 = Line(Point(list_landmark[0], "T1"), Point(list_landmark[1], "T1"))
             LT2 = Line(Point(list_landmark[2], "T2"), Point(list_landmark[3], "T2"))
 
-            measure = Angle(LT1, LT2, type_of_measure)
+            measure = Angle(LT1, LT2, "Angle line T1 and line T2")
             out.append(measure)
 
-        elif type_of_measure == "Distance between 2 points T1":
+        if "Distance between 2 points T1" in type_of_measure:
             P1 = Point(list_landmark[0], "T1")
             P2 = Point(list_landmark[1], "T1")
 
-            measure = Distance(P1, P2, type_of_measure[:-3], time="T1")
+            measure = Distance(P1, P2, "Distance between 2 points", time="T1")
             out.append(measure)
 
-        elif type_of_measure == "Distance point line T1":
+        if "Distance between 2 points T2" in type_of_measure:
+            P1 = Point(list_landmark[0], "T2")
+            P2 = Point(list_landmark[1], "T2")
+
+            measure = Distance(P1, P2, "Distance between 2 points", time="T2")
+            out.append(measure)
+
+        if "Distance point line T1" in type_of_measure:
             P = Point(list_landmark[0], "T1")
             L = Line(Point(list_landmark[1], "T1"), Point(list_landmark[2], "T1"))
 
-            measure = Distance(P, L, type_of_measure[:-3], time="T1")
+            measure = Distance(P, L, "Distance point line", time="T1")
             out.append(measure)
 
-        elif (
-            type_of_measure == "Distance point line T1 T2"
+        if "Distance point line T2" in type_of_measure:
+            P = Point(list_landmark[0], "T2")
+            L = Line(Point(list_landmark[1], "T2"), Point(list_landmark[2], "T2"))
+
+            measure = Distance(P, L, "Distance point line", time="T2")
+            out.append(measure)
+
+        if (
+            "Distance point line T1 T2" in type_of_measure
         ):
             PT1 = Point(list_landmark[0], "T1")
             LT1 = Line(Point(list_landmark[1], "T1"), Point(list_landmark[2], "T1"))
             PT2 = Point(list_landmark[3], "T2")
             LT2 = Line(Point(list_landmark[4], "T2"), Point(list_landmark[5], "T2"))
 
-            measure1 = Distance(PT1, LT1, type_of_measure[:-6], time="T1")
-            measure2 = Distance(PT2, LT2, type_of_measure[:-6], time="T2")
+            measure1 = Distance(PT1, LT1, "Distance point line", time="T1")
+            measure2 = Distance(PT2, LT2, "Distance point line", time="T2")
             measure_dif = Diff2Measure(measure1, measure2)
 
-            out.append(measure1)
-            out.append(measure2)
             out.append(measure_dif)
 
-        elif type_of_measure == "Distance between 2 points T1 T2":
+        if "Distance between 2 points T1 T2" in type_of_measure:
             P1 = Point(list_landmark[0], "T1")
             P2 = Point(list_landmark[1], "T2")
 
-            measure = Distance(P1, P2, type_of_measure)
+            measure = Distance(P1, P2, "Distance between 2 points T1 T2")
 
-            P1 = Point(list_landmark[0], "T1")
-            P2 = Point(list_landmark[1], "T1")
+            # P1 = Point(list_landmark[0], "T1")
+            # P2 = Point(list_landmark[1], "T1")
 
-            T1measure = Distance(P1, P2, type_of_measure[:-6], time="T1")
+            # T1measure = Distance(P1, P2, type_of_measure[:-6], time="T1")
 
-            P1 = Point(list_landmark[0], "T2")
-            P2 = Point(list_landmark[1], "T2")
+            # P1 = Point(list_landmark[0], "T2")
+            # P2 = Point(list_landmark[1], "T2")
 
-            T2measure = Distance(P1, P2, type_of_measure[:-6], time="T2")
+            # T2measure = Distance(P1, P2, type_of_measure[:-6], time="T2")
 
             out.append(measure)
-            out.append(T1measure)
-            out.append(T2measure)
+            # out.append(T1measure)
+            # out.append(T2measure)
 
 
         return out
 
-    def ComputeMeasure(self, list_measure: list, dic_patient: dict):
+    def ComputeMeasurement(self, list_measure: list, dic_patient: dict):
         """Compute measure
 
             Printing warning, if there is error with computation or if landmark dont exist for one patient
-            Printing message, if ComputeMeasure remove one measure if there is useless (example : there are only zero in measure)
+            Printing message, if ComputeMeasurement remove one measure if there is useless (example : there are only zero in measure)
     Args:
         list_measure (list): list = [measure , measure , measure]
         dic_patient (dic):  contaneation of dic_patient
@@ -1639,6 +1699,15 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             "Roll Component": [],
             "Roll Meaning": [],
         }
+        # dic_with_all_measurement = {}
+        # dic_short_cut = {'Distance point line T1':'DplT1',
+        #                  "Distance point line T1 T2":'DplT12',
+        #                  'Angle between 2 lines T1': 'Ab2lT1',
+        #                  'Angle betwwen 2 lines T1 T2':'Ab2plT12',
+        #                  "Distance between 2 points T1":"Db2pT1",
+        #                  "Distance between 2 points T1 T2":"Db2pT12",
+        #                  "Angle line T1 and line T2": "AlT1&lT2"}
+
         list_title = [
             "Landmarks",
             "R-L Component",
@@ -1688,7 +1757,61 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                         f"Dont write this measure {measure} for this patient {patient} because is useless measure"
                     )
                     continue
-        return dic_patient__computation
+
+        # for measure in list_measure :
+        #     dic_measurement_sheet = {
+        #     "Patient": [],
+        #     "Landmarks" : [],
+        #     "R-L Component": [],
+        #     "R-L Meaning": [],
+        #     "A-P Component": [],
+        #     "A-P Meaning": [],
+        #     "S-I Component": [],
+        #     "S-I Meaning": [],
+        #     "3D Distance": [],
+        #     "Yaw Component": [],
+        #     "Yaw Meaning": [],
+        #     "Pitch Component": [],
+        #     "Pitch Meaning": [],
+        #     "Roll Component": [],
+        #     "Roll Meaning": [],
+        # }   
+        #     add_in_name_sheet = ''
+        #     if measure["Landmarks"].replace('/','-')[:3] == "Mid" :
+        #         add_in_name_sheet = 'Mid'
+        #     else :
+        #         add_in_name_sheet = measure["Landmarks"].replace('/','-')
+        #     type_measure = dic_short_cut[measure["Type of measurement + time"]] + add_in_name_sheet
+        #     dic_with_all_measurement[type_measure] = dic_measurement_sheet
+        #     for patient, point in dic_patient.items():
+        #         try:
+        #             measure["position"] = point
+        #         except KeyError as key:
+        #             print(f"this landmark {key} doesnt exist for this patient", patient)
+        #             continue
+        #         try:
+        #             measure.computation()
+        #         except ZeroDivisionError as Zero:
+        #             print(
+        #                 f"impossible to compute this measure {measure} for this patient {patient} a reason divide by 0 {Zero}"
+        #             )
+        #             continue
+
+        #         measure.SignManager()
+
+        #         if measure.isUtilMeasure():
+        #             dic_with_all_measurement[type_measure]["Patient"].append(patient)
+        #             for title in list_title:
+        #                 dic_with_all_measurement[type_measure][title].append(measure[title])
+
+        #         else:
+        #             print(
+        #                 f"Dont write this measure {measure} for this patient {patient} because is useless measure"
+        #             )
+        #             continue
+
+
+        return dic_patient__computation#, dic_with_all_measurement
     
 
     def WriteMeasurementExcel(self, dic_patient__computation : dict, path : str, name_file : str):
@@ -1705,6 +1828,27 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
             df.to_excel(os.path.join(path, name_file))
 
+
+
+
+    # def WriteMeasurementExcel2(self, dic_patient__computation : dict, path : str, name_file : str):
+    #     """Create excel file with result of computation
+
+    # Args:
+    #     dic_patient__computation (dict): 
+    #     path (str): file's path
+    #     name_file (str): file name
+    # """
+    #     dic_sheet = {}
+
+    #     # if len(dic_patient__computation["Patient"]) > 0:
+    #     print(dic_patient__computation)
+    #     for key , value in dic_patient__computation.items():
+    #         df = pd.DataFrame(value)
+    #         dic_sheet[key] = df
+    #     with pd.ExcelWriter(os.path.join(path, name_file)) as writer :
+    #         for key , df in dic_sheet.items():            
+    #             df.to_excel(writer,sheet_name = key, index = False)
 
     def AddMidpointToPatient(self, dic_patient: dict, landmark1: str, landmark2: str):
         """
@@ -1748,7 +1892,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
         return dic_patient
 
-    def getEnabledLandmarks(self,markups_node : list,Group_Landmark : Group_landmark):
+    def GetEnableLandmarks(self,markups_node : list,Group_Landmark : Group_landmark):
         """
         
         Args:
@@ -1829,6 +1973,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
        
 
         tmp_folder = os.path.join(slicer.util.tempDirectory())
+        print(f'tmp folder {tmp_folder}')
 
 
         self.setUp(tmp_folder)
@@ -1881,7 +2026,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
         patient_T1 = logic.CreateDictPatient(os.path.join(folder,'T1'))
         patient_T2 = logic.CreateDictPatient(os.path.join(folder,'T2'))
 
-        dif_landmark , dif_patient = logic.compareT1T2(patient_T1,patient_T2)
+        dif_landmark , dif_patient = logic.CompareT1T2(patient_T1,patient_T2)
         assert dif_landmark == {} and dif_patient == None
 
         list_landmark_exist, group_landmark = logic.UpdateGroupLandmark(patient_T1,group_landmark)
@@ -1898,15 +2043,21 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
     def TestCreateMeasure(self) -> list[Measure]:
         logic = AQ3DCLogic()
-        measure_to_create = {'Angle between 2 lines T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS'],
+        measure_to_create = {'Angle between 2 lines T1' : ['RPCo', 'LOr','RAE', 'ROr'],
+                            "Angle between 2 lines T2":['Ba', 'N', 'RACo', 'PNS'],
+                            'Angle between 2 lines T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS'],
                             'Angle line T1 and line T2':['RPCo', 'LOr', 'Ba', 'N'],
+                            "Distance point line T1" : ['RPCo', 'LOr', 'Ba'],
+                            "Distance point line T2" : ['N', 'RAE', 'ROr'],
                             'Distance point line T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr'],
-                            'Distance between 2 points T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS']}
+                            'Distance between 2 points T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS'],
+                            "Distance between 2 points T1" : ['RPCo', 'LOr'],
+                            "Distance between 2 points T2" : ['RPCo', 'LOr']}
                 
 
         list_measure = []
         for measure , landmarks in measure_to_create.items():
-            list_measure = list_measure + logic.CreateMeasure(measure,landmarks)
+            list_measure = list_measure + logic.CreateMeasurement([measure],landmarks)
 
 
         return list_measure
@@ -1914,8 +2065,8 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def TestComputeMeasure(self,patient_T1 : dict ,patient_T2 : dict,list_measure : list[Measure]):
         logic = AQ3DCLogic()
 
-        cat_patient = logic.CatPatientT1T2(patient_T1,patient_T2)
-        compute = logic.ComputeMeasure(list_measure,cat_patient)
+        cat_patient = logic.ConcatenateT1T2Patient(patient_T1,patient_T2)
+        compute = logic.ComputeMeasurement(list_measure,cat_patient)
 
         return compute
 
@@ -1926,6 +2077,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
         reader_computation_test = pd.read_excel(os.path.join(folder,'computatation_test.xlsx'), sheet_name=None)
         reader_grounthruth = pd.read_excel(os.path.join(folder,'computatation_groundtruth.xlsx'), sheet_name=None)
+        print(f' file ground thruth : {os.path.join(folder,"computatation_groundtruth.xlsx")}, file test {os.path.join(folder,"computatation_test.xlsx")}')
         for key in reader_computation_test['Sheet1'].keys():
             assert reader_computation_test['Sheet1'][key].to_dict() == reader_grounthruth['Sheet1'][key].to_dict(), f'test : {reader_computation_test["Sheet1"][key].to_dict()} \n ground truth {reader_grounthruth["Sheet1"][key].to_dict()}'
 
@@ -1937,8 +2089,8 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
         logic = AQ3DCLogic()
 
         #Test Import Export Measure
-        logic.ExportMeasure(os.path.join(folder,'ExportMeasure.xlsx'),list_measure)
-        import_measure = logic.ImportMeasure(os.path.join(folder,'ExportMeasure.xlsx'))
+        logic.ExportMeasurement(os.path.join(folder,'ExportMeasure.xlsx'),list_measure)
+        import_measure = logic.ImportMeasurement(os.path.join(folder,'ExportMeasure.xlsx'))
 
         #compare import measure and list measure 
         for measure in import_measure :

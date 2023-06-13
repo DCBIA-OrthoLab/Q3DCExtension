@@ -145,6 +145,7 @@ class Group_landmark:
     def __setitem__(self, key, value):
         if isinstance(value, list):
             self.group_landmark[key] = MyList(value)
+
         elif isinstance(value, str):
             self.group_landmark[key].set(value)
 
@@ -158,6 +159,9 @@ class Group_landmark:
             tuples, tuples : return keys and value of group landmark
         """
         return self.group_landmark.items()
+    
+    def keys(self):
+        return self.group_landmark.keys()
 
 
 class MyList:
@@ -192,6 +196,9 @@ class MyList:
 
     def tolist(self):
         return self.suffix
+    
+    def __iadd__(self,__o : list):
+        self.suffix += __o
 
 
 class MyDict(MyList):
