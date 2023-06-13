@@ -3,14 +3,15 @@ from Classes.Line import Line
 import numpy as np
 
 
-upper_right_back = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3"]
-upper_right_front = ["UR1", "UR2"]
-upper_left_back = ["UL8", "UL7", "UL6", "UL5", "UL4", "UL3"]
-upper_left_front = ["UL1", "UL2"]
-lower_right_back = ["LR8", "LR7", "LR6", "LR5", "LR4", "LR3"]
-lower_right_front = ["LR1", "LR2"]
-lower_left_back = ["LL8", "LL7", "LL6", "LL5", "LL4", "LL3"]
-lower_left_front = ["LL1", "LL2"]
+UPPER_RIGHT_BACK = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3"]
+UPPER_RIGHT_FRONT = ["UR1", "UR2"]
+UPPER_LEFT_BACK = ["UL8", "UL7", "UL6", "UL5", "UL4", "UL3"]
+UPPER_LEFT_FRONT = ["UL1", "UL2"]
+LOWER_RIGHT_BACK = ["LR8", "LR7", "LR6", "LR5", "LR4", "LR3"]
+LOWER_RIGHT_FRONT = ["LR1", "LR2"]
+LOWER_LEFT_BACK = ["LL8", "LL7", "LL6", "LL5", "LL4", "LL3"]
+LOWER_LEFT_FRONT = ["LL1", "LL2"]
+
 
 
 class Measure:
@@ -130,19 +131,19 @@ class Distance(Measure):
         elif key == "Landmarks":
             return str(self.point1) + " - " + str(self.point2line)
         elif key == "R-L Component":
-            return str(abs(self.lr))
+            return float(abs(self.lr))
         elif key == "R-L Meaning":
             return self.lr_sign_meaning
         elif key == "A-P Component":
-            return str(abs(self.ap))
+            return float(abs(self.ap))
         elif key == "A-P Meaning":
             return self.ap_sign_meaning
         elif key == "S-I Component":
-            return str(abs(self.si))
+            return float(abs(self.si))
         elif key == "S-I Meaning":
             return self.si_sign_meaning
         elif key == "3D Distance":
-            return self.norm
+            return float(self.norm)
         elif key == "group":
             return "Distance"
         return Measure.__getitem__(self, key)
@@ -238,7 +239,7 @@ class Distance(Measure):
 
     def __SignMeaningDentalDst(self):
         lst_measurement = [self.point1["name"], self.point2line["name"]]
-        if check(lst_measurement, upper_right_back):
+        if check(lst_measurement, UPPER_RIGHT_BACK):
             self.lr_sign_meaning = "L"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "E"
@@ -251,7 +252,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "I"
 
-        elif check(lst_measurement, upper_right_front):
+        elif check(lst_measurement, UPPER_RIGHT_FRONT):
             self.lr_sign_meaning = "M"
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "E"
@@ -264,7 +265,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "I"
 
-        elif check(lst_measurement, upper_left_back):
+        elif check(lst_measurement, UPPER_LEFT_BACK):
             self.rl_sign_meaning = "B"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "E"
@@ -277,7 +278,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "I"
 
-        elif check(lst_measurement, upper_left_front):
+        elif check(lst_measurement, UPPER_LEFT_FRONT):
             self.si_sign_meaning = "E"
             self.ap_sign_meaning = "L"
             self.rl_sign_meaning = "D"
@@ -290,7 +291,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "I"
 
-        elif check(lst_measurement, lower_right_back):
+        elif check(lst_measurement, LOWER_RIGHT_BACK):
             self.rl_sign_meaning = "L"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "I"
@@ -303,7 +304,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "E"
 
-        elif check(lst_measurement, lower_right_front):
+        elif check(lst_measurement, LOWER_RIGHT_FRONT):
             self.rl_sign_meaning = "M"
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "I"
@@ -316,7 +317,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "E"
 
-        elif check(lst_measurement, lower_left_back):
+        elif check(lst_measurement, LOWER_LEFT_BACK):
             self.rl_sign_meaning = "B"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "I"
@@ -329,7 +330,7 @@ class Distance(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "E"
 
-        elif check(lst_measurement, lower_left_front):
+        elif check(lst_measurement, LOWER_LEFT_FRONT):
             self.rl_sign_meaning = "D"
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "I"
@@ -364,15 +365,25 @@ class Angle(Measure):
         elif key == "Landmarks":
             return str(self.line1) + " / " + str(self.line2)
         elif key == "Yaw Component":
-            return str(abs(self.lr))
+            return float(abs(self.lr))
         elif key == "Yaw Meaning":
             return self.lr_sign_meaning
         elif key == "Pitch Component":
-            return str(abs(self.ap))
+            return float(abs(self.ap))
         elif key == "Pitch Meaning":
             return self.ap_sign_meaning
         elif key == "Roll Component":
-            return str(abs(self.si))
+            return float(abs(self.si))
+        # elif key == "Yaw Component":
+        #     return float(self.lr)
+        # elif key == "Yaw Meaning":
+        #     return self.lr_sign_meaning
+        # elif key == "Pitch Component":
+        #     return float(self.ap)
+        # elif key == "Pitch Meaning":
+        #     return self.ap_sign_meaning
+        # elif key == "Roll Component":
+        #     return float(self.si)
         elif key == "Roll Meaning":
             return self.si_sign_meaning
         elif key == "complement":
@@ -478,109 +489,109 @@ class Angle(Measure):
             self.line2[2]["name"],
         ]
         # print("function angle")
-        if check(lst_measurement, upper_right_back):
-            self.lr_sign_meaning = "D"
-            self.ap_sign_meaning = "L"
-            self.si_sign_meaning = "DR"
-            if self.lr > 0:
-                self.lr_sign_meaning = "M"
-
-            if self.ap > 0:
-                self.ap_sign_meaning = "B"
-
-            if self.si > 0:
-                self.si_sign_meaning = "MR"
-
-        elif check(lst_measurement, upper_right_front):
-            self.lr_sign_meaning = "L"
-            self.ap_sign_meaning = "M"
-            self.si_sign_meaning = "DR"
-            if self.lr > 0:
-                self.lr_sign_meaning = "B"
-
-            if self.ap > 0:
-                self.ap_sign_meaning = "D"
-
-            if self.si > 0:
-                self.si_sign_meaning = "MR"
-
-        elif check(lst_measurement, upper_left_back):
-            self.lr_sign_meaning = "D"
-            self.ap_sign_meaning = "B"
-            self.si_sign_meaning = "MR"
-            if self.lr > 0:
-                self.lr_sign_meaning = "M"
-
-            if self.ap > 0:
-                self.ap_sign_meaning = "L"
-
-            if self.si > 0:
-                self.si_sign_meaning = "DR"
-
-        elif check(lst_measurement, upper_left_front):
-            self.lr_sign_meaning = "L"
+        if check(lst_measurement, UPPER_RIGHT_BACK):
             self.ap_sign_meaning = "D"
-            self.si_sign_meaning = "MR"
+            self.si_sign_meaning = "L"
+            self.lr_sign_meaning = "DR"
             if self.lr > 0:
-                self.lr_sign_meaning = "B"
-
-            if self.ap > 0:
                 self.ap_sign_meaning = "M"
 
-            if self.si > 0:
-                self.si_sign_meaning = "DR"
-
-        elif check(lst_measurement, lower_right_back):
-            self.lr_sign_meaning = "M"
-            self.ap_sign_meaning = "B"
-            self.si_sign_meaning = "DR"
-            if self.lr > 0:
-                self.lr_sign_meaning = "D"
-
             if self.ap > 0:
-                self.ap_sign_meaning = "L"
+                self.si_sign_meaning = "B"
 
             if self.si > 0:
-                self.si_sign_meaning = "MR"
+                self.lr_sign_meaning = "MR"
 
-        elif check(lst_measurement, lower_right_front):
-            self.lr_sign_meaning = "B"
-            self.ap_sign_meaning = "D"
-            self.si_sign_meaning = "DR"
-            if self.lr > 0:
-                self.lr_sign_meaning = "L"
-
-            if self.ap > 0:
-                self.ap_sign_meaning = "M"
-
-            if self.si > 0:
-                self.si_sign_meaning = "MR"
-
-        elif check(lst_measurement, lower_left_back):
-            self.lr_sign_meaning = "M"
+        elif check(lst_measurement, UPPER_RIGHT_FRONT):
             self.ap_sign_meaning = "L"
-            self.si_sign_meaning = "MR"
+            self.si_sign_meaning = "M"
+            self.lr_sign_meaning = "DR"
             if self.lr > 0:
-                self.lr_sign_meaning = "D"
-
-            if self.ap > 0:
                 self.ap_sign_meaning = "B"
 
-            if self.si > 0:
-                self.si_sign_meaning = "DR"
+            if self.ap > 0:
+                self.si_sign_meaning = "D"
 
-        elif check(lst_measurement, lower_left_front):
-            self.lr_sign_meaning = "B"
-            self.ap_sign_meaning = "M"
-            self.si_sign_meaning = "MR"
+            if self.si > 0:
+                self.lr_sign_meaning = "MR"
+
+        elif check(lst_measurement, UPPER_LEFT_BACK):
+            self.ap_sign_meaning = "D"
+            self.si_sign_meaning = "B"
+            self.lr_sign_meaning = "MR"
             if self.lr > 0:
-                self.lr_sign_meaning = "L"
+                self.ap_sign_meaning = "M"
 
             if self.ap > 0:
-                self.ap_sign_meaning = "D"
+                self.si_sign_meaning = "L"
 
             if self.si > 0:
-                self.si_sign_meaning = "DR"
+                self.lr_sign_meaning = "DR"
+
+        elif check(lst_measurement, UPPER_LEFT_FRONT):
+            self.ap_sign_meaning = "L"
+            self.si_sign_meaning = "D"
+            self.lr_sign_meaning = "MR"
+            if self.lr > 0:
+                self.ap_sign_meaning = "B"
+
+            if self.ap > 0:
+                self.si_sign_meaning = "M"
+
+            if self.si > 0:
+                self.lr_sign_meaning = "DR"
+
+        elif check(lst_measurement, LOWER_RIGHT_BACK):
+            self.ap_sign_meaning = "M"
+            self.si_sign_meaning = "B"
+            self.lr_sign_meaning = "DR"
+            if self.lr > 0:
+                self.ap_sign_meaning = "D"
+
+            if self.ap > 0:
+                self.si_sign_meaning = "L"
+
+            if self.si > 0:
+                self.lr_sign_meaning = "MR"
+
+        elif check(lst_measurement, LOWER_RIGHT_FRONT):
+            self.ap_sign_meaning = "B"
+            self.si_sign_meaning = "D"
+            self.lr_sign_meaning = "DR"
+            if self.lr > 0:
+                self.ap_sign_meaning = "L"
+
+            if self.ap > 0:
+                self.si_sign_meaning = "M"
+
+            if self.si > 0:
+                self.lr_sign_meaning = "MR"
+
+        elif check(lst_measurement, LOWER_LEFT_BACK):
+            self.ap_sign_meaning = "M"
+            self.si_sign_meaning = "L"
+            self.lr_sign_meaning = "MR"
+            if self.lr > 0:
+                self.ap_sign_meaning = "D"
+
+            if self.ap > 0:
+                self.si_sign_meaning = "B"
+
+            if self.si > 0:
+                self.lr_sign_meaning = "DR"
+
+        elif check(lst_measurement, LOWER_LEFT_FRONT):
+            self.ap_sign_meaning = "B"
+            self.si_sign_meaning = "M"
+            self.lr_sign_meaning = "MR"
+            if self.lr > 0:
+                self.ap_sign_meaning = "L"
+
+            if self.ap > 0:
+                self.si_sign_meaning = "D"
+
+            if self.si > 0:
+                self.lr_sign_meaning = "DR"
 
 
 class Diff2Measure(Measure):
@@ -611,24 +622,24 @@ class Diff2Measure(Measure):
             return self.measure1["Landmarks"] + " && " + self.measure2["Landmarks"]
         elif isinstance(self.measure1, Distance):
             if key == "R-L Component":
-                return str(abs(self.lr))
+                return float(abs(self.lr))
             elif key == "A-P Component":
-                return str(abs(self.ap))
+                return float(abs(self.ap))
             elif key == "S-I Component":
-                return str(abs(self.si))
+                return float(abs(self.si))
             elif key == "3D Distance":
-                return str(
+                return float(
                     round(np.linalg.norm(np.array([self.lr, self.ap, self.si])), 3)
                 )
             elif key == "group":
                 return "Distance"
         elif isinstance(self.measure1, Angle):
             if key == "Yaw Component":
-                return str(abs(self.lr))
+                return float(abs(self.lr))
             elif key == "Pitch Component":
-                return str(abs(self.ap))
+                return float(abs(self.ap))
             elif key == "Roll Component":
-                return str(abs(self.si))
+                return float(abs(self.si))
             elif key == "group":
                 return "Angle"
         return super().__getitem__(key)
