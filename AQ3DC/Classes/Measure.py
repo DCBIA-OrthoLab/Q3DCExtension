@@ -493,23 +493,23 @@ class Angle(Measure):
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "L"
             self.lr_sign_meaning = "DR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "M"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "B"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "MR"
 
         elif check(lst_measurement, UPPER_RIGHT_FRONT):
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "M"
             self.lr_sign_meaning = "DR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "B"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "D"
 
             if self.si > 0:
@@ -519,78 +519,78 @@ class Angle(Measure):
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "B"
             self.lr_sign_meaning = "MR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "M"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "L"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "DR"
 
         elif check(lst_measurement, UPPER_LEFT_FRONT):
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "D"
             self.lr_sign_meaning = "MR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "B"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "M"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "DR"
 
         elif check(lst_measurement, LOWER_RIGHT_BACK):
             self.ap_sign_meaning = "M"
             self.si_sign_meaning = "B"
             self.lr_sign_meaning = "DR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "D"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "L"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "MR"
 
         elif check(lst_measurement, LOWER_RIGHT_FRONT):
             self.ap_sign_meaning = "B"
             self.si_sign_meaning = "D"
             self.lr_sign_meaning = "DR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "L"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "M"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "MR"
 
         elif check(lst_measurement, LOWER_LEFT_BACK):
             self.ap_sign_meaning = "M"
             self.si_sign_meaning = "L"
             self.lr_sign_meaning = "MR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "D"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "B"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "DR"
 
         elif check(lst_measurement, LOWER_LEFT_FRONT):
             self.ap_sign_meaning = "B"
             self.si_sign_meaning = "M"
             self.lr_sign_meaning = "MR"
-            if self.lr > 0:
+            if self.ap > 0:
                 self.ap_sign_meaning = "L"
 
-            if self.ap > 0:
+            if self.si > 0:
                 self.si_sign_meaning = "D"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "DR"
 
 
