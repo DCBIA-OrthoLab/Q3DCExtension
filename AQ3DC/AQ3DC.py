@@ -261,7 +261,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.mid_point = []
 
         # init self.group landmark
-        self.selectFolderImportMeasurement(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
+        self.selectFileImportListLandmark(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
 
         # ==============================================================================================================================================================
         # Widget conect
@@ -273,7 +273,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.CheckBoxT1T2.toggled.connect(self.updateComboboxListMeasurement)
         self.ui.ButtonPathT1.clicked.connect(self.selectFolderT1Patient)
         self.ui.ButtonPathT2.clicked.connect(self.selectFolderT2Patients)
-        self.ui.ButtonImportLandmarks.clicked.connect(self.selectFolderImportMeasurement)
+        self.ui.ButtonImportLandmarks.clicked.connect(self.selectFileImportListLandmark)
         self.ui.ButtonSelectTabLandmarks.clicked.connect(self.checkAllLandmarks)
         self.ui.ButtonClearTabLandmarks.clicked.connect(self.decheckAllLandmark)
         self.ui.ButtonAddMidpoint.clicked.connect(self.addMidpoint)
@@ -554,7 +554,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 # Landmark
 #=========================================================================================================================================
 
-    def selectFolderImportMeasurement(self, path_listlandmarks=None):
+    def selectFileImportListLandmark(self, path_listlandmarks=None):
         """
     Ask user, which excel file is use for group landmark
     add landmark in the tablandmarks and update combo box with all landmark
