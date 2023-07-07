@@ -17,17 +17,7 @@ from qt import (
     QTabWidget,
     QGridLayout,
 )
-from Classes import (
-    Angle,
-    Distance,
-    Diff2Measure,
-    Measure,
-    Point,
-    Line,
-    Group_landmark,
-    MyList,
-    MyDict,
-)
+
 
 from typing import Union
 
@@ -48,7 +38,18 @@ try:
 except:
     slicer.util.pip_install("openpyxl")
     import openpyxl
-
+    
+from Classes import (
+    Angle,
+    Distance,
+    Diff2Measure,
+    Measure,
+    Point,
+    Line,
+    Group_landmark,
+    MyList,
+    MyDict,
+)
 """
 TODO:
     -change __setitem__ of lines, point and measure (very bad names, very confusing)
