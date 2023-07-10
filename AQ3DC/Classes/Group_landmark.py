@@ -238,7 +238,7 @@ class MyDict(MyList):
         self.prefix.update(dic)
         return self
 
-    def separateTopresuf(self):
+    def getSeparatePreSuf(self):
         return self.prefix.copy(), self.suffix.copy()
 
     def tolist(self):

@@ -1,8 +1,10 @@
 from Classes.Point import Point
 from Classes.Line import Line
 import numpy as np
+from typing import Union
 
-
+#Constant List
+#Describe where each tooth
 UPPER_RIGHT_BACK = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3"]
 UPPER_RIGHT_FRONT = ["UR1", "UR2"]
 UPPER_LEFT_BACK = ["UL8", "UL7", "UL6", "UL5", "UL4", "UL3"]
@@ -15,12 +17,32 @@ LOWER_LEFT_FRONT = ["LL1", "LL2"]
 
 
 class Measure:
+    '''
+    The Measure class contains the information about which measurement the user want to use, by containing the type of measurement and the landmar used
+
+    Explanation how compute measurement :
+        - give the position of the landmark to the Measure class
+The position of the point have to be give by a dictionnary like this 
+        position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
+                  "T2":{"A":[8,3,5],"B":[9,2,5],...}}
+
+        - call computation
+        - call manageMeaningComponent
+        - the result can be extract to the Measure class
+
+    meaning of short cut word:
+    lr -> left-rght
+    ap -> anterior-posterior
+    si -> superieur-interieur
+
+    The meaning component are explain in point powerpoint : "AQ3DC_meaning_component.pptx" in docs folder
+    '''
     def __init__(self, time: str, measure: str):
         self.time = time
 
         self.measure = measure
-        self.checkbox = None
-        self.lr_sign_meaning = ""
+        self.checkbox = None #"complement Angle" checkbox in Angle tab 
+        self.lr_sign_meaning = "" 
         self.ap_sign_meaning = ""
         self.si_sign_meaning = ""
         self.lr, self.ap, self.si, self.norm = 0, 0, 0, 0
@@ -101,6 +123,10 @@ class Measure:
 
 
 class Distance(Measure):
+    """
+    Distance class can contrain the "Distance point line" and "Distance between 2 points" of T1 or T2 measurement
+
+    """
     def __init__(
         self, Point1: Point, Point2Line, measure: str, time: str = None
     ) -> None:
@@ -117,10 +143,6 @@ class Distance(Measure):
         return self.__str__()
 
     def __setitem__(self, key, value):
-        if key == "position":
-            self.point1["position"] = value
-            self.point2line["position"] = value
-
         Measure.__setitem__(self, key, value)
 
     def __getitem__(self, key):
@@ -157,7 +179,19 @@ class Distance(Measure):
                 out = True
         return out
     
-    def IterBasicInformation(self):
+    def setPosition(self,position:dict):
+        """
+        position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
+                  "T2":{"A":[8,3,5],"B":[9,2,5],...}}
+        """
+        self.point1["position"] = position
+        self.point2line["position"] = position
+    
+    def iterBasicInformation(self):
+        """
+        Iter the information to describe the measurement
+
+        """
         yield self.__getitem__('Type of measurement + time')
         yield self.__getitem__('point 1')
         yield self.__getitem__('point 2')
@@ -212,7 +246,13 @@ class Distance(Measure):
             round(norm, 3),
         )
 
-    def SignManager(self):
+    def manageMeaningComponent(self):
+        """
+        manage the meaning component about the measurement
+
+        manageMeaningComponent have to be call after computation of the measurement
+        The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
+        """
         if self.measure == "Distance between 2 points":
             if self.isUpperLower(self.point1["name"]) and self.isUpperLower(
                 self.point2line["name"]
@@ -345,6 +385,15 @@ class Distance(Measure):
 
 
 class Angle(Measure):
+    '''
+    Angle class can contain "Angle line 2 lines" of T1 or T2 and "Angle line T1 and line T2" measurement.
+
+
+    Explain meaning of variable :
+    lr -> yaw
+    ap -> pitch
+    si -> roll
+    '''
     def __init__(self, Line1: Line, Line2: Line, measure: str, time: str = None):
         super().__init__(time, measure)
         self.line1 = Line1
@@ -374,16 +423,6 @@ class Angle(Measure):
             return self.ap_sign_meaning
         elif key == "Roll Component":
             return float(abs(self.si))
-        # elif key == "Yaw Component":
-        #     return float(self.lr)
-        # elif key == "Yaw Meaning":
-        #     return self.lr_sign_meaning
-        # elif key == "Pitch Component":
-        #     return float(self.ap)
-        # elif key == "Pitch Meaning":
-        #     return self.ap_sign_meaning
-        # elif key == "Roll Component":
-        #     return float(self.si)
         elif key == "Roll Meaning":
             return self.si_sign_meaning
         elif key == "complement":
@@ -393,10 +432,7 @@ class Angle(Measure):
         return Measure.__getitem__(self, key)
 
     def __setitem__(self, key, value):
-        if key == "position":
-            self.line1["position"] = value
-            self.line2["position"] = value
-        elif key == "complement":
+        if key == "complement":
             self.complement_checkbox = value
 
         return super().__setitem__(key, value)
@@ -412,7 +448,15 @@ class Angle(Measure):
                 out = True
         return out
     
-    def IterBasicInformation(self):
+    def setPosition(self,position):
+        """
+        position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
+                  "T2":{"A":[8,3,5],"B":[9,2,5],...}}
+        """
+        self.line1["position"] = position
+        self.line2["position"] = position    
+
+    def iterBasicInformation(self):
         yield self.__getitem__('Type of measurement + time')
         yield self.__getitem__('line 1')
         yield self.__getitem__('line 2')
@@ -433,7 +477,13 @@ class Angle(Measure):
 
         return out
 
-    def SignManager(self):
+    def manageMeaningComponent(self):
+        """
+        manage the meaning component about the measurement
+
+        manageMeaningComponent have to be call after computation of the measurement
+        The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
+        """
         if (
             self.isUpperLower(self.line1[1]["name"])
             and self.isUpperLower(self.line1[2]["name"])
@@ -595,14 +645,17 @@ class Angle(Measure):
 
 
 class Diff2Measure(Measure):
-    def __init__(self, measure1, measure2) -> None:
+    """
+    Diff2Measure cointan "Distance point line T1 T2", "Angle between 2 lines T1 T2" measurement
+    """
+    def __init__(self, measure1 : Union[Angle,Measure], measure2 : Union[Angle,Measure]) -> None:
         super().__init__(time="T1 T2", measure=measure1["Type of measurement"])
-        self.T1PL1 = measure1[1]
+        self.T1PL1 = measure1[1] #T1PL1 means Time 1 Point/Line 1
         self.T1PL2 = measure1[2]
         self.T2PL1 = measure2[1]
         self.T2PL2 = measure2[2]
-        self.measure1 = measure1
-        self.measure2 = measure2
+        self.measure1 : Union[Angle,Measure] = measure1
+        self.measure2 : Union[Angle,Measure]= measure2
 
     def __str__(self):
 
@@ -645,10 +698,7 @@ class Diff2Measure(Measure):
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        if key == "position":
-            self.measure1["position"] = value
-            self.measure2["position"] = value
-        elif "complement" == key:
+        if "complement" == key:
             self.measure1["complement"] = value
             self.measure2["complement"] = value
 
@@ -661,7 +711,15 @@ class Diff2Measure(Measure):
                 out = True
         return out
     
-    def IterBasicInformation(self):
+    def setPosition(self,position):
+        """
+        position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
+                  "T2":{"A":[8,3,5],"B":[9,2,5],...}}
+        """
+        self.measure1.setPosition(position)
+        self.measure2.setPosition(position)
+    
+    def iterBasicInformation(self):
         yield self.__getitem__('Type of measurement + time')
         yield f'{self.T1PL1}/{self.T2PL1}'
         yield f'{self.T1PL2}/{self.T2PL2}'
@@ -683,13 +741,24 @@ class Diff2Measure(Measure):
 
         return out
 
-    def SignManager(self):
+    def manageMeaningComponent(self):
         # it is normal
-        # we dont need to compute the meaning of measurement
+        # we dont need to compute the meaning of measurement for difference measurement
         pass
 
 
-def check(list_landmark, tocheck):
+def check(list_landmark : list, tocheck : list) -> bool:
+    """check if all landmark in list_landmark are in tocheck list
+        if all landmark are in tocheck list the function return True othterwise False
+        In the of the landmark in list_landmark are midpoint. The midpoint of both landmark should be in tocheck list
+
+    Args:
+        list_landmark (list): list landmark
+        tocheck (list): _description_
+
+    Returns:
+        bool: _description_
+    """
     nb_correct = 0
     nb_midpoint = 0
     for landmark in list_landmark:
