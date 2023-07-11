@@ -351,13 +351,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
     Call by CbImportExportMeasure
     """
-        dict = {
+        indexes = {
             "None": 0,
             "Import list of measurements": 1,
             "Export list of measurements": 2,
         }
         choice = self.ui.CbImportExportMeasure.currentText
-        self.ui.StackedImportExport.setCurrentIndex(dict[choice])
+        self.ui.StackedImportExport.setCurrentIndex(indexes[choice])
 
     def selectFolderExportMeasurement(self):
         """Ask to user, which foler he want to put his measurement file,
@@ -672,7 +672,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       """
         text = self.ui.CbListMeasurement.currentText
         currentTab = self.ui.TabMeasure.currentWidget().name
-        dict = {
+        indexes = {
             "TabDistance": {
                 False: {"Distance point line": 1, "Distance between 2 points": 0},
                 True: {"Distance point line": 2, "Distance between 2 points": 0},
@@ -684,7 +684,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         }
 
         self.ui.StackedMeasure.setCurrentIndex(
-            dict[currentTab][self.ui.CheckBoxT1T2.isChecked()][text]
+            indexes[currentTab][self.ui.CheckBoxT1T2.isChecked()][text]
         )
 
     def updateComboboxListMeasurement(self):
