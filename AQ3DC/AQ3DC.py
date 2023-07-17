@@ -841,7 +841,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         dict_page2namemeasure_checkbox = {
             "PageDistancePointLineT1T2": ["Distance point line T1 T2"],
             "PageAngleBetween2LinesT1T2": ["Angle between 2 lines T1 T2"],
-            "PageDistance2Points": ["Distance between 2 points T1 T2"],
+            "PageDistance2PointsT1T2": ["Distance between 2 points T1 T2"],
             "PageAngleLineT1T2": ["Angle line T1 and line T2"]
         }
 
