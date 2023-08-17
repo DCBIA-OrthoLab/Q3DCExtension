@@ -274,7 +274,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.CheckBoxT1T2.toggled.connect(self.updateComboboxListMeasurement)
         self.ui.ButtonPathT1.clicked.connect(self.selectFolderT1Patient)
         self.ui.ButtonPathT2.clicked.connect(self.selectFolderT2Patients)
-        self.ui.ButtonImportLandmarks.clicked.connect(self.selectFileImportListLandmark)
+        self.ui.ButtonImportLandmarks.clicked.connect(partial(self.selectFileImportListLandmark,None))
         self.ui.ButtonSelectTabLandmarks.clicked.connect(self.checkAllLandmarks)
         self.ui.ButtonClearTabLandmarks.clicked.connect(self.decheckAllLandmark)
         self.ui.ButtonAddMidpoint.clicked.connect(self.addMidpoint)
@@ -555,7 +555,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 # Landmark
 #=========================================================================================================================================
 
-    def selectFileImportListLandmark(self, path_listlandmarks=None):
+    def selectFileImportListLandmark(self, path_listlandmarks=None,nothing=None):
         """
     Ask user, which excel file is use for group landmark
     add landmark in the tablandmarks and update combo box with all landmark
