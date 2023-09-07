@@ -456,6 +456,7 @@ class Angle(Measure):
         self.line1["position"] = position
         self.line2["position"] = position    
 
+
     def iterBasicInformation(self):
         yield self.__getitem__('Type of measurement + time')
         yield self.__getitem__('line 1')
@@ -492,9 +493,10 @@ class Angle(Measure):
         ):
             self.__SignMeaningDentalAngle()
 
-    def __computeAngle(self, line1, line2, axis):
+    def __computeAngle(self, line1, line2, axis,point1, point2, point3, point4):
         mask = [True] * 3
         mask[axis] = False
+
         line1 = line1[mask]
         line2 = line2[mask]
 
@@ -506,7 +508,17 @@ class Angle(Measure):
         if norm1 == 0 or norm2 == 0:
             raise ZeroDivisionError(line1, line2)
         radians = np.arcsin(det / norm1 / norm2)
-        return np.degrees(radians)
+        degree = np.degrees(radians)
+
+
+        if axis==0:
+            produit_scalaire = np.dot(line1, line2)
+            radians = np.arctan2(np.linalg.norm(np.cross(line1, line2)), produit_scalaire)
+            degree = np.degrees(radians)
+            if np.all(point2==point3):
+                degree=180-degree
+ 
+        return degree
 
     def __computeAngles(self, point1, point2, point3, point4):
         line1 = point2 - point1
@@ -518,7 +530,7 @@ class Angle(Measure):
         ]
         result = []
         for axis in axes:
-            value = self.__computeAngle(line1, line2, axis)
+            value = self.__computeAngle(line1, line2, axis,point1, point2, point3, point4)
             result.append(round(value, 3))
 
         if self.complement_checkbox is not None and self.complement_checkbox.isChecked():
@@ -529,7 +541,7 @@ class Angle(Measure):
 
             result = tmp_result
 
-        return result[0], -result[1], -result[2]
+        return result[0], result[1], result[2] # Nathan's methode for the axis 0 : return -result[1] et -result[2]
 
     def __SignMeaningDentalAngle(self):
         lst_measurement = [

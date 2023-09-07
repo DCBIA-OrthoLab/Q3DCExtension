@@ -1709,6 +1709,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 measure : Union[Diff2Measure,Angle,Distance] = __measure
                 try:
                     measure.setPosition(point)
+
                 except KeyError as key:
                     print(f"this landmark {key} doesnt exist for this patient", patient)
                     continue
