@@ -735,11 +735,11 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             b = QTableWidgetItem(value)
             dict[group].setItem(num, count + 1, b)
 
-        if group == "Angle":
-            # add checkbox to choose if user want the complementary angle
-            checkbox_angle_complement = QCheckBox()
-            dict[group].setCellWidget(num, 4, checkbox_angle_complement)
-            measure["complement"] = checkbox_angle_complement
+        # if group == "Angle":
+        #     # add checkbox to choose if user want the complementary angle
+        #     checkbox_angle_complement = QCheckBox()
+        #     dict[group].setCellWidget(num, 4, checkbox_angle_complement)
+        #     measure["complement"] = checkbox_angle_complement
 
         measure["checkbox"] = a
         self.list_measure.append(measure)
