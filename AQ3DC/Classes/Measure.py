@@ -503,20 +503,14 @@ class Angle(Measure):
         norm1 = np.linalg.norm(line1)
         norm2 = np.linalg.norm(line2)
 
-        matrix = np.array([line1, line2])
-        det = np.linalg.det(matrix)
         if norm1 == 0 or norm2 == 0:
             raise ZeroDivisionError(line1, line2)
-        radians = np.arcsin(det / norm1 / norm2)
+
+        produit_scalaire = np.dot(line1, line2)
+        radians = np.arctan2(np.linalg.norm(np.cross(line1, line2)), produit_scalaire)
         degree = np.degrees(radians)
-
-
-        if axis==0:
-            produit_scalaire = np.dot(line1, line2)
-            radians = np.arctan2(np.linalg.norm(np.cross(line1, line2)), produit_scalaire)
-            degree = np.degrees(radians)
-            if np.all(point2==point3):
-                degree=180-degree
+        if np.all(point2==point3):
+            degree=180-degree
  
         return degree
 
