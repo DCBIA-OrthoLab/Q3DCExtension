@@ -527,13 +527,13 @@ class Angle(Measure):
             value = self.__computeAngle(line1, line2, axis,point1, point2, point3, point4)
             result.append(round(value, 3))
 
-        if self.complement_checkbox is not None and self.complement_checkbox.isChecked():
-            tmp_result = []
-            for resu in result:
-                new_resu = round(180 - np.absolute(resu), 3)
-                tmp_result.append(new_resu)
+        # if self.complement_checkbox is not None and self.complement_checkbox.isChecked():
+        #     tmp_result = []
+        #     for resu in result:
+        #         new_resu = round(180 - np.absolute(resu), 3)
+        #         tmp_result.append(new_resu)
 
-            result = tmp_result
+            # result = tmp_result
 
         return result[0], result[1], result[2] # Nathan's methode for the axis 0 : return -result[1] et -result[2]
 
