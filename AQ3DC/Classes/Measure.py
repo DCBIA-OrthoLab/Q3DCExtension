@@ -253,7 +253,8 @@ class Distance(Measure):
         manageMeaningComponent have to be call after computation of the measurement
         The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
         """
-        if self.measure == "Distance between 2 points":
+
+        if "Distance between 2 points" in self.measure :
             if self.isUpperLower(self.point1["name"]) and self.isUpperLower(
                 self.point2line["name"]
             ):
@@ -306,11 +307,11 @@ class Distance(Measure):
                 self.si_sign_meaning = "I"
 
         elif check(lst_measurement, UPPER_LEFT_BACK):
-            self.rl_sign_meaning = "B"
+            self.lr_sign_meaning = "B"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "E"
             if self.lr > 0:
-                self.rl_sign_meaning = "L"
+                self.lr_sign_meaning = "L"
 
             if self.ap > 0:
                 self.ap_sign_meaning = "M"
@@ -321,9 +322,9 @@ class Distance(Measure):
         elif check(lst_measurement, UPPER_LEFT_FRONT):
             self.si_sign_meaning = "E"
             self.ap_sign_meaning = "L"
-            self.rl_sign_meaning = "D"
+            self.lr_sign_meaning = "D"
             if self.lr > 0:
-                self.rl_sign_meaning = "M"
+                self.lr_sign_meaning = "M"
 
             if self.ap > 0:
                 self.ap_sign_meaning = "B"
@@ -332,11 +333,11 @@ class Distance(Measure):
                 self.si_sign_meaning = "I"
 
         elif check(lst_measurement, LOWER_RIGHT_BACK):
-            self.rl_sign_meaning = "L"
+            self.lr_sign_meaning = "L"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "I"
             if self.lr > 0:
-                self.rl_sign_meaning = "B"
+                self.lr_sign_meaning = "B"
 
             if self.ap > 0:
                 self.ap_sign_meaning = "M"
@@ -345,11 +346,11 @@ class Distance(Measure):
                 self.si_sign_meaning = "E"
 
         elif check(lst_measurement, LOWER_RIGHT_FRONT):
-            self.rl_sign_meaning = "M"
+            self.lr_sign_meaning = "M"
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "I"
             if self.lr > 0:
-                self.rl_sign_meaning = "D"
+                self.lr_sign_meaning = "D"
 
             if self.ap > 0:
                 self.ap_sign_meaning = "B"
@@ -358,11 +359,11 @@ class Distance(Measure):
                 self.si_sign_meaning = "E"
 
         elif check(lst_measurement, LOWER_LEFT_BACK):
-            self.rl_sign_meaning = "B"
+            self.lr_sign_meaning = "B"
             self.ap_sign_meaning = "D"
             self.si_sign_meaning = "I"
             if self.lr > 0:
-                self.rl_sign_meaning = "L"
+                self.lr_sign_meaning = "L"
 
             if self.ap > 0:
                 self.ap_sign_meaning = "M"
@@ -371,11 +372,11 @@ class Distance(Measure):
                 self.si_sign_meaning = "E"
 
         elif check(lst_measurement, LOWER_LEFT_FRONT):
-            self.rl_sign_meaning = "D"
+            self.lr_sign_meaning = "D"
             self.ap_sign_meaning = "L"
             self.si_sign_meaning = "I"
             if self.lr > 0:
-                self.rl_sign_meaning = "M"
+                self.lr_sign_meaning = "M"
 
             if self.ap > 0:
                 self.ap_sign_meaning = "B"
