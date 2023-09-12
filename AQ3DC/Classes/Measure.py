@@ -493,6 +493,8 @@ class Angle(Measure):
             and self.isUpperLower(self.line2[2]["name"])
         ):
             self.__SignMeaningDentalAngle()
+        else :
+            self.__SignMeaningDentalAngleHour()
 
     def __computeAngle(self, line1, line2, axis,point1, point2, point3, point4):
         mask = [True] * 3
@@ -537,6 +539,20 @@ class Angle(Measure):
             # result = tmp_result
 
         return result[0], result[1], result[2] # Nathan's methode for the axis 0 : return -result[1] et -result[2]
+    
+    def __SignMeaningDentalAngleHour(self):
+        self.ap_sign_meaning = "ClockWise"
+        self.si_sign_meaning = "CounterC"
+        self.lr_sign_meaning = "ClockWise"
+        if self.ap > 0:
+            self.ap_sign_meaning = "CounterC"
+
+        if self.si > 0:
+            self.si_sign_meaning = "Clockwise"
+
+        if self.lr > 0:
+            self.lr_sign_meaning = "CounterC"
+
 
     def __SignMeaningDentalAngle(self):
         lst_measurement = [
