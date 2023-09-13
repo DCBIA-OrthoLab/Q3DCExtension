@@ -113,7 +113,7 @@ The position of the point have to be give by a dictionnary like this
             "UR7",
         ]
         loop = 1
-        if "mid" in landmark.upper():
+        if "Mid" in landmark.upper():
             loop = 2
         out = True
         for i in range(loop):
@@ -785,13 +785,12 @@ def check(list_landmark : list, tocheck : list) -> bool:
     nb_correct = 0
     nb_midpoint = 0
     for landmark in list_landmark:
-        if "mid".upper() in landmark.upper():
+        if "Mid".upper() in landmark.upper():
             nb_midpoint += 1
 
         for check in tocheck:
-
             if check in landmark:
-                nb_correct += 1
+                nb_correct += landmark.count(check)
 
     out = False
     if nb_correct == len(list_landmark) + nb_midpoint:
