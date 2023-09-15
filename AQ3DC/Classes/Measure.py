@@ -493,7 +493,7 @@ class Angle(Measure):
             and self.isUpperLower(self.line2[2]["name"])
         ):
             self.__SignMeaningDentalAngle()
-        else :
+        elif "T1" in self.measure and "T2" in self.measure:
             self.__SignMeaningDentalAngleHour()
 
     def __computeAngle(self, line1, line2, axis,point1, point2, point3, point4):
