@@ -464,6 +464,7 @@ class Angle(Measure):
         yield self.__getitem__('line 2')
 
     def computation(self):
+
         self.lr, self.ap, self.si = self.__computeAngles(
             np.array(self.line1[1]["position"]),
             np.array(self.line1[2]["position"]),
@@ -503,6 +504,7 @@ class Angle(Measure):
         line1 = line1[mask]
         line2 = line2[mask]
 
+
         norm1 = np.linalg.norm(line1)
         norm2 = np.linalg.norm(line2)
 
@@ -511,11 +513,27 @@ class Angle(Measure):
 
         produit_scalaire = np.dot(line1, line2)
         radians = np.arctan2(np.linalg.norm(np.cross(line1, line2)), produit_scalaire)
-        degree = np.degrees(radians)
+        degree2 = np.degrees(radians)
         if np.all(point2==point3):
-            degree=180-degree
- 
-        return degree
+            degree2=180-degree2
+
+        # matrix = np.array([line1, line2])
+        # det = np.linalg.det(matrix)
+        # radians = np.arcsin(det / norm1 / norm2)
+
+        # produit_scalaire = np.dot(line1, line2)
+        # radians = np.arccos(produit_scalaire / (norm1 * norm2))
+        # degree = np.degrees(radians)
+        # degree = 180-degree
+
+        z = line1[0]*line2[1]-line1[1]*line2[0]
+
+        if z<0:
+            return degree2
+        
+        else : 
+            return -degree2
+
 
     def __computeAngles(self, point1, point2, point3, point4):
         line1 = point2 - point1
