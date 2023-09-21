@@ -518,24 +518,24 @@ class Angle(Measure):
 
         produit_scalaire = np.dot(line1, line2)
         radians = np.arctan2(np.linalg.norm(np.cross(line1, line2)), produit_scalaire)
-        degree2 = np.degrees(radians)
+        degree = np.degrees(radians)
 
 
         if np.all(point2==point3):
-            degree2=180-degree2
+            degree=180-degree
 
 
         z = line1[0]*line2[1]-line1[1]*line2[0]
     
         if z<0:
             if axis==2:
-                return -degree2
-            return degree2
+                return -degree
+            return degree
         
         else : 
             if axis==2:
-                return degree2
-            return -degree2
+                return degree
+            return -degree
 
 
     def __computeAngles(self, point1, point2, point3, point4):
