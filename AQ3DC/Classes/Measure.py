@@ -2,6 +2,7 @@ from Classes.Point import Point
 from Classes.Line import Line
 import numpy as np
 from typing import Union
+import math
 
 #Constant List
 #Describe where each tooth
@@ -487,6 +488,7 @@ class Angle(Measure):
         manageMeaningComponent have to be call after computation of the measurement
         The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
         """
+
         if (
             self.isUpperLower(self.line1[1]["name"])
             and self.isUpperLower(self.line1[2]["name"])
@@ -510,28 +512,29 @@ class Angle(Measure):
 
         if norm1 == 0 or norm2 == 0:
             raise ZeroDivisionError(line1, line2)
+        
+        line1 = line1 / np.linalg.norm(line1)
+        line2 = line2 / np.linalg.norm(line2)
 
         produit_scalaire = np.dot(line1, line2)
         radians = np.arctan2(np.linalg.norm(np.cross(line1, line2)), produit_scalaire)
         degree2 = np.degrees(radians)
+
+
         if np.all(point2==point3):
             degree2=180-degree2
 
-        # matrix = np.array([line1, line2])
-        # det = np.linalg.det(matrix)
-        # radians = np.arcsin(det / norm1 / norm2)
-
-        # produit_scalaire = np.dot(line1, line2)
-        # radians = np.arccos(produit_scalaire / (norm1 * norm2))
-        # degree = np.degrees(radians)
-        # degree = 180-degree
 
         z = line1[0]*line2[1]-line1[1]*line2[0]
-
+    
         if z<0:
+            if axis==2:
+                return -degree2
             return degree2
         
         else : 
+            if axis==2:
+                return degree2
             return -degree2
 
 
@@ -603,7 +606,7 @@ class Angle(Measure):
             if self.si > 0:
                 self.si_sign_meaning = "D"
 
-            if self.si > 0:
+            if self.lr > 0:
                 self.lr_sign_meaning = "MR"
 
         elif check(lst_measurement, UPPER_LEFT_BACK):
