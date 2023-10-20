@@ -340,6 +340,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if self.ui.ComboBoxExcelFormat.currentText == "Statistics":
                 patient_compute = self.reorganizeStat(patient_compute)
             # write measure
+            #test windows
             self.logic.writeMeasurementExcel(patient_compute, path, file_name)
             # self.logic.WriteMeasurementExcel2(test, path, file_name)
 
