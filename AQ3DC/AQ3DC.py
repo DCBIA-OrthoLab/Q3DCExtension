@@ -233,6 +233,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.dict_patient_T1 = {}
         self.dict_patient_T2 = {}
+        self.dict_patient_extraction = {}
         """
     exemple of dict_patient T1 and T2 
 
@@ -334,10 +335,163 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
+            for cle in patient_compute.keys():
+                 print(cle)
 
+            patient_compute = self.reorganizeStat(patient_compute)
             # write measure
             self.logic.writeMeasurementExcel(patient_compute, path, file_name)
             # self.logic.WriteMeasurementExcel2(test, path, file_name)
+
+
+    def reorganizeStat(self,patient_compute):
+        dic_stats = {
+                "ID":[],
+                "Tooth":[],
+                "Arch":[],
+                "Segment":[],
+                "Group":[],
+                "BL Ang":[],
+                "MD Ang":[],
+                "Rotation":[],
+                "AP":[],
+                "Vertical":[],
+                "Transverse-RL":[],
+                "3D":[]
+            }
+        
+        for i in range(len(patient_compute["Patient"])) :
+            #ID
+            dic_stats["ID"].append(patient_compute["Patient"][i][1:])
+            print("-"*150)
+            print("patient_compute['Patient'][i] : ",patient_compute["Patient"][i])
+            print("-"*150)
+
+            #Tooth
+            if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
+                tooths = patient_compute["Landmarks"][i]
+                indice_espace = tooths.find(" ")
+                indice_tiret = tooths.find("-")
+                if indice_espace != -1 and indice_tiret != -1:
+                    tooth = tooths[:indice_espace-1]
+
+            else :
+                tooth = patient_compute["Landmarks"][i]
+            dic_stats["Tooth"].append(tooth)
+
+            #Arch : upper=0, lower=1
+            if "U" in tooth :
+                dic_stats["Arch"].append(0)
+            else : 
+                dic_stats["Arch"].append(1)
+
+            #Segment : posterior=0,anterior=1
+            if "1" in tooth or "2" in tooth:
+                dic_stats["Segment"].append(1)
+            else : 
+                dic_stats["Segment"].append(0)
+
+            #Group : non-extraction=0, extraction=1
+            dic_stats["Group"].append(self.dict_patient_extraction[patient_compute["Patient"][i]])
+
+            
+            if dic_stats["Segment"][i] == 1 : # is anterior
+                #BL Ang
+                roll = patient_compute["Roll Component"][i]
+                if roll!="x":
+                    roll=float(roll)
+                    if patient_compute["Roll Meaning"][i]=="D":
+                        roll=-roll
+                dic_stats["BL Ang"].append(str(roll))
+
+                #MD Ang
+                pitch = patient_compute["Pitch Component"][i]
+                if pitch!="x":
+                    pitch=float(pitch)
+                    if patient_compute["Pitch Meaning"][i]=="L":
+                        pitch=-pitch
+                dic_stats["MD Ang"].append(str(pitch))
+
+                #AP dist 
+                rl = patient_compute["R-L Component"][i]
+                if rl!="x":
+                    rl=float(rl)
+                    if patient_compute["R-L Meaning"][i]=="D":
+                        rl=-rl
+                dic_stats["AP"].append(str(rl))
+
+                #Transverse-RL
+                ap = patient_compute["A-P Component"][i]
+                if ap!="x":
+                    ap=float(ap)
+                    if patient_compute["A-P Meaning"][i]=="L":
+                        ap=-ap
+                dic_stats["Transverse-RL"].append(str(ap))
+
+
+            else :
+                #BL Ang
+                pitch = patient_compute["Pitch Component"][i]
+                if pitch!="x":
+                    pitch=float(pitch)
+                    if patient_compute["Pitch Meaning"][i]=="D":
+                        pitch=-pitch
+                dic_stats["BL Ang"].append(str(pitch))
+
+                #MD Ang
+                roll = patient_compute["Roll Component"][i]
+                if roll!="x":
+                    roll=float(roll)
+                    if patient_compute["Roll Meaning"][i]=="L":
+                        roll=-roll
+                dic_stats["MD Ang"].append(str(roll))
+
+                #AP dist 
+                ap = patient_compute["A-P Component"][i]
+                if ap!="x":
+                    ap=float(ap)
+                    if patient_compute["A-P Meaning"][i]=="D":
+                        ap=-ap
+                dic_stats["AP"].append(str(ap))
+
+                #Transverse-RL
+                rl = patient_compute["R-L Component"][i]
+                if rl!="x":
+                    rl=float(rl)
+                    if patient_compute["R-L Meaning"][i]=="L":
+                        rl=-rl
+                dic_stats["Transverse-RL"].append(str(rl))
+
+            #Rotation
+            yaw = patient_compute["Yaw Component"][i]
+            if yaw!="x":
+                yaw=float(yaw)
+                if patient_compute["Yaw Meaning"][i]=="DR":
+                    yaw=-yaw
+            dic_stats["Rotation"].append(str(yaw))
+
+            #Vertical
+            si = patient_compute["S-I Component"][i]
+            if si!="x":
+                si=float(si)
+                if patient_compute["S-I Meaning"][i]=="I":
+                    si=-si
+            dic_stats["Vertical"].append(str(si))
+
+            #3D
+            ThreeD = patient_compute["3D Distance"][i]
+            dic_stats["3D"].append(str(ThreeD))
+
+
+        return dic_stats
+                
+
+                    
+
+
+
+
+            
 
 
 
@@ -884,7 +1038,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if surface_folder != "":
             self.ui.LineEditPathT1.setText(surface_folder)
             
-            self.dict_patient_T1 = self.logic.createDictPatient(surface_folder)
+            self.dict_patient_T1, self.dict_patient_extraction = self.logic.createDictPatient(surface_folder)
 
             (
                 self.list_landmarks_exist,
@@ -908,7 +1062,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if surface_folder != "":
                 self.ui.LineEditPathT2.setText(surface_folder)
                 
-                self.dict_patient_T2  = self.logic.createDictPatient(surface_folder)
+                self.dict_patient_T2,x  = self.logic.createDictPatient(surface_folder)
                 self.logic.compareT1T2(self.dict_patient_T1, self.dict_patient_T2)
 
                 (self.list_landmarks_exist,
@@ -1054,6 +1208,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                        patient n :{landmarks1 : [0 , 0, 0], landmarks2 : [0 , 0, 0], ...}}
     """
         patients_dict = {}
+        dict_patient_extraction = {}
         patients_lst = []
         lst_files = []
         normpath = os.path.normpath("/".join([folder_path, "**", ""]))
@@ -1094,8 +1249,16 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                         print(
                             f"For this file {jsonfile} this landmark {landmark_name} are not good "
                         )
+                    
+                if "NE" in jsonfile or "Non_Extraction" in jsonfile or "Non Extraction" in jsonfile or "non_extraction" in jsonfile or "non extraction" in jsonfile :
+                    dict_patient_extraction[patient]=0
+                else :
+                    dict_patient_extraction[patient]=1
+                # print("*"*150)
+                # print("json file : ",jsonfile)
+                # print("*"*150)
 
-        return patients_dict 
+        return patients_dict,dict_patient_extraction
 
     def compareT1T2(self, dict_patinetT1: dict, dict_patientT2: dict):
         """Check if patient T1 and T2 have the same landmark, and the same patient
@@ -1705,6 +1868,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         ]
 
         for patient, point in dict_patient.items():
+            print("patient : ",patient)
             for __measure in list_measure:
                 measure : Union[Diff2Measure,Angle,Distance] = __measure
                 try:
@@ -1802,11 +1966,17 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         path (str): file's path
         name_file (str): file name
     """
+        if "Patient" in dict_patient__computation:
+            if len(dict_patient__computation["Patient"]) > 0:
+                df = pd.DataFrame(dict_patient__computation)
 
-        if len(dict_patient__computation["Patient"]) > 0:
-            df = pd.DataFrame(dict_patient__computation)
+                df.to_excel(os.path.join(path, name_file))
+        
+        if "ID" in dict_patient__computation:
+            if len(dict_patient__computation["ID"]) > 0:
+                df = pd.DataFrame(dict_patient__computation)
 
-            df.to_excel(os.path.join(path, name_file))
+                df.to_excel(os.path.join(path, name_file))
 
 
 
@@ -2003,8 +2173,8 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
         
         logic = AQ3DCLogic()
         group_landmark = Group_landmark(widget.resourcePath("name_landmark.xlsx"))
-        patient_T1 = logic.createDictPatient(os.path.join(folder,'T1'))
-        patient_T2 = logic.createDictPatient(os.path.join(folder,'T2'))
+        patient_T1,x = logic.createDictPatient(os.path.join(folder,'T1'))
+        patient_T2,x = logic.createDictPatient(os.path.join(folder,'T2'))
 
         dif_landmark , dif_patient = logic.compareT1T2(patient_T1,patient_T2)
         assert dif_landmark == {} and dif_patient == None
