@@ -12,8 +12,8 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_7">
    <item>
-    <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
-     <property name="text">
+    <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton" native="true">
+     <property name="text" stdset="0">
       <string>Sample</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -238,14 +238,14 @@
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="CollapsibleButton">
+    <widget class="ctkCollapsibleButton" name="CollapsibleButton" native="true">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
        <height>16777215</height>
       </size>
      </property>
-     <property name="text">
+     <property name="text" stdset="0">
       <string>Measurement</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
@@ -913,16 +913,6 @@
      <property name="bottomMargin">
       <number>10</number>
      </property>
-     <item row="0" column="4" colspan="2">
-      <widget class="QLineEdit" name="LineEditComputationFile">
-       <property name="inputMask">
-        <string/>
-       </property>
-       <property name="text">
-        <string>result.xlsx</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="3">
       <widget class="QLabel" name="LabelFileName">
        <property name="text">
@@ -930,10 +920,20 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="3" colspan="3">
-      <widget class="QLabel" name="LabelMeasurementSaved">
+     <item row="7" column="0" colspan="3">
+      <widget class="QPushButton" name="ButtonCompute">
        <property name="text">
+        <string>Compute</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4" colspan="2">
+      <widget class="QLineEdit" name="LineEditComputationFile">
+       <property name="inputMask">
         <string/>
+       </property>
+       <property name="text">
+        <string>result.xlsx</string>
        </property>
       </widget>
      </item>
@@ -947,10 +947,10 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0" colspan="3">
-      <widget class="QPushButton" name="ButtonCompute">
+     <item row="7" column="3" colspan="3">
+      <widget class="QLabel" name="LabelMeasurementSaved">
        <property name="text">
-        <string>Compute</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -959,6 +959,27 @@
        <property name="text">
         <string>Folder name</string>
        </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLabel" name="LabelExcelFormat">
+       <property name="text">
+        <string>Excel format :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4" colspan="2">
+      <widget class="QComboBox" name="ComboBoxExcelFormat">
+       <item>
+        <property name="text">
+         <string>Clinician</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Statistics</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

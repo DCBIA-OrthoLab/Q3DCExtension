@@ -335,10 +335,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
-            for cle in patient_compute.keys():
-                 print(cle)
-
-            patient_compute = self.reorganizeStat(patient_compute)
+            
+            print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
+            if self.ui.ComboBoxExcelFormat.currentText == "Statistics":
+                patient_compute = self.reorganizeStat(patient_compute)
             # write measure
             self.logic.writeMeasurementExcel(patient_compute, path, file_name)
             # self.logic.WriteMeasurementExcel2(test, path, file_name)
@@ -372,7 +372,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
                 tooth = patient_compute["Landmarks"][i][:3]
-                print("tooth : ",tooth)
 
             if "M" in tooth:
                 tooth = patient_compute["Landmarks"][i]
@@ -396,9 +395,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             #ID
             dic_stats["ID"].append(patient_compute["Patient"][i][1:])
-            print("-"*150)
-            print("patient_compute['Patient'][i] : ",patient_compute["Patient"][i])
-            print("-"*150)
+            
 
             dist = None
             ang = None
