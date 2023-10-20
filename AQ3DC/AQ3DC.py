@@ -375,6 +375,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 tooth = patient_compute["Landmarks"][i][:3]
 
             if "M" in tooth:
+                continue
                 tooth = patient_compute["Landmarks"][i]
                 
             indices_trouves=[]
@@ -400,6 +401,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             dist = None
             ang = None
+            mid = i
             if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
                 dist = i
                 for indice, valeur in enumerate(patient_compute["Landmarks"]):
@@ -411,6 +413,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 for indice, valeur in enumerate(patient_compute["Landmarks"]):
                     if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Distance between 2 points T1 T2":
                         dist=indice
+                        
+            for indice, valeur in enumerate(patient_compute["Landmarks"]):
+                if tooth in valeur and "Mid" in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
+                    mid=indice
                 
             if ang==None:
                 ang=i
@@ -437,18 +443,18 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             
             if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior
                 #BL Ang
-                roll = patient_compute["Roll Component"][ang]
+                roll = patient_compute["Roll Component"][mid]
                 if roll!="x":
                     roll=float(roll)
-                    if patient_compute["Roll Meaning"][ang]=="D":
+                    if patient_compute["Roll Meaning"][mid]=="D":
                         roll=-roll
                 dic_stats["BL Ang"].append(str(roll))
 
                 #MD Ang
-                pitch = patient_compute["Pitch Component"][ang]
+                pitch = patient_compute["Pitch Component"][mid]
                 if pitch!="x":
                     pitch=float(pitch)
-                    if patient_compute["Pitch Meaning"][ang]=="L":
+                    if patient_compute["Pitch Meaning"][mid]=="L":
                         pitch=-pitch
                 dic_stats["MD Ang"].append(str(pitch))
 
@@ -470,21 +476,21 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
             else :
-                #BL Ang
-                pitch = patient_compute["Pitch Component"][ang]
+                #MD Ang
+                pitch = patient_compute["Pitch Component"][mid]
                 if pitch!="x":
                     pitch=float(pitch)
-                    if patient_compute["Pitch Meaning"][ang]=="D":
+                    if patient_compute["Pitch Meaning"][mid]=="D":
                         pitch=-pitch
-                dic_stats["BL Ang"].append(str(pitch))
+                dic_stats["MD Ang"].append(str(pitch))
 
-                #MD Ang
-                roll = patient_compute["Roll Component"][ang]
+                #BL Ang
+                roll = patient_compute["Roll Component"][mid]
                 if roll!="x":
                     roll=float(roll)
-                    if patient_compute["Roll Meaning"][ang]=="L":
+                    if patient_compute["Roll Meaning"][mid]=="L":
                         roll=-roll
-                dic_stats["MD Ang"].append(str(roll))
+                dic_stats["BL Ang"].append(str(roll))
 
                 #AP dist 
                 ap = patient_compute["A-P Component"][dist]
