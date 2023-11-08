@@ -972,7 +972,7 @@
       <widget class="QComboBox" name="ComboBoxExcelFormat">
        <item>
         <property name="text">
-         <string>Clinician</string>
+         <string>Clinic</string>
         </property>
        </item>
        <item>
