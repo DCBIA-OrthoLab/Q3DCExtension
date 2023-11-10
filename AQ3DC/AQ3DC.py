@@ -265,6 +265,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # init self.group landmark
         self.selectFileImportListLandmark(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
 
+        self.statisticVisible()
+
         # ==============================================================================================================================================================
         # Widget conect
         # ==============================================================================================================================================================
@@ -364,6 +366,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for i in range(len(patient_compute["Patient"])) :
 
             #Tooth
+            tooth=None
             if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
                 tooths = patient_compute["Landmarks"][i]
                 indice_espace = tooths.find(" ")
@@ -374,10 +377,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
                 tooth = patient_compute["Landmarks"][i][:3]
 
+            if tooth==None:
+                continue 
+
             if "M" in tooth:
                 continue
                 tooth = patient_compute["Landmarks"][i]
-                
+               
             indices_trouves=[]
             for indice, valeur in enumerate(dic_stats["Tooth"]):
                 if valeur == tooth:
@@ -944,6 +950,79 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         measure["checkbox"] = a
         self.list_measure.append(measure)
 
+        self.statisticVisible()
+
+    def statisticVisible(self):
+        dic_tooth = ["UR1","UR2","UR3","UR4","UR5","UR6","UR7",
+                          "UL1","UL2","UL3","UL4","UL5","UL6","UL7",
+                          "LR1","LR2","LR3","LR4","LR5","LR6","LR7",
+                          "LL1","LL2","LL3","LL4","LL5","LL6","LL7"]
+        visible = True
+        if len(self.list_measure)==0:
+            visible=False
+        
+        for measure in self.list_measure:
+            # # Extraction des informations pour Line 1 et Line 2
+            if measure.measure == "Angle line T1 and line T2":
+                landmark1a = measure.line1.point1.name
+                landmark1b = measure.line1.point2.name
+                landmark2a = measure.line2.point1.name
+                landmark2b = measure.line2.point2.name
+
+                tooths = [False]*4
+                
+
+                for tooth in dic_tooth:
+                    if tooth in landmark1a:
+                        tooths[0]=True
+                    if tooth in landmark1b:
+                        tooths[1]=True
+                    if tooth in landmark2a:
+                        tooths[2]=True
+                    if tooth in landmark2b:
+                        tooths[3]=True
+                    if all(tooths):
+                        break
+
+                if not all(tooths) :
+                    visible = False
+                    break
+
+            if measure.measure=="Distance between 2 points T1 T2":
+                landmark1=measure.point1.name
+                landmark2=measure.point2line.name
+                tooths=[False]*2
+
+                for tooth in dic_tooth:
+
+                    if tooth in landmark1:
+                        tooths[0]=True
+
+                    if tooth in landmark2:
+                        tooths[1]=True
+
+                    if all(tooths):
+                        break
+
+
+                if not all(tooths) :
+                    visible = False
+                    break
+
+        if visible:
+            self.ui.LabelExcelFormat.setVisible(True)
+            self.ui.ComboBoxExcelFormat.setVisible(True)
+        else :
+            self.ui.LabelExcelFormat.setVisible(False)
+            self.ui.ComboBoxExcelFormat.setVisible(False)
+
+
+        
+
+
+        
+
+
     def selectAllMeasurement(self, group, column):
         if column == 0:
             list_checkbox = []
@@ -979,6 +1058,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         for idremove in row_remove:
             self.list_measure.pop(idremove)
+
+        self.statisticVisible()
 
     def createMeasurement(self):
         """
