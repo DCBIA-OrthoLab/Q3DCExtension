@@ -326,6 +326,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     Compute measurement 
 
     Call by ButtonCompute
+    test
     """
         path = self.ui.LineEditFolderComputation.text
         file_name = self.ui.LineEditComputationFile.text
