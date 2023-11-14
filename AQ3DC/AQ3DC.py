@@ -326,7 +326,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     Compute measurement 
 
     Call by ButtonCompute
-    test
     """
         path = self.ui.LineEditFolderComputation.text
         file_name = self.ui.LineEditComputationFile.text
@@ -1957,6 +1956,8 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             "Landmarks": [],
             "R-L Component": [],
             "R-L Meaning": [],
+            "Lateral or medial-Right":[],
+            "Lateral or medial-Left":[],
             "A-P Component": [],
             "A-P Meaning": [],
             "S-I Component": [],
@@ -1982,6 +1983,8 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             "Landmarks",
             "R-L Component",
             "R-L Meaning",
+            "Lateral or medial-Right",
+            "Lateral or medial-Left",
             "A-P Component",
             "A-P Meaning",
             "S-I Component",
@@ -2029,6 +2032,12 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                         f"Dont write this measure {measure} for this patient {patient} because is useless measure"
                     )
                     continue
+
+        if all(value=="x" for value in dict_patient__computation["Lateral or medial-Left"]):
+            del dict_patient__computation["Lateral or medial-Left"]
+
+        if all(value=="x" for value in dict_patient__computation["Lateral or medial-Right"]):
+            del dict_patient__computation["Lateral or medial-Right"]
 
         # for measure in list_measure :
         #     dict_measurement_sheet = {

@@ -15,6 +15,8 @@ LOWER_RIGHT_FRONT = ["LR1", "LR2"]
 LOWER_LEFT_BACK = ["LL8", "LL7", "LL6", "LL5", "LL4", "LL3"]
 LOWER_LEFT_FRONT = ["LL1", "LL2"]
 
+SKELETAL_LM_RL = ["Ba","Na","S","A","ANS","PNS","B","Pog","Me"]
+
 
 
 class Measure:
@@ -46,6 +48,8 @@ The position of the point have to be give by a dictionnary like this
         self.lr_sign_meaning = "" 
         self.ap_sign_meaning = ""
         self.si_sign_meaning = ""
+        self.lmr = "x"
+        self.lml = "x"
         self.lr, self.ap, self.si, self.norm = 0, 0, 0, 0
 
     def __str__(self):
@@ -157,6 +161,10 @@ class Distance(Measure):
             return float(abs(self.lr))
         elif key == "R-L Meaning":
             return self.lr_sign_meaning
+        elif key == "Lateral or medial-Right":
+            return self.lmr
+        elif key == "Lateral or medial-Left":
+            return self.lml
         elif key == "A-P Component":
             return float(abs(self.ap))
         elif key == "A-P Meaning":
@@ -270,8 +278,17 @@ class Distance(Measure):
         self.lr_sign_meaning = "L"
         self.ap_sign_meaning = "P"
         self.si_sign_meaning = "I"
+        lst_measurement = [self.point1["name"], self.point2line["name"]]
         if self.lr > 0:
             self.lr_sign_meaning = "R"  # Right
+
+        if check_skeletal(lst_measurement,SKELETAL_LM_RL):
+            if self.lr>0:
+                self.lmr = "Lateral"
+                self.lml = "Medial"
+            else :
+                self.lmr = "Medial"
+                self.lml = "Lateral"
 
         if self.ap > 0:
             self.ap_sign_meaning = "A"  # Anterior
@@ -820,3 +837,16 @@ def check(list_landmark : list, tocheck : list) -> bool:
         out = True
 
     return out
+
+def check_skeletal(list_landmark : list, tocheck : list) -> bool:
+    '''same utilities as check but more for skeletal. It handle the case where 'B' in 'Ba' and 'Ba' in 'Ba' that ending with a false counting in check.
+    '''
+    for landmark in list_landmark:
+        if "Mid_" in landmark:
+            components = landmark.split("_")[1:] 
+            if not all(component in tocheck for component in components):
+                return False
+            
+        elif landmark not in tocheck:
+            return False
+    return True
