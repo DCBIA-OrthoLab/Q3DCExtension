@@ -363,6 +363,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 "3D":[]
             }
         
+        TOOTHS = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3","UR1", "UR2","UL8", "UL7", "UL6", "UL5", "UL4", "UL3","UL1", "UL2",
+                  "LR8", "LR7", "LR6", "LR5", "LR4", "LR3","LR1", "LR2","LL8", "LL7", "LL6", "LL5", "LL4", "LL3","LL1", "LL2"]
+        
         for i in range(len(patient_compute["Patient"])) :
 
             #Tooth
@@ -377,13 +380,17 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
                 tooth = patient_compute["Landmarks"][i][:3]
 
+            
+
+            if "Mid" in tooth:
+                save = tooth
+                for t in TOOTHS :
+                    if t in save :
+                        tooth = t
+                        
             if tooth==None:
                 continue 
 
-            if "M" in tooth:
-                continue
-                tooth = patient_compute["Landmarks"][i]
-               
             indices_trouves=[]
             for indice, valeur in enumerate(dic_stats["Tooth"]):
                 if valeur == tooth:
@@ -465,20 +472,20 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 dic_stats["MD Ang"].append(str(pitch))
 
                 #AP dist 
-                rl = patient_compute["A-P Component"][dist]
-                if rl!="x":
-                    rl=float(rl)
-                    if patient_compute["A-P Component"][dist]=="L":
-                        rl=-rl
-                dic_stats["AP"].append(str(rl))
-
-                #Transverse-RL 
-                ap = patient_compute["R-L Component"][dist]
+                ap = patient_compute["A-P Component"][dist]
                 if ap!="x":
                     ap=float(ap)
-                    if patient_compute["R-L Component"][dist]=="D":
+                    if patient_compute["A-P Component"][dist]=="L":
                         ap=-ap
-                dic_stats["Transverse-RL"].append(str(ap))
+                dic_stats["AP"].append(str(ap))
+
+                #Transverse-RL 
+                rl = patient_compute["R-L Component"][dist]
+                if rl!="x":
+                    rl=float(rl)
+                    if patient_compute["R-L Component"][dist]=="D":
+                        rl=-rl
+                dic_stats["Transverse-RL"].append(str(rl))
 
 
             else :
@@ -1956,8 +1963,6 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             "Landmarks": [],
             "R-L Component": [],
             "R-L Meaning": [],
-            "Lateral or medial-Right":[],
-            "Lateral or medial-Left":[],
             "A-P Component": [],
             "A-P Meaning": [],
             "S-I Component": [],
@@ -1983,8 +1988,6 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             "Landmarks",
             "R-L Component",
             "R-L Meaning",
-            "Lateral or medial-Right",
-            "Lateral or medial-Left",
             "A-P Component",
             "A-P Meaning",
             "S-I Component",
@@ -2033,11 +2036,11 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     )
                     continue
 
-        if all(value=="x" for value in dict_patient__computation["Lateral or medial-Left"]):
-            del dict_patient__computation["Lateral or medial-Left"]
+        # if all(value=="x" for value in dict_patient__computation["Lateral or medial-Left"]):
+        #     del dict_patient__computation["Lateral or medial-Left"]
 
-        if all(value=="x" for value in dict_patient__computation["Lateral or medial-Right"]):
-            del dict_patient__computation["Lateral or medial-Right"]
+        # if all(value=="x" for value in dict_patient__computation["Lateral or medial-Right"]):
+        #     del dict_patient__computation["Lateral or medial-Right"]
 
         # for measure in list_measure :
         #     dict_measurement_sheet = {

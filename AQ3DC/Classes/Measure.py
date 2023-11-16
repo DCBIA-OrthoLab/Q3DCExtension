@@ -48,8 +48,6 @@ The position of the point have to be give by a dictionnary like this
         self.lr_sign_meaning = "" 
         self.ap_sign_meaning = ""
         self.si_sign_meaning = ""
-        self.lmr = "x"
-        self.lml = "x"
         self.lr, self.ap, self.si, self.norm = 0, 0, 0, 0
 
     def __str__(self):
@@ -161,10 +159,6 @@ class Distance(Measure):
             return float(abs(self.lr))
         elif key == "R-L Meaning":
             return self.lr_sign_meaning
-        elif key == "Lateral or medial-Right":
-            return self.lmr
-        elif key == "Lateral or medial-Left":
-            return self.lml
         elif key == "A-P Component":
             return float(abs(self.ap))
         elif key == "A-P Meaning":
@@ -281,14 +275,6 @@ class Distance(Measure):
         lst_measurement = [self.point1["name"], self.point2line["name"]]
         if self.lr > 0:
             self.lr_sign_meaning = "R"  # Right
-
-        if check_skeletal(lst_measurement,SKELETAL_LM_RL):
-            if self.lr>0:
-                self.lmr = "Lateral"
-                self.lml = "Medial"
-            else :
-                self.lmr = "Medial"
-                self.lml = "Lateral"
 
         if self.ap > 0:
             self.ap_sign_meaning = "A"  # Anterior
