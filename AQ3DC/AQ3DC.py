@@ -447,7 +447,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             dic_stats["Group"].append(self.dict_patient_extraction[patient_compute["Patient"][i]])
 
             
-            if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior
+            if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior teeth
                 #BL Ang
                 roll = patient_compute["Roll Component"][mid]
                 if roll!="x":
@@ -465,18 +465,18 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 dic_stats["MD Ang"].append(str(pitch))
 
                 #AP dist 
-                rl = patient_compute["R-L Component"][dist]
+                rl = patient_compute["A-P Component"][dist]
                 if rl!="x":
                     rl=float(rl)
-                    if patient_compute["R-L Meaning"][dist]=="D":
+                    if patient_compute["A-P Component"][dist]=="L":
                         rl=-rl
                 dic_stats["AP"].append(str(rl))
 
-                #Transverse-RL
-                ap = patient_compute["A-P Component"][dist]
+                #Transverse-RL 
+                ap = patient_compute["R-L Component"][dist]
                 if ap!="x":
                     ap=float(ap)
-                    if patient_compute["A-P Meaning"][dist]=="L":
+                    if patient_compute["R-L Component"][dist]=="D":
                         ap=-ap
                 dic_stats["Transverse-RL"].append(str(ap))
 
