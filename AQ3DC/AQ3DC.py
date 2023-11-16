@@ -360,7 +360,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 "AP":[],
                 "Vertical":[],
                 "Transverse-RL":[],
-                "3D":[]
+                "3D":[],
+                "R-L Component":[],
+                "A-P Component":[],
+                "S-I Component":[],
+                "Yaw Component":[],
+                "Pitch Component":[],
+                "Roll Component":[],
             }
         
         TOOTHS = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3","UR1", "UR2","UL8", "UL7", "UL6", "UL5", "UL4", "UL3","UL1", "UL2",
@@ -369,179 +375,206 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for i in range(len(patient_compute["Patient"])) :
 
             #Tooth
-            tooth=None
-            if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
-                tooths = patient_compute["Landmarks"][i]
-                indice_espace = tooths.find(" ")
-                indice_tiret = tooths.find("-")
-                if indice_espace != -1 and indice_tiret != -1:
-                    tooth = tooths[:indice_espace-1]
+            for t in TOOTHS : 
+                if t in patient_compute["Landmarks"][i] :
+                    type = "tooth"
 
-            elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
-                tooth = patient_compute["Landmarks"][i][:3]
+            if type == "tooth":
+                tooth=None
+                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
+                    tooths = patient_compute["Landmarks"][i]
+                    indice_espace = tooths.find(" ")
+                    indice_tiret = tooths.find("-")
+                    if indice_espace != -1 and indice_tiret != -1:
+                        tooth = tooths[:indice_espace-1]
 
-            
+                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
+                    tooth = patient_compute["Landmarks"][i][:3]
 
-            if "Mid" in tooth:
-                save = tooth
-                for t in TOOTHS :
-                    if t in save :
-                        tooth = t
-                        
-            if tooth==None:
-                continue 
-
-            indices_trouves=[]
-            for indice, valeur in enumerate(dic_stats["Tooth"]):
-                if valeur == tooth:
-                    indices_trouves.append(indice)
-            
-            patient_id = patient_compute["Patient"][i][1:]
-            already_treated = False
-            for indice_trouve in indices_trouves:
-                if indice_trouve < len(dic_stats["ID"]) and dic_stats["ID"][indice_trouve] == patient_id:
-                    already_treated=True
-                    break
-
-            if already_treated:
-                continue
-            
-            dic_stats["Tooth"].append(tooth)
-
-            #ID
-            dic_stats["ID"].append(patient_compute["Patient"][i][1:])
-            
-
-            dist = None
-            ang = None
-            mid = i
-            if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
-                dist = i
-                for indice, valeur in enumerate(patient_compute["Landmarks"]):
-                    if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
-                        ang=indice
-
-            elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
-                ang = i
-                for indice, valeur in enumerate(patient_compute["Landmarks"]):
-                    if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Distance between 2 points T1 T2":
-                        dist=indice
-                        
-            for indice, valeur in enumerate(patient_compute["Landmarks"]):
-                if tooth in valeur and "Mid" in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
-                    mid=indice
                 
-            if ang==None:
-                ang=i
-            if dist==None:
-                dist=i
+
+                if "Mid" in tooth:
+                    save = tooth
+                    for t in TOOTHS :
+                        if t in save :
+                            tooth = t
+
+                if tooth==None:
+                    continue 
+
+                indices_trouves=[]
+                for indice, valeur in enumerate(dic_stats["Tooth"]):
+                    if valeur == tooth:
+                        indices_trouves.append(indice)
+                
+                patient_id = patient_compute["Patient"][i][1:]
+                already_treated = False
+                for indice_trouve in indices_trouves:
+                    if indice_trouve < len(dic_stats["ID"]) and dic_stats["ID"][indice_trouve] == patient_id:
+                        already_treated=True
+                        break
+
+                if already_treated:
+                    continue
+                
+                dic_stats["Tooth"].append(tooth)
+
+                #ID
+                dic_stats["ID"].append(patient_compute["Patient"][i][1:])
+                
+
+                dist = None
+                ang = None
+                mid = i
+                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
+                    dist = i
+                    for indice, valeur in enumerate(patient_compute["Landmarks"]):
+                        if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
+                            ang=indice
+
+                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
+                    ang = i
+                    for indice, valeur in enumerate(patient_compute["Landmarks"]):
+                        if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Distance between 2 points T1 T2":
+                            dist=indice
+                            
+                for indice, valeur in enumerate(patient_compute["Landmarks"]):
+                    if tooth in valeur and "Mid" in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
+                        mid=indice
+                    
+                if ang==None:
+                    ang=i
+                if dist==None:
+                    dist=i
 
 
 
-            #Arch : upper=0, lower=1
-            if "U" in tooth :
-                dic_stats["Arch"].append(0)
+                #Arch : upper=0, lower=1
+                if "U" in tooth :
+                    dic_stats["Arch"].append(0)
+                else : 
+                    dic_stats["Arch"].append(1)
+
+                #Segment : posterior=0,anterior=1
+                if "1" in tooth or "2" in tooth:
+                    dic_stats["Segment"].append(1)
+                else : 
+                    dic_stats["Segment"].append(0)
+
+                #Group : non-extraction=0, extraction=1
+                dic_stats["Group"].append(self.dict_patient_extraction[patient_compute["Patient"][i]])
+
+                
+                if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior teeth
+                    #BL Ang
+                    roll = patient_compute["Roll Component"][mid]
+                    if roll!="x":
+                        roll=float(roll)
+                        if patient_compute["Roll Meaning"][mid]=="D":
+                            roll=-roll
+                    dic_stats["BL Ang"].append(str(roll))
+
+                    #MD Ang
+                    pitch = patient_compute["Pitch Component"][mid]
+                    if pitch!="x":
+                        pitch=float(pitch)
+                        if patient_compute["Pitch Meaning"][mid]=="L":
+                            pitch=-pitch
+                    dic_stats["MD Ang"].append(str(pitch))
+
+                    #AP dist 
+                    ap = patient_compute["A-P Component"][dist]
+                    if ap!="x":
+                        ap=float(ap)
+                        if patient_compute["A-P Component"][dist]=="L":
+                            ap=-ap
+                    dic_stats["AP"].append(str(ap))
+
+                    #Transverse-RL 
+                    rl = patient_compute["R-L Component"][dist]
+                    if rl!="x":
+                        rl=float(rl)
+                        if patient_compute["R-L Component"][dist]=="D":
+                            rl=-rl
+                    dic_stats["Transverse-RL"].append(str(rl))
+
+
+                else :
+                    #MD Ang
+                    pitch = patient_compute["Pitch Component"][mid]
+                    if pitch!="x":
+                        pitch=float(pitch)
+                        if patient_compute["Pitch Meaning"][mid]=="D":
+                            pitch=-pitch
+                    dic_stats["MD Ang"].append(str(pitch))
+
+                    #BL Ang
+                    roll = patient_compute["Roll Component"][mid]
+                    if roll!="x":
+                        roll=float(roll)
+                        if patient_compute["Roll Meaning"][mid]=="L":
+                            roll=-roll
+                    dic_stats["BL Ang"].append(str(roll))
+
+                    #AP dist 
+                    ap = patient_compute["A-P Component"][dist]
+                    if ap!="x":
+                        ap=float(ap)
+                        if patient_compute["A-P Meaning"][dist]=="D":
+                            ap=-ap
+                    dic_stats["AP"].append(str(ap))
+
+                    #Transverse-RL
+                    rl = patient_compute["R-L Component"][dist]
+                    if rl!="x":
+                        rl=float(rl)
+                        if patient_compute["R-L Meaning"][dist]=="L":
+                            rl=-rl
+                    dic_stats["Transverse-RL"].append(str(rl))
+
+                #Rotation
+                yaw = patient_compute["Yaw Component"][ang]
+                if yaw!="x":
+                    yaw=float(yaw)
+                    if patient_compute["Yaw Meaning"][ang]=="DR":
+                        yaw=-yaw
+                dic_stats["Rotation"].append(str(yaw))
+
+                #Vertical
+                si = patient_compute["S-I Component"][dist]
+                if si!="x":
+                    si=float(si)
+                    if patient_compute["S-I Meaning"][dist]=="I":
+                        si=-si
+                dic_stats["Vertical"].append(str(si))
+
+                #3D
+                ThreeD = patient_compute["3D Distance"][dist]
+                dic_stats["3D"].append(str(ThreeD))
+
+                # to put something into skeletal 
+                dic_stats["R-L Component"].append("x")
+                dic_stats["A-P Component"].append("x")
+                dic_stats["S-I Component"].append("x")
+                dic_stats["Yaw Component"].append("x")
+                dic_stats["Pitch Component"].append("x")
+                dic_stats["Roll Component"].append("x")
+
             else : 
-                dic_stats["Arch"].append(1)
+                continue
 
-            #Segment : posterior=0,anterior=1
-            if "1" in tooth or "2" in tooth:
-                dic_stats["Segment"].append(1)
-            else : 
-                dic_stats["Segment"].append(0)
+        keys_to_delete = []
+        for key, value in dic_stats.items():
+            if not value:  # Check if the list is empty
+                keys_to_delete.append(key)
+            elif all(item == "x" for item in value):  # Check if all items in the list are "x"
+                keys_to_delete.append(key)
 
-            #Group : non-extraction=0, extraction=1
-            dic_stats["Group"].append(self.dict_patient_extraction[patient_compute["Patient"][i]])
+        # Deleting the keys where the condition is not met
+        for key in keys_to_delete:
+            del dic_stats[key]
 
-            
-            if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior teeth
-                #BL Ang
-                roll = patient_compute["Roll Component"][mid]
-                if roll!="x":
-                    roll=float(roll)
-                    if patient_compute["Roll Meaning"][mid]=="D":
-                        roll=-roll
-                dic_stats["BL Ang"].append(str(roll))
-
-                #MD Ang
-                pitch = patient_compute["Pitch Component"][mid]
-                if pitch!="x":
-                    pitch=float(pitch)
-                    if patient_compute["Pitch Meaning"][mid]=="L":
-                        pitch=-pitch
-                dic_stats["MD Ang"].append(str(pitch))
-
-                #AP dist 
-                ap = patient_compute["A-P Component"][dist]
-                if ap!="x":
-                    ap=float(ap)
-                    if patient_compute["A-P Component"][dist]=="L":
-                        ap=-ap
-                dic_stats["AP"].append(str(ap))
-
-                #Transverse-RL 
-                rl = patient_compute["R-L Component"][dist]
-                if rl!="x":
-                    rl=float(rl)
-                    if patient_compute["R-L Component"][dist]=="D":
-                        rl=-rl
-                dic_stats["Transverse-RL"].append(str(rl))
-
-
-            else :
-                #MD Ang
-                pitch = patient_compute["Pitch Component"][mid]
-                if pitch!="x":
-                    pitch=float(pitch)
-                    if patient_compute["Pitch Meaning"][mid]=="D":
-                        pitch=-pitch
-                dic_stats["MD Ang"].append(str(pitch))
-
-                #BL Ang
-                roll = patient_compute["Roll Component"][mid]
-                if roll!="x":
-                    roll=float(roll)
-                    if patient_compute["Roll Meaning"][mid]=="L":
-                        roll=-roll
-                dic_stats["BL Ang"].append(str(roll))
-
-                #AP dist 
-                ap = patient_compute["A-P Component"][dist]
-                if ap!="x":
-                    ap=float(ap)
-                    if patient_compute["A-P Meaning"][dist]=="D":
-                        ap=-ap
-                dic_stats["AP"].append(str(ap))
-
-                #Transverse-RL
-                rl = patient_compute["R-L Component"][dist]
-                if rl!="x":
-                    rl=float(rl)
-                    if patient_compute["R-L Meaning"][dist]=="L":
-                        rl=-rl
-                dic_stats["Transverse-RL"].append(str(rl))
-
-            #Rotation
-            yaw = patient_compute["Yaw Component"][ang]
-            if yaw!="x":
-                yaw=float(yaw)
-                if patient_compute["Yaw Meaning"][ang]=="DR":
-                    yaw=-yaw
-            dic_stats["Rotation"].append(str(yaw))
-
-            #Vertical
-            si = patient_compute["S-I Component"][dist]
-            if si!="x":
-                si=float(si)
-                if patient_compute["S-I Meaning"][dist]=="I":
-                    si=-si
-            dic_stats["Vertical"].append(str(si))
-
-            #3D
-            ThreeD = patient_compute["3D Distance"][dist]
-            dic_stats["3D"].append(str(ThreeD))
-
-
+ 
         return dic_stats
                 
 
