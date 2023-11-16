@@ -350,7 +350,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def reorganizeStat(self,patient_compute):
         dic_stats = {
                 "ID":[],
-                "Tooth":[],
+                "Tooth/Landmarks":[],
+                "Type of measurement":[],
                 "Arch":[],
                 "Segment":[],
                 "Group":[],
@@ -375,6 +376,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for i in range(len(patient_compute["Patient"])) :
 
             #Tooth
+            type = "skeletal"
             for t in TOOTHS : 
                 if t in patient_compute["Landmarks"][i] :
                     type = "tooth"
@@ -417,7 +419,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 if already_treated:
                     continue
                 
-                dic_stats["Tooth"].append(tooth)
+                dic_stats["Tooth/Landmarks"].append(tooth)
 
                 #ID
                 dic_stats["ID"].append(patient_compute["Patient"][i][1:])
@@ -559,9 +561,113 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 dic_stats["Yaw Component"].append("x")
                 dic_stats["Pitch Component"].append("x")
                 dic_stats["Roll Component"].append("x")
+                dic_stats["Type of measurement"].append("x")
+                
 
             else : 
-                continue
+                if patient_compute["Type of measurement"][i]!="Distance between 2 points T1 T2" and patient_compute["Type of measurement"][i]!="Angle line T1 and line T2":
+                    continue 
+
+                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
+                    parts = [part.strip() for part in patient_compute["Landmarks"][i].split("-")]
+                    print("parts : ",parts)
+                    landmark1 = parts[0] if len(parts) >= 1 else None
+                    landmark2 = parts[1] if len(parts) >= 2 else None
+                    
+                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
+                    print("1"*100)
+                    print(patient_compute["Landmarks"][i])
+
+
+                dic_stats["ID"].append(patient_compute["Patient"][i][3:])
+                dic_stats["Tooth/Landmarks"].append(patient_compute["Landmarks"][i])
+                dic_stats["Type of measurement"].append(patient_compute["Type of measurement"][i])
+
+
+                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2" :
+                    #RL
+                    direction = self.right_left_stat(landmark1,landmark2)
+                    rl = patient_compute["R-L Component"][i]
+                    rl_meaning = patient_compute["R-L Meaning"][i]
+                    if rl!="x":
+                        rl = float(rl)
+                        if rl_meaning=="L":
+                            rl=-rl
+                        elif rl_meaning=="Lateral" and direction=="L":
+                            rl=-rl
+                        elif rl_meaning=="Medial" and direction=="R":
+                            rl=-rl
+                    dic_stats["R-L Component"].append(str(rl))
+
+                    #AP
+                    ap = patient_compute["A-P Component"][i]
+                    ap_meaning = patient_compute["A-P Meaning"][i]
+                    if ap!="x":
+                        ap=float(ap)
+                        if ap_meaning=="P":
+                            ap=-ap
+                    dic_stats["A-P Component"].append(str(ap))
+
+                    #SI
+                    si = patient_compute["S-I Component"][i]
+                    si_meaning = patient_compute["S-I Meaning"][i]
+                    if si!="x":
+                        si=float(ap)
+                        if si_meaning=="S":
+                            si=-si
+                    dic_stats["S-I Component"].append(str(si))
+
+                    dic_stats["Yaw Component"].append("x")
+                    dic_stats["Pitch Component"].append("x")
+                    dic_stats["Roll Component"].append("x")
+
+                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2" :
+                    #Yaw
+                    yaw = patient_compute["Yaw Component"][i]
+                    yaw_meaning = patient_compute["Yaw Meaning"][i]
+                    if yaw!="x":
+                        yaw=float(yaw)
+                        if yaw_meaning=="CounterC":
+                            yaw=-yaw
+                    dic_stats["Yaw Component"].append(str(yaw))
+
+                    #Pitch
+                    pitch = patient_compute["Pitch Component"][i]
+                    pitch_meaning = patient_compute["Pitch Meaning"][i]
+                    if pitch!="x":
+                        pitch=float(pitch)
+                        if pitch_meaning=="CounterC":
+                            pitch=-pitch
+                    dic_stats["Pitch Component"].append(str(pitch))
+
+                    #Roll
+                    roll = patient_compute["Roll Component"][i]
+                    roll_meaning = patient_compute["Roll Meaning"][i]
+                    if roll!="x":
+                        roll=float(roll)
+                        if roll_meaning=="CounterC":
+                            roll=-roll
+                    dic_stats["Roll Component"].append(str(roll))
+
+                    dic_stats["R-L Component"].append("x")
+                    dic_stats["A-P Component"].append("x")
+                    dic_stats["S-I Component"].append("x")
+                
+                #3D
+                ThreeD = patient_compute["3D Distance"][i]
+                dic_stats["3D"].append(str(ThreeD))
+
+                # to put something into dental
+                dic_stats["Arch"].append("x")
+                dic_stats["Segment"].append("x")
+                dic_stats["Group"].append("x")
+                dic_stats["BL Ang"].append("x")
+                dic_stats["MD Ang"].append("x")
+                dic_stats["Rotation"].append("x")
+                dic_stats["AP"].append("x")
+                dic_stats["Vertical"].append("x")
+                dic_stats["Transverse-RL"].append("x")
+                
 
         keys_to_delete = []
         for key, value in dic_stats.items():
@@ -578,7 +684,54 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         return dic_stats
                 
 
-                    
+    def right_left_stat(self,land1,land2):
+        lst_measurement = [land1, land2]
+        print("lst_measurement : ",lst_measurement)
+        direction1 = lst_measurement[0][0]
+        direction2 = lst_measurement[1][0]
+        if direction1 == "M":
+            parts = lst_measurement[0].split("_")
+            landmark1 = parts[1] if len(parts) > 1 else None
+            landmark2 = parts[2] if len(parts) > 2 else None
+
+            if landmark1[0]==landmark2[0]:
+                direction1 = landmark1[0]
+
+            else : 
+                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
+                    direction1 = "No_direction"
+                elif landmark1[0]=="R" or landmark1[0]=="L" : direction1=landmark1[0] 
+                elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0] 
+                else : direction1 = None
+
+        if direction2 == "M":
+            parts = lst_measurement[0].split("_")
+            landmark1 = parts[1] if len(parts) > 1 else None
+            landmark2 = parts[2] if len(parts) > 2 else None
+
+            if landmark1[0]==landmark2[0]:
+                direction2 = landmark1[0]
+
+            else : 
+                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
+                    direction2 = "No_direction"
+                elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0] 
+                elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
+                else : direction2 = None
+
+        if direction1 == direction2 :
+            direction = direction1
+
+        elif (direction1=="No_direction" and direction2!="No_direction") :
+            direction = direction2
+
+        elif (direction2=="No_direction" and direction1!="No_direction") :
+            direction = direction1
+
+        elif (direction1=="R" and direction2=="L") or (direction1=="L" and direction2=="R"):
+            direction = "No_direction"
+
+        return direction
 
 
 
@@ -1049,6 +1202,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     visible = False
                     break
 
+        visible = True
         if visible:
             self.ui.LabelExcelFormat.setVisible(True)
             self.ui.ComboBoxExcelFormat.setVisible(True)
