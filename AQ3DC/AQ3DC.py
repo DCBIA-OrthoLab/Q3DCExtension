@@ -570,13 +570,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
                 if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
                     parts = [part.strip() for part in patient_compute["Landmarks"][i].split("-")]
-                    print("parts : ",parts)
                     landmark1 = parts[0] if len(parts) >= 1 else None
                     landmark2 = parts[1] if len(parts) >= 2 else None
-                    
-                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
-                    print("1"*100)
-                    print(patient_compute["Landmarks"][i])
 
 
                 dic_stats["ID"].append(patient_compute["Patient"][i][3:])
