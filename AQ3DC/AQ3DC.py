@@ -396,16 +396,16 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 
 
                 if "Mid" in tooth:
-                    save = tooth
+                    save = patient_compute["Landmarks"][i]
                     for t in TOOTHS :
                         if t in save :
                             tooth = t
 
-                if tooth==None:
+                if tooth==None or tooth=="Mid":
                     continue 
 
                 indices_trouves=[]
-                for indice, valeur in enumerate(dic_stats["Tooth"]):
+                for indice, valeur in enumerate(dic_stats["Tooth/Landmarks"]):
                     if valeur == tooth:
                         indices_trouves.append(indice)
                 
@@ -488,7 +488,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     ap = patient_compute["A-P Component"][dist]
                     if ap!="x":
                         ap=float(ap)
-                        if patient_compute["A-P Component"][dist]=="L":
+                        if patient_compute["A-P Meaning"][dist]=="L":
                             ap=-ap
                     dic_stats["AP"].append(str(ap))
 
@@ -496,7 +496,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     rl = patient_compute["R-L Component"][dist]
                     if rl!="x":
                         rl=float(rl)
-                        if patient_compute["R-L Component"][dist]=="D":
+                        if patient_compute["R-L Meaning"][dist]=="D":
                             rl=-rl
                     dic_stats["Transverse-RL"].append(str(rl))
 
@@ -714,6 +714,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
                 else : direction2 = None
 
+        direction="No_direction"
         if direction1 == direction2 :
             direction = direction1
 
