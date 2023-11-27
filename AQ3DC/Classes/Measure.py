@@ -48,8 +48,6 @@ The position of the point have to be give by a dictionnary like this
         self.lr_sign_meaning = "" 
         self.ap_sign_meaning = ""
         self.si_sign_meaning = ""
-        self.lmr = "x"
-        self.lml = "x"
         self.lr, self.ap, self.si, self.norm = 0, 0, 0, 0
 
     def __str__(self):
@@ -161,10 +159,6 @@ class Distance(Measure):
             return float(abs(self.lr))
         elif key == "R-L Meaning":
             return self.lr_sign_meaning
-        elif key == "Lateral or medial-Right":
-            return self.lmr
-        elif key == "Lateral or medial-Left":
-            return self.lml
         elif key == "A-P Component":
             return float(abs(self.ap))
         elif key == "A-P Meaning":
@@ -275,20 +269,72 @@ class Distance(Measure):
             self.__SignMeaningDist()
 
     def __SignMeaningDist(self):
-        self.lr_sign_meaning = "L"
+        lst_measurement = [self.point1["name"], self.point2line["name"]]
+        direction1 = lst_measurement[0][0]
+        direction2 = lst_measurement[1][0]
+        if direction1 == "M":
+            parts = lst_measurement[0].split("_")
+            landmark1 = parts[1] if len(parts) > 1 else None
+            landmark2 = parts[2] if len(parts) > 2 else None
+
+            if landmark1[0]==landmark2[0]:
+                direction1 = landmark1[0]
+
+            else : 
+                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
+                    direction1 = "No_direction"
+                elif landmark1[0]=="R" or landmark1[0]=="L" : direction1=landmark1[0] 
+                elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0] 
+                else : direction1 = None
+
+        if direction2 == "M":
+            parts = lst_measurement[0].split("_")
+            landmark1 = parts[1] if len(parts) > 1 else None
+            landmark2 = parts[2] if len(parts) > 2 else None
+
+            if landmark1[0]==landmark2[0]:
+                direction2 = landmark1[0]
+
+            else : 
+                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
+                    direction2 = "No_direction"
+                elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0] 
+                elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
+                else : direction2 = None
+
+        if direction1 == direction2 :
+            direction = direction1
+
+        elif (direction1=="No_direction" and direction2!="No_direction") :
+            direction = direction2
+
+        elif (direction2=="No_direction" and direction1!="No_direction") :
+            direction = direction1
+
+        elif (direction1=="R" and direction2=="L") or (direction1=="L" and direction2=="R"):
+            direction = "No_direction"
+
+        if direction == "R":
+            self.lr_sign_meaning = "Median"
+        elif direction == "L":
+            self.lr_sign_meaning = "Lateral"
+        elif direction == "No_direction" : 
+            self.lr_sign_meaning = "x"
+        else: 
+            self.lr_sign_meaning = "L"
+  
+        if self.lr > 0:
+            if direction == "R":
+                self.lr_sign_meaning = "Lateral"
+            elif direction == "L":
+                self.lr_sign_meaning = "Median"
+            elif direction == "No_direction" : 
+                self.lr_sign_meaning = "x"
+            else: 
+                self.lr_sign_meaning = "R"
+
         self.ap_sign_meaning = "P"
         self.si_sign_meaning = "I"
-        lst_measurement = [self.point1["name"], self.point2line["name"]]
-        if self.lr > 0:
-            self.lr_sign_meaning = "R"  # Right
-
-        if check_skeletal(lst_measurement,SKELETAL_LM_RL):
-            if self.lr>0:
-                self.lmr = "Lateral"
-                self.lml = "Medial"
-            else :
-                self.lmr = "Medial"
-                self.lml = "Lateral"
 
         if self.ap > 0:
             self.ap_sign_meaning = "A"  # Anterior
