@@ -395,6 +395,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
                 
 
+                if tooth==None :
+                    continue
+
                 if "Mid" in tooth:
                     save = patient_compute["Landmarks"][i]
                     for t in TOOTHS :
@@ -422,7 +425,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 dic_stats["Tooth/Landmarks"].append(tooth)
 
                 #ID
-                dic_stats["ID"].append(patient_compute["Patient"][i][1:])
+                if patient_compute["Patient"][i][1].lower()=="p" :
+                    dic_stats["ID"].append(patient_compute["Patient"][i][1:])
+                elif patient_compute["Patient"][i][:3].lower() == "pat" :
+                    dic_stats["ID"].append(patient_compute["Patient"][i][3:])
+                else :
+                    dic_stats["ID"].append(patient_compute["Patient"][i])
                 
 
                 dist = None
@@ -468,21 +476,21 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
                 
                 if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior teeth
-                    #BL Ang
+                    #MD Ang
                     roll = patient_compute["Roll Component"][mid]
                     if roll!="x":
                         roll=float(roll)
                         if patient_compute["Roll Meaning"][mid]=="D":
                             roll=-roll
-                    dic_stats["BL Ang"].append(str(roll))
+                    dic_stats["MD Ang"].append(str(roll))
 
-                    #MD Ang
+                    #BL Ang
                     pitch = patient_compute["Pitch Component"][mid]
                     if pitch!="x":
                         pitch=float(pitch)
                         if patient_compute["Pitch Meaning"][mid]=="L":
                             pitch=-pitch
-                    dic_stats["MD Ang"].append(str(pitch))
+                    dic_stats["BL Ang"].append(str(pitch))
 
                     #AP dist 
                     ap = patient_compute["A-P Component"][dist]
@@ -573,8 +581,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     landmark1 = parts[0] if len(parts) >= 1 else None
                     landmark2 = parts[1] if len(parts) >= 2 else None
 
+                if patient_compute["Patient"][i][:3].lower() == "pat" :
+                    dic_stats["ID"].append(patient_compute["Patient"][i][3:])
+                elif patient_compute["Patient"][i][:3].lower() == "p": 
+                    dic_stats["ID"].append(patient_compute["Patient"][i][1:])
+                else : 
+                    dic_stats["ID"].append(patient_compute["Patient"][i])
 
-                dic_stats["ID"].append(patient_compute["Patient"][i][3:])
                 dic_stats["Tooth/Landmarks"].append(patient_compute["Landmarks"][i])
                 dic_stats["Type of measurement"].append(patient_compute["Type of measurement"][i])
 
