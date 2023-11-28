@@ -315,7 +315,7 @@ class Distance(Measure):
             direction = "No_direction"
 
         if direction == "R":
-            self.lr_sign_meaning = "Median"
+            self.lr_sign_meaning = "Medial"
         elif direction == "L":
             self.lr_sign_meaning = "Lateral"
         elif direction == "No_direction" : 
@@ -327,7 +327,7 @@ class Distance(Measure):
             if direction == "R":
                 self.lr_sign_meaning = "Lateral"
             elif direction == "L":
-                self.lr_sign_meaning = "Median"
+                self.lr_sign_meaning = "Medial"
             elif direction == "No_direction" : 
                 self.lr_sign_meaning = "x"
             else: 
