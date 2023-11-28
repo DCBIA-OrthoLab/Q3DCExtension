@@ -587,58 +587,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         return dic_stats
                 
 
-    def right_left_stat(self,land1,land2):
-        lst_measurement = [land1, land2]
-        print("lst_measurement : ",lst_measurement)
-        direction1 = lst_measurement[0][0]
-        direction2 = lst_measurement[1][0]
-        if direction1 == "M":
-            parts = lst_measurement[0].split("_")
-            landmark1 = parts[1] if len(parts) > 1 else None
-            landmark2 = parts[2] if len(parts) > 2 else None
-
-            if landmark1[0]==landmark2[0]:
-                direction1 = landmark1[0]
-
-            else : 
-                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
-                    direction1 = "No_direction"
-                elif landmark1[0]=="R" or landmark1[0]=="L" : direction1=landmark1[0] 
-                elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0] 
-                else : direction1 = None
-
-        if direction2 == "M":
-            parts = lst_measurement[0].split("_")
-            landmark1 = parts[1] if len(parts) > 1 else None
-            landmark2 = parts[2] if len(parts) > 2 else None
-
-            if landmark1[0]==landmark2[0]:
-                direction2 = landmark1[0]
-
-            else : 
-                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
-                    direction2 = "No_direction"
-                elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0] 
-                elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
-                else : direction2 = None
-
-        direction="No_direction"
-        if direction1 == direction2 :
-            direction = direction1
-
-        elif (direction1=="No_direction" and direction2!="No_direction") :
-            direction = direction2
-
-        elif (direction2=="No_direction" and direction1!="No_direction") :
-            direction = direction1
-
-        elif (direction1=="R" and direction2=="L") or (direction1=="L" and direction2=="R"):
-            direction = "No_direction"
-
-        return direction
-
-
-
 
             
 
