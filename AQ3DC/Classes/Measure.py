@@ -302,6 +302,8 @@ class Distance(Measure):
                 elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
                 else : direction2 = None
 
+        direction = None
+
         if direction1 == direction2 :
             direction = direction1
 
@@ -313,6 +315,7 @@ class Distance(Measure):
 
         elif (direction1=="R" and direction2=="L") or (direction1=="L" and direction2=="R"):
             direction = "No_direction"
+        
 
         if direction == "R":
             self.lr_sign_meaning = "Medial"

@@ -339,6 +339,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
+            patient_compute = self.allowSign(patient_compute)
             
             print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
             if self.ui.ComboBoxExcelFormat.currentText == "Statistics":
@@ -349,6 +350,27 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             #test windows
             self.logic.writeMeasurementExcel(patient_compute, path, file_name)
             # self.logic.WriteMeasurementExcel2(test, path, file_name)
+
+    def allowSign(self,patient_compute):
+        for i in range(len(patient_compute["Type of measurement"])) :
+            T1 = False
+            T2 = False
+            if "T1" in patient_compute["Type of measurement"][i]:
+                T1=True
+            if "T2" in patient_compute["Type of measurement"][i]:
+                T2=True
+            
+            if T1 and T2 :
+                continue
+            else :
+                patient_compute["R-L Meaning"][i] = "x"
+                patient_compute["A-P Meaning"][i] = "x"
+                patient_compute["S-I Meaning"][i] = "x"
+
+                patient_compute["Yaw Meaning"][i] = "x"
+                patient_compute["Pitch Meaning"][i] = "x"
+                patient_compute["Roll Meaning"][i] = "x"
+        return patient_compute
 
     
     def renameTimepoint(self,patient_compute):
@@ -407,13 +429,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 "Transverse":[],
                 "AP":[],
                 "Vertical":[],
+                "3D":[],
                 "Yaw":[],
                 "Pitch":[],
                 "Roll":[],
                 "BL":[],
                 "MD":[],
-                "Rotation":[],
-                "3D":[]
+                "Rotation":[]
             }
         
         TOOTHS = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3","UR1", "UR2","UL8", "UL7", "UL6", "UL5", "UL4", "UL3","UL1", "UL2",

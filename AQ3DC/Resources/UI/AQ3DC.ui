@@ -913,13 +913,6 @@
      <property name="bottomMargin">
       <number>10</number>
      </property>
-     <item row="7" column="0" colspan="3">
-      <widget class="QPushButton" name="ButtonCompute">
-       <property name="text">
-        <string>Compute</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0" colspan="2">
       <widget class="QPushButton" name="ButtonFolderCompute">
        <property name="text">
@@ -985,7 +978,7 @@
      <item row="0" column="6">
       <widget class="QLabel" name="labelNameT1">
        <property name="text">
-        <string>Name time 1 : </string>
+        <string>Timepoint #1 :</string>
        </property>
       </widget>
      </item>
@@ -999,7 +992,7 @@
      <item row="1" column="6">
       <widget class="QLabel" name="labelNameT2">
        <property name="text">
-        <string>Name time 2: </string>
+        <string>Timepoint #2 :</string>
        </property>
       </widget>
      </item>
@@ -1011,6 +1004,13 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="ButtonCompute">
+     <property name="text">
+      <string>Compute</string>
+     </property>
+    </widget>
    </item>
    <item>
     <spacer name="verticalSpacer">
