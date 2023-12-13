@@ -508,21 +508,21 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     dic_stats["Transverse"].append(str(rl))
 
 
-                    #MD
+                    #BL
                     pitch = patient_compute["Pitch Component"][i]
                     if pitch!="x" and pitch!="":
                         pitch=float(pitch)
                         if patient_compute["Pitch Meaning"][i]=="L":
                             pitch=-pitch
-                    dic_stats["MD"].append(str(pitch))
+                    dic_stats["BL"].append(str(pitch))
 
-                    #BL
+                    #MD
                     roll = patient_compute["Roll Component"][i]
                     if roll!="x" and roll!="":
                         roll=float(roll)
                         if patient_compute["Roll Meaning"][i]=="D":
                             roll=-roll
-                    dic_stats["BL"].append(str(roll))
+                    dic_stats["MD"].append(str(roll))
 
 
                 else :
