@@ -270,9 +270,11 @@ class Distance(Measure):
 
     def __SignMeaningDist(self):
         lst_measurement = [self.point1["name"], self.point2line["name"]]
-        direction1 = lst_measurement[0][0]
-        direction2 = lst_measurement[1][0]
-        if direction1 == "M":
+        direction1 = lst_measurement[0][0:3]
+        direction2 = lst_measurement[1][0:3]
+        print("direction1 : ",direction1)
+        print("direction2 : ",direction2)
+        if direction1 == "Mid":
             parts = lst_measurement[0].split("_")
             landmark1 = parts[1] if len(parts) > 1 else None
             landmark2 = parts[2] if len(parts) > 2 else None
@@ -287,8 +289,10 @@ class Distance(Measure):
                 elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0] 
                 else : direction1 = None
 
-        if direction2 == "M":
-            parts = lst_measurement[0].split("_")
+        if direction2 == "Mid":
+            parts = lst_measurement[1].split("_")
+            print("lst_measurement : ",lst_measurement)
+            print("parts : ",parts)
             landmark1 = parts[1] if len(parts) > 1 else None
             landmark2 = parts[2] if len(parts) > 2 else None
 
@@ -301,6 +305,10 @@ class Distance(Measure):
                 elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0] 
                 elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
                 else : direction2 = None
+
+        if direction1!="Mid" and direction2!="Mid" :
+            direction1 = lst_measurement[0][0]
+            direction2 = lst_measurement[1][0]
 
         direction = None
 
