@@ -272,8 +272,6 @@ class Distance(Measure):
         lst_measurement = [self.point1["name"], self.point2line["name"]]
         direction1 = lst_measurement[0][0:3]
         direction2 = lst_measurement[1][0:3]
-        print("direction1 : ",direction1)
-        print("direction2 : ",direction2)
         if direction1 == "Mid":
             parts = lst_measurement[0].split("_")
             landmark1 = parts[1] if len(parts) > 1 else None
