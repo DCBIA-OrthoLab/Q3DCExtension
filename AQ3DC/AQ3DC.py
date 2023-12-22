@@ -1387,7 +1387,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         for jsonfile in sorted(glob.iglob(normpath, recursive=True)):
             if os.path.isfile(jsonfile) and ".json" in jsonfile:
                 lst_files.append(jsonfile)
-                patient = os.path.basename(jsonfile).split("_")[0]
+                patient = os.path.basename(jsonfile).split("_")[0].split('.mrk')[0]
                 if patient not in patients_lst:
                     patients_lst.append(patient)
                 if patient not in patients_dict:
@@ -1451,13 +1451,14 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         # compare landmark patient T1 and T2
         dif_landmark = {}
         for patientT1, landmarks in dict_patinetT1.items():
-            if set(landmarks) != set(dict_patientT2[patientT1]):
-                dif = set(landmarks) - set(dict_patientT2[patientT1])
-                dif.union(set(dict_patientT2[patientT1]) - set(landmarks))
-                dif_landmark[patientT1] = dif 
-                print(
-                    f"T1 and T2 of this patient {patientT1} doesnt have the same landmark, landmark dif {dif}"
-                )
+            if patientT1 in dict_patientT2:
+                if set(landmarks) != set(dict_patientT2[patientT1]):
+                    dif = set(landmarks) - set(dict_patientT2[patientT1])
+                    dif.union(set(dict_patientT2[patientT1]) - set(landmarks))
+                    dif_landmark[patientT1] = dif 
+                    print(
+                        f"T1 and T2 of this patient {patientT1} doesnt have the same landmark, landmark dif {dif}"
+                    )
 
         # compare the name patient T1 and T2
         dif_patient = None
