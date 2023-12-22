@@ -1077,7 +1077,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     list_checkbox.append(mea["checkbox"])
 
             for checkbox in list_checkbox:
-                checkbox.setChecked(True)
+                if checkbox.isChecked() :
+                    checkbox.setChecked(False)
+                else :
+                    checkbox.setChecked(True)
 
     def deleteMeasurement(self):
         """
