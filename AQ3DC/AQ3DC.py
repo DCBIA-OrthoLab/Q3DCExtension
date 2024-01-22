@@ -339,6 +339,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
+            print("*"*150)
+            print("patient_compute : :",patient_compute)
+            print("*"*150)
             patient_compute = self.allowSign(patient_compute)
             
             print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
@@ -2055,6 +2058,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     continue
 
                 try:
+                    print("measure : ",measure)
                     measure.computation()
                 except ZeroDivisionError as Zero:
                     print(
@@ -2065,12 +2069,12 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 measure.manageMeaningComponent()
 
                 # if measure.isUtilMeasure():
-                #     dict_patient__computation["Patient"].append(patient)
-                #     dict_patient__computation["Type of measurement"].append(
-                #         measure["Type of measurement + time"]
-                #     )
-                #     for title in list_title:
-                #         dict_patient__computation[title].append(measure[title])
+                dict_patient__computation["Patient"].append(patient)
+                dict_patient__computation["Type of measurement"].append(
+                    measure["Type of measurement + time"]
+                )
+                for title in list_title:
+                    dict_patient__computation[title].append(measure[title])
 
                 # else:
                 #     print(
