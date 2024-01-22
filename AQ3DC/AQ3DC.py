@@ -339,9 +339,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
-            print("*"*150)
-            print("patient_compute : :",patient_compute)
-            print("*"*150)
             patient_compute = self.allowSign(patient_compute)
             
             print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
