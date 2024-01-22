@@ -2064,19 +2064,19 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
                 measure.manageMeaningComponent()
 
-                if measure.isUtilMeasure():
-                    dict_patient__computation["Patient"].append(patient)
-                    dict_patient__computation["Type of measurement"].append(
-                        measure["Type of measurement + time"]
-                    )
-                    for title in list_title:
-                        dict_patient__computation[title].append(measure[title])
+                # if measure.isUtilMeasure():
+                #     dict_patient__computation["Patient"].append(patient)
+                #     dict_patient__computation["Type of measurement"].append(
+                #         measure["Type of measurement + time"]
+                #     )
+                #     for title in list_title:
+                #         dict_patient__computation[title].append(measure[title])
 
-                else:
-                    print(
-                        f"Dont write this measure {measure} for this patient {patient} because is useless measure"
-                    )
-                    continue
+                # else:
+                #     print(
+                #         f"Dont write this measure {measure} for this patient {patient} because is useless measure"
+                #     )
+                #     continue
 
         # if all(value=="x" for value in dict_patient__computation["Lateral or medial-Left"]):
         #     del dict_patient__computation["Lateral or medial-Left"]
