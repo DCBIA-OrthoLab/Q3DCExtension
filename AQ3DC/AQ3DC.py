@@ -1108,9 +1108,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 if checkbox.isChecked() :
                     checkbox.setChecked(False)
                 else :
-                    checkbox.setChecked(True) 
+                    checkbox.setChecked(True)
 
-    
 
     def deleteMeasurement(self):
         """
@@ -1209,10 +1208,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for point in dict_page2combobox[page]:
             list_point.append(point.currentText)
 
-        
+
         if page == "PageDistance2Points" and self.ui.CheckBoxT1T2.isChecked():
             page = "PageDistance2PointsT1T2"
-        
+
         dict_page_to_namemeasure = dict_page2namemeasure_T1
         if self.ui.LineEditPathT2.text != '':
             dict_page_to_namemeasure = dict_page2namemeasure_T1T2
@@ -1225,16 +1224,15 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.addMeasurementToTabMeasurement(measure)
 
     """
-   ___    _     _                   
-  / _ \  | |_  | |__     ___   _ __ 
+   ___    _     _
+  / _ \  | |_  | |__     ___   _ __
  | | | | | __| | '_ \   / _ \ | '__|
- | |_| | | |_  | | | | |  __/ | |   
-  \___/   \__| |_| |_|  \___| |_|   
-                                    
+ | |_| | | |_  | | | | |  __/ | |
+  \___/   \__| |_| |_|  \___| |_|
   """
 
     def selectFolderT1Patient(self):
-        """ Open window allow user to choose folder with T1 patients' information. 
+        """ Open window allow user to choose folder with T1 patients' information.
         """
 
         surface_folder = qt.QFileDialog.getExistingDirectory(
@@ -1242,7 +1240,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         )
         if surface_folder != "":
             self.ui.LineEditPathT1.setText(surface_folder)
-            
+
             self.dict_patient_T1, self.dict_patient_extraction = self.logic.createDictPatient(surface_folder)
 
             (
@@ -1255,7 +1253,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
     def selectFolderT2Patients(self):
-        """ Open window allow user to choose folder with T1 patients' information. 
+        """ Open window allow user to choose folder with T1 patients' information.
         """
         if self.dict_patient_T1 == None:
             self.warningMessage("Missing T1 folder")
@@ -1266,7 +1264,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             )
             if surface_folder != "":
                 self.ui.LineEditPathT2.setText(surface_folder)
-                
+
                 self.dict_patient_T2,x  = self.logic.createDictPatient(surface_folder)
                 self.logic.compareT1T2(self.dict_patient_T1, self.dict_patient_T2)
 
@@ -1454,7 +1452,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                         print(
                             f"For this file {jsonfile} this landmark {landmark_name} are not good "
                         )
-                    
+
                 if "NE" in jsonfile or "Non_Extraction" in jsonfile or "Non Extraction" in jsonfile or "non_extraction" in jsonfile or "non extraction" in jsonfile :
                     dict_patient_extraction[patient]=0
                 else :
@@ -1488,7 +1486,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 if set(landmarks) != set(dict_patientT2[patientT1]):
                     dif = set(landmarks) - set(dict_patientT2[patientT1])
                     dif.union(set(dict_patientT2[patientT1]) - set(landmarks))
-                    dif_landmark[patientT1] = dif 
+                    dif_landmark[patientT1] = dif
                     print(
                         f"T1 and T2 of this patient {patientT1} doesnt have the same landmark, landmark dif {dif}"
                     )
@@ -1500,9 +1498,9 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             dif.union(set(dict_patientT2.keys()) - set(dict_patinetT1.keys()))
             dif_patient = dif_landmark
             print(f"T1 and T2 doesnt have the same patient, dif patient {dif}")
-        return dif_landmark , dif_patient 
+        return dif_landmark , dif_patient
 
-    
+
     def updateGroupLandmark(self, dict_patient: dict, all_landmarks: Group_landmark) -> tuple[list,Group_landmark]:
         """
     Add in goup_landmark  midpoints and landmark not existing in group_landmark, but existing in dict_patient.
@@ -1570,7 +1568,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     '29':{"A":[0,3,5],"B":[3,6,2],...}
                   }
         out_path (str): the path folder where the midpoint will be save
-        midpoints (list[list]): list midpoint 
+        midpoints (list[list]): list midpoint
             list = [['A','UL6O'],['R2RM','LL6O']] -> Mid_A_UL6O, Mid_R2RM_LL6O
     """
 
@@ -1607,7 +1605,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         for patient, cp_lst in midpoint_dict.items():
             if os.path.exists(os.path.join(out_path,f"{patient}_Midpoint.json")) :
                 cp_lst = self.mergeJsonControlePoint(os.path.join(out_path,f"{patient}_Midpoint.json"),cp_lst)
-            
+
             self.writeJson(f"{patient}_Midpoint", cp_lst, out_path)
 
     def mergeJsonControlePoint(self, file_name : str, list_controle_point : list ):
@@ -1622,7 +1620,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
     Args:
         file_name (str): name of json file
-        list_controle_point (list): list with controle point 
+        list_controle_point (list): list with controle point
                                   a controle point has this architectue :
                                       controle_point = {
                                       "id": str(1),
@@ -1636,7 +1634,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                                       "visibility": True,
                                       "positionStatus": "defined"
                                     }
-        folder (str): write json file 
+        folder (str): write json file
     """
 
         file = {
@@ -1700,7 +1698,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         dict: Controle point
     """
         controle_point = {
-            "id": str(1), 
+            "id": str(1),
             "label": label,
             "description": "",
             "associatedNodeID": "",
@@ -1721,7 +1719,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                Type of measurement Point 1   Point 2 / Line
 0     Distance between 2 points T1       S  MID_LR3RC_LR4RC
 1     Distance between 2 points T2       S  MID_LR3RC_LR4RC
-2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC  
+2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC
 
             page Distnace point line
              Type of measurement            Point 1                       Point 2 / Line
@@ -1802,7 +1800,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                Type of measurement Point 1   Point 2 / Line
 0     Distance between 2 points T1       S  MID_LR3RC_LR4RC
 1     Distance between 2 points T2       S  MID_LR3RC_LR4RC
-2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC  
+2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC
 
             page Distnace point line
              Type of measurement            Point 1                       Point 2 / Line
