@@ -275,7 +275,7 @@
            <enum>QTabWidget::North</enum>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <property name="tabsClosable">
            <bool>false</bool>
@@ -317,6 +317,11 @@
                   <string>Point 2 / Line </string>
                  </property>
                 </column>
+                <column>
+                 <property name="text">
+                  <string>Keep sign</string>
+                 </property>
+                </column>
                </widget>
               </item>
              </layout>
@@ -351,6 +356,11 @@
               <column>
                <property name="text">
                 <string>Line 2</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Keep sign</string>
                </property>
               </column>
              </widget>

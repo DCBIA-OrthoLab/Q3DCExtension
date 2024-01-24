@@ -44,6 +44,7 @@ The position of the point have to be give by a dictionnary like this
         self.time = time
 
         self.measure = measure
+        self.keep_sign = None
         self.checkbox = None #"complement Angle" checkbox in Angle tab 
         self.lr_sign_meaning = "" 
         self.ap_sign_meaning = ""
@@ -59,15 +60,27 @@ The position of the point have to be give by a dictionnary like this
                 strs += " True "
             else:
                 strs += " False "
+
+        if self.keep_sign:
+            if self.keep_sign.checkState():
+                strs += " True "
+            else:
+                strs += " False "
         return strs
 
     def __setitem__(self, key, value):
         if key == "checkbox":
             self.checkbox = value
+        if key == "keep_sign":
+            self.keep_sign = value
+
+    
 
     def __getitem__(self, key):
         if key == "checkbox" or key == "check box":
             return self.checkbox
+        elif key == "keep_sign" or key == "keep sign ":
+            return self.keep_sign
         elif key == "Type of measurement":
             return self.measure
         elif key == "Type of measurement + time":
@@ -256,17 +269,29 @@ class Distance(Measure):
         manageMeaningComponent have to be call after computation of the measurement
         The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
         """
+        print("-"*100)
+        print("keep_sign : ",self.keep_sign.isChecked())
+        print("-"*100)
+        if self.keep_sign.isChecked() :
+            print("J'ai le droit")
+            if "Distance between 2 points" in self.measure :
+                if self.isUpperLower(self.point1["name"]) and self.isUpperLower(
+                    self.point2line["name"]
+                ):
+                    self.__SignMeaningDentalDst()
+                else:
+                    self.__SignMeaningDist()
 
-        if "Distance between 2 points" in self.measure :
-            if self.isUpperLower(self.point1["name"]) and self.isUpperLower(
-                self.point2line["name"]
-            ):
-                self.__SignMeaningDentalDst()
             else:
                 self.__SignMeaningDist()
+        else : 
+            self.__SignMeaningX()
+            print("J'ai pas le droit")
 
-        else:
-            self.__SignMeaningDist()
+    def __SignMeaningX(self):
+        self.lr_sign_meaning = "x"
+        self.ap_sign_meaning = "x"
+        self.si_sign_meaning = "x"
 
     def __SignMeaningDist(self):
         lst_measurement = [self.point1["name"], self.point2line["name"]]
@@ -560,16 +585,25 @@ class Angle(Measure):
         manageMeaningComponent have to be call after computation of the measurement
         The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
         """
+        if self.keep_sign.isChecked() :
+            print("GOOOO")
+            if (
+                self.isUpperLower(self.line1[1]["name"])
+                and self.isUpperLower(self.line1[2]["name"])
+                and self.isUpperLower(self.line2[1]["name"])
+                and self.isUpperLower(self.line2[2]["name"])
+            ):
+                self.__SignMeaningDentalAngle()
+            elif "T1" in self.measure and "T2" in self.measure:
+                self.__SignMeaningDentalAngleHour()
+        else : 
+            self.__SignMeaningX()
+            print("Dommage")
 
-        if (
-            self.isUpperLower(self.line1[1]["name"])
-            and self.isUpperLower(self.line1[2]["name"])
-            and self.isUpperLower(self.line2[1]["name"])
-            and self.isUpperLower(self.line2[2]["name"])
-        ):
-            self.__SignMeaningDentalAngle()
-        elif "T1" in self.measure and "T2" in self.measure:
-            self.__SignMeaningDentalAngleHour()
+    def __SignMeaningX(self):
+        self.lr_sign_meaning = "x"
+        self.ap_sign_meaning = "x"
+        self.si_sign_meaning = "x"
 
     def __computeAngle(self, line1, line2, axis,point1, point2, point3, point4):
         mask = [True] * 3

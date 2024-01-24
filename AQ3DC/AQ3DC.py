@@ -339,7 +339,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
-            patient_compute = self.allowSign(patient_compute)
+            print("*"*150)
+            print("self.list_measure : ",self.list_measure)
+            # patient_compute = self.allowSign(patient_compute,self.list_measure)
             
             print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
             if self.ui.ComboBoxExcelFormat.currentText == "Statistics":
@@ -351,7 +353,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.writeMeasurementExcel(patient_compute, path, file_name)
             # self.logic.WriteMeasurementExcel2(test, path, file_name)
 
-    def allowSign(self,patient_compute):
+    def allowSign(self,patient_compute,list_measure):
         for i in range(len(patient_compute["Type of measurement"])) :
             T1 = False
             T2 = False
@@ -363,6 +365,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             if T1 and T2 :
                 continue
             else :
+                
                 patient_compute["R-L Meaning"][i] = "x"
                 patient_compute["A-P Meaning"][i] = "x"
                 patient_compute["S-I Meaning"][i] = "x"
@@ -371,6 +374,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 patient_compute["Pitch Meaning"][i] = "x"
                 patient_compute["Roll Meaning"][i] = "x"
         return patient_compute
+    
+    def checkKeepSign(self,list_measure,landmarks,measurement):
+        for measure in list_measure :
+            if measurement in measure["Type of measurement"]:
+                if measure["group"]=="Angle":
+                    land = measure["line1"] + " " + measure["line2"]
+
 
     
     def renameTimepoint(self,patient_compute):
@@ -1053,18 +1063,20 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         a = QCheckBox()
         dict[group].setCellWidget(num, 0, a)
 
+
         #use function to iter all informations needed
         for count, value in enumerate(measure.iterBasicInformation()):
             b = QTableWidgetItem(value)
             dict[group].setItem(num, count + 1, b)
 
         # if group == "Angle":
-        #     # add checkbox to choose if user want the complementary angle
-        #     checkbox_angle_complement = QCheckBox()
-        #     dict[group].setCellWidget(num, 4, checkbox_angle_complement)
-        #     measure["complement"] = checkbox_angle_complement
+
+        checkbox_keep_sign = QCheckBox()
+        dict[group].setCellWidget(num, 4, checkbox_keep_sign)
+        measure["keep_sign"] = checkbox_keep_sign
 
         measure["checkbox"] = a
+        
         self.list_measure.append(measure)
 
 
@@ -1081,6 +1093,20 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     checkbox.setChecked(False)
                 else :
                     checkbox.setChecked(True)
+
+        if column == 4:
+            list_checkbox = []
+            for mea in self.list_measure:
+                if mea["group"] == group:
+                    list_checkbox.append(mea["keep_sign"])
+
+            for checkbox in list_checkbox:
+                if checkbox.isChecked() :
+                    checkbox.setChecked(False)
+                else :
+                    checkbox.setChecked(True) 
+
+    
 
     def deleteMeasurement(self):
         """
