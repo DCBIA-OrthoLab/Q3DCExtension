@@ -269,11 +269,8 @@ class Distance(Measure):
         manageMeaningComponent have to be call after computation of the measurement
         The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
         """
-        print("-"*100)
-        print("keep_sign : ",self.keep_sign.isChecked())
-        print("-"*100)
+
         if self.keep_sign.isChecked() :
-            print("J'ai le droit")
             if "Distance between 2 points" in self.measure :
                 if self.isUpperLower(self.point1["name"]) and self.isUpperLower(
                     self.point2line["name"]
@@ -286,7 +283,6 @@ class Distance(Measure):
                 self.__SignMeaningDist()
         else : 
             self.__SignMeaningX()
-            print("J'ai pas le droit")
 
     def __SignMeaningX(self):
         self.lr_sign_meaning = "x"
@@ -586,7 +582,6 @@ class Angle(Measure):
         The explanatin of the meaning are explain in "AQ3DC_meaning_component.pptx" (located in docs folder)
         """
         if self.keep_sign.isChecked() :
-            print("GOOOO")
             if (
                 self.isUpperLower(self.line1[1]["name"])
                 and self.isUpperLower(self.line1[2]["name"])
@@ -598,7 +593,6 @@ class Angle(Measure):
                 self.__SignMeaningDentalAngleHour()
         else : 
             self.__SignMeaningX()
-            print("Dommage")
 
     def __SignMeaningX(self):
         self.lr_sign_meaning = "x"
