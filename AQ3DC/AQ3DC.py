@@ -38,7 +38,7 @@ try:
 except:
     slicer.util.pip_install("openpyxl")
     import openpyxl
-    
+
 from Classes import (
     Angle,
     Distance,
@@ -235,7 +235,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.dict_patient_T2 = {}
         self.dict_patient_extraction = {}
         """
-    exemple of dict_patient T1 and T2 
+    exemple of dict_patient T1 and T2
 
 
     dict = {"001":{"A":[0,0,2],"B":[0,2,3],..},
@@ -243,7 +243,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         '29':{"A":[0,3,5],"B":[3,6,2],...}
           }
     The number is patient and the letter are landmark
-    
+
     The patient and landmark have to be string
     The postion of landmark have to be a list
     """
@@ -342,7 +342,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             print("*"*150)
             print("self.list_measure : ",self.list_measure)
             # patient_compute = self.allowSign(patient_compute,self.list_measure)
-            
+
             print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
             if self.ui.ComboBoxExcelFormat.currentText == "Statistics":
                 patient_compute = self.reorganizeStat(patient_compute)
@@ -361,11 +361,11 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 T1=True
             if "T2" in patient_compute["Type of measurement"][i]:
                 T2=True
-            
+
             if T1 and T2 :
                 continue
             else :
-                
+
                 patient_compute["R-L Meaning"][i] = "x"
                 patient_compute["A-P Meaning"][i] = "x"
                 patient_compute["S-I Meaning"][i] = "x"
@@ -374,7 +374,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 patient_compute["Pitch Meaning"][i] = "x"
                 patient_compute["Roll Meaning"][i] = "x"
         return patient_compute
-    
+
     def checkKeepSign(self,list_measure,landmarks,measurement):
         for measure in list_measure :
             if measurement in measure["Type of measurement"]:
@@ -382,7 +382,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     land = measure["line1"] + " " + measure["line2"]
 
 
-    
+
     def renameTimepoint(self,patient_compute):
         for i in range(len(patient_compute["Type of measurement"])) :
             measure = patient_compute["Type of measurement"][i]
@@ -421,10 +421,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 
-            
 
 
-            
 
 
 
@@ -447,10 +445,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 "MD":[],
                 "Rotation":[]
             }
-        
+
         TOOTHS = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3","UR1", "UR2","UL8", "UL7", "UL6", "UL5", "UL4", "UL3","UL1", "UL2",
                   "LR8", "LR7", "LR6", "LR5", "LR4", "LR3","LR1", "LR2","LL8", "LL7", "LL6", "LL5", "LL4", "LL3","LL1", "LL2"]
-        
+
         for i in range(len(patient_compute["Patient"])) :
 
 
@@ -469,39 +467,38 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 T1=True
             if "T2" in patient_compute["Type of measurement"][i]:
                 T2=True
-            
+
             if T1 and T2 :
                 dic_stats["Time"].append(f"{self.ui.lineEditNameT1.text}-{self.ui.lineEditNameT2.text}")
             elif T1 :
                 dic_stats["Time"].append(str(self.ui.lineEditNameT1.text))
-            else : 
+            else :
                 dic_stats["Time"].append(str(self.ui.lineEditNameT2.text))
 
-            
+
             type = "skeletal"
             tooth = None
-            for t in TOOTHS : 
+            for t in TOOTHS :
                 if t in patient_compute["Landmarks"][i] :
                     tooth = t
-            
+
             if tooth != None:
                 #Arch : upper=0, lower=1
                 if "U" in tooth :
                     dic_stats["Arch"].append(0)
-                else : 
+                else :
                     dic_stats["Arch"].append(1)
 
                 #Segment : posterior=0,anterior=1
                 if "1" in tooth or "2" in tooth:
                     dic_stats["Segment"].append(1)
-                else : 
+                else :
                     dic_stats["Segment"].append(0)
 
-                
-                
+
                 if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior teeth
 
-                    #AP 
+                    #AP
                     ap = patient_compute["A-P Component"][i]
                     if ap!="x" and ap!="":
                         ap=float(ap)
@@ -509,7 +506,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                             ap=-ap
                     dic_stats["AP"].append(str(ap))
 
-                    #Transverse-RL 
+                    #Transverse-RL
                     rl = patient_compute["R-L Component"][i]
                     if rl!="x" and rl!="":
                         rl=float(rl)
@@ -536,7 +533,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
                 else :
-                    #AP 
+                    #AP
                     ap = patient_compute["A-P Component"][i]
                     if ap!="x" and ap!="":
                         ap=float(ap)
@@ -544,7 +541,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                             ap=-ap
                     dic_stats["AP"].append(str(ap))
 
-                    #Transverse-RL 
+                    #Transverse-RL
                     rl = patient_compute["R-L Component"][i]
                     if rl!="x" and rl!="":
                         rl=float(rl)
@@ -552,7 +549,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                             rl=-rl
                     dic_stats["Transverse"].append(str(rl))
 
-                    #MD 
+                    #MD
                     pitch = patient_compute["Pitch Component"][i]
                     if pitch!="x" and pitch!="":
                         pitch=float(pitch)
@@ -591,7 +588,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 dic_stats["Yaw"].append(str("x"))
                 dic_stats["Pitch"].append(str("x"))
                 dic_stats["Roll"].append(str("x"))
-            
+
             else :
                 dic_stats["Arch"].append("x")
                 dic_stats["Segment"].append("x")
@@ -600,7 +597,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 dic_stats["MD"].append(str("x"))
                 dic_stats["Rotation"].append(str("x"))
 
-                #Transverse-RL 
+                #Transverse-RL
                 rl = patient_compute["R-L Component"][i]
                 if rl!="x" and rl!="":
                     rl=float(rl)
@@ -652,7 +649,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 #3D
                 ThreeD = patient_compute["3D Distance"][i]
                 dic_stats["3D"].append(str(ThreeD))
-          
+
 
         keys_to_delete = []
         for key, value in dic_stats.items():
@@ -665,12 +662,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for key in keys_to_delete:
             del dic_stats[key]
 
- 
+
         return dic_stats
-                
 
 
-            
+
+
 
 
 
@@ -681,7 +678,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def manageDisplayImportExportMeasurementPage(self):
         """
     Manage Interface if user want export list of measurement or export
-    
+
     Call by CbImportExportMeasure
     """
         indexes = {
@@ -739,7 +736,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.addMeasurementToTabMeasurement(measure)
 
 
-    
+
 #=================================================================================================================================================
 # CheckBox Landmark
 #=================================================================================================================================================
@@ -871,7 +868,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if enabled :
             self.list_LandMarkCheck.append(landmark)
         else :
-            self.list_LandMarkCheck.remove(landmark)   
+            self.list_LandMarkCheck.remove(landmark)
         self.updateAllLandmarks()
 
     def updateAllLandmarks(self):
@@ -883,7 +880,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             Cb.addItems(enable_landmark)
 
 
-    
+
 #=========================================================================================================================================
 # Landmark
 #=========================================================================================================================================
@@ -941,7 +938,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def addMidpoint(self):
         """
-    Add midpoint in tablandmark 
+    Add midpoint in tablandmark
     """
         P1 = self.ui.CbMidpointP1.currentText
         P2 = self.ui.CbMidpointP2.currentText
@@ -992,7 +989,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.mid_point,
             )
 
-    
+
 #===============================================================================================================
 # Measurement
 #===============================================================================================================
@@ -1074,12 +1071,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         checkbox_keep_sign = QCheckBox()
         dict[group].setCellWidget(num, 4, checkbox_keep_sign)
         if "T1" in measure["Type of measurement"] and "T2" in measure["Type of measurement"] :
-            checkbox_keep_sign.setChecked(True)  
+            checkbox_keep_sign.setChecked(True)
             checkbox_keep_sign.setEnabled(False)
         measure["keep_sign"] = checkbox_keep_sign
 
         measure["checkbox"] = a
-        
+
         self.list_measure.append(measure)
 
 
@@ -1384,7 +1381,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         """
         From Folder path create dictionnary with position landmarks for each patient
 
-    Read each json file in the folder (recursively). 
+    Read each json file in the folder (recursively).
     CreateDictPatient can recognize multiple files belonging to the same patient, with the pattern at the beginning of the file name, it takes the pattern before the first '_' to search for another existing one.
         example:
                 file name            patient
@@ -1822,7 +1819,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         path_file (str): path of the excel file
 
     Returns:
-        list: list of measure 
+        list: list of measure
     """
         reader = pd.read_excel(path_file, sheet_name=None)
         newreader = {
@@ -2130,7 +2127,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         #     "Pitch Meaning": [],
         #     "Roll Component": [],
         #     "Roll Meaning": [],
-        # }   
+        # }
         #     add_in_name_sheet = ''
         #     if measure["Landmarks"].replace('/','-')[:3] == "Mid" :
         #         add_in_name_sheet = 'Mid'
@@ -2167,13 +2164,12 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
 
         return dict_patient__computation#, dic_with_all_measurement
-    
 
     def writeMeasurementExcel(self, dict_patient__computation : dict, path : str, name_file : str):
         """Create excel file with result of computation
 
     Args:
-        dict_patient__computation (dict): 
+        dict_patient__computation (dict):
         path (str): file's path
         name_file (str): file name
     """
@@ -2182,7 +2178,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 df = pd.DataFrame(dict_patient__computation)
 
                 df.to_excel(os.path.join(path, name_file))
-        
+
         if "ID" in dict_patient__computation:
             if len(dict_patient__computation["ID"]) > 0:
                 df = pd.DataFrame(dict_patient__computation)
@@ -2196,7 +2192,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     #     """Create excel file with result of computation
 
     # Args:
-    #     dict_patient__computation (dict): 
+    #     dict_patient__computation (dict):
     #     path (str): file's path
     #     name_file (str): file name
     # """
@@ -2208,7 +2204,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     #         df = pd.DataFrame(value)
     #         dict_sheet[key] = df
     #     with pd.ExcelWriter(os.path.join(path, name_file)) as writer :
-    #         for key , df in dict_sheet.items():            
+    #         for key , df in dict_sheet.items():
     #             df.to_excel(writer,sheet_name = key, index = False)
 
     def addMidpointToPatient(self, dict_patient: dict, landmark1: str, landmark2: str):
@@ -2216,7 +2212,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     Add midpoint for each patient
 
     Args:
-        dict_patient (dict): dict_patient 
+        dict_patient (dict): dict_patient
                             dict = {'patient1':{'landmark1':[0,1,0],'landmark2':[0,4,4],...},
                                         .
                                         .
@@ -2225,7 +2221,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         landmark2 (str): landmark
 
     Returns:
-        dict: dict_patient 
+        dict: dict_patient
                   dict = {'patient1':{'landmark1':[0,1,0],'landmark2':[0,4,4],'Mid_landmark1_landmark2':[x,x,x],...},
                       .
                       .
@@ -2255,13 +2251,13 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
     def getEnableLandmarks(self,markups_node : list,Group_Landmark : Group_landmark):
         """
-        
+
         Args:
             markups_node (list): list label selected
-            Group_Landmark (Group_landmark): Landmark can existe 
+            Group_Landmark (Group_landmark): Landmark can existe
 
         Returns:
-            
+
         """
 
         labels = []
@@ -2299,7 +2295,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def setUp(self,path):
         """ Do whatever is needed to reset the state - typically a scene clear will be enough.
     """
-       
+
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -2330,8 +2326,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def runTest(self):
         """Run as few or as many tests as needed here.
     """
-        
-       
+
 
         tmp_folder = os.path.join(slicer.util.tempDirectory())
         print(f'tmp folder {tmp_folder}')
@@ -2342,12 +2337,12 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
 
         list_landmark_exist_groundthruth = ['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS', 'Mid_RPo_LPo', 'Mid_UR6R_UL6R', 'LLCo',
-                                    'LR1R', 'LR6R', 'Mid_UR1R_UL1R', 'UL1O', 'LL6O', 'LPCo', 'Mid_UR1O_UL1O', 'RPo', 'UL6O', 
-                                    'Pog', 'Mid_RGo_LGo', 'Mid_LMCo_LLCo', 'Mid_UR4O_UL4O', 'RMCo', 'UR1O', 'Mid_ROr_LOr', 'UL1R', 
-                                    'RCo', 'LL1R', 'LL6R', 'LPo', 'RLCo', 'UR4O', 'Mid_LR6R_LL6R', 'Mid_UR6O_UL6O', 'LR6MB', 'ANS', 
-                                    'Mid_RCo_LCo', 'B', 'Mid_RACo_RPCo', 'UL6R', 'Mid_LACo_LPCo', 'RGo', 'LGo', 'LAF', 'LCo', 'UR6O', 
-                                    'LR6O', 'LACo', 'A', 'RAF', 'Mid_LR1R_LL1R','RSig', 'LL1O', 'UL4O', 'RPF', 
-                                    'Gn', 'LR1O', 'Mid_RMCo_RLCo', 'UR6MB', 'LPF', 'LAE', 'LSig', 'UR1R', 'S', 'Mid_LR1O_LL1O', 'Mid_LR6O_LL6O', 
+                                    'LR1R', 'LR6R', 'Mid_UR1R_UL1R', 'UL1O', 'LL6O', 'LPCo', 'Mid_UR1O_UL1O', 'RPo', 'UL6O',
+                                    'Pog', 'Mid_RGo_LGo', 'Mid_LMCo_LLCo', 'Mid_UR4O_UL4O', 'RMCo', 'UR1O', 'Mid_ROr_LOr', 'UL1R',
+                                    'RCo', 'LL1R', 'LL6R', 'LPo', 'RLCo', 'UR4O', 'Mid_LR6R_LL6R', 'Mid_UR6O_UL6O', 'LR6MB', 'ANS',
+                                    'Mid_RCo_LCo', 'B', 'Mid_RACo_RPCo', 'UL6R', 'Mid_LACo_LPCo', 'RGo', 'LGo', 'LAF', 'LCo', 'UR6O',
+                                    'LR6O', 'LACo', 'A', 'RAF', 'Mid_LR1R_LL1R','RSig', 'LL1O', 'UL4O', 'RPF',
+                                    'Gn', 'LR1O', 'Mid_RMCo_RLCo', 'UR6MB', 'LPF', 'LAE', 'LSig', 'UR1R', 'S', 'Mid_LR1O_LL1O', 'Mid_LR6O_LL6O',
                                     'LL6MB', 'Me', 'UL6MB', 'UR6R', 'LMCo']
 
         self.delayDisplay(' Test Creation Dictionnary Patient')
@@ -2381,7 +2376,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def testCreateDictPatient(self,folder : str,landmark_exist : list) -> tuple[dict,dict]:
 
         widget = AQ3DCWidget()
-        
+
         logic = AQ3DCLogic()
         group_landmark = Group_landmark(widget.resourcePath("name_landmark.xlsx"))
         patient_T1,x = logic.createDictPatient(os.path.join(folder,'T1'))
@@ -2400,7 +2395,6 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
 
         return patient_T1, patient_T2
-    
 
     def testCreateMeasure(self) -> list[Measure]:
         logic = AQ3DCLogic()
@@ -2414,7 +2408,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
                             'Distance between 2 points T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS'],
                             "Distance between 2 points T1" : ['RPCo', 'LOr'],
                             "Distance between 2 points T2" : ['RPCo', 'LOr']}
-                
+
 
         list_measure = []
         for measure , landmarks in measure_to_create.items():
@@ -2453,10 +2447,10 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
         logic.exportMeasurement(os.path.join(folder,'ExportMeasure.xlsx'),list_measure)
         import_measure = logic.importMeasurement(os.path.join(folder,'ExportMeasure.xlsx'))
 
-        #compare import measure and list measure 
+        #compare import measure and list measure
         for measure in import_measure :
             assert measure in list_measure, f'measure {measure} \n \n  list_measure {list_measure}'
-        
+
         for measure in list_measure:
             assert measure in import_measure,  f'measure {measure} \n \n  import_measure {import_measure}'
 
@@ -2474,14 +2468,14 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
             computation_midpoint_function = patient_T1['01'][f'Mid_{landmark1}_{landmark2}']
             compution_midpoint = list((np.array(patient_T1['01'][landmark1]) + np.array( patient_T1['01'][landmark2])) / 2)
-            assert computation_midpoint_function == compution_midpoint, f'function : {computation_midpoint_function}, \n manually : {compution_midpoint}' 
+            assert computation_midpoint_function == compution_midpoint, f'function : {computation_midpoint_function}, \n manually : {compution_midpoint}'
 
         logic.saveMidpoint(patient_T1,os.path.join(folder,'T1'),list_midpoint)
         logic.saveMidpoint(patient_T2,os.path.join(folder,'T2'),list_midpoint)
 
 
         patient_T1 , patient_T2 = self.testCreateDictPatient(folder,list_landmark_check)
-        
+
 
 
 

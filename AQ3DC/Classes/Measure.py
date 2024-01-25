@@ -45,8 +45,8 @@ The position of the point have to be give by a dictionnary like this
 
         self.measure = measure
         self.keep_sign = None
-        self.checkbox = None #"complement Angle" checkbox in Angle tab 
-        self.lr_sign_meaning = "" 
+        self.checkbox = None #"complement Angle" checkbox in Angle tab
+        self.lr_sign_meaning = ""
         self.ap_sign_meaning = ""
         self.si_sign_meaning = ""
         self.lr, self.ap, self.si, self.norm = 0, 0, 0, 0
@@ -74,7 +74,6 @@ The position of the point have to be give by a dictionnary like this
         if key == "keep_sign":
             self.keep_sign = value
 
-    
 
     def __getitem__(self, key):
         if key == "checkbox" or key == "check box":
@@ -194,7 +193,7 @@ class Distance(Measure):
 
                 out = True
         return out
-    
+
     def setPosition(self,position:dict):
         """
         position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
@@ -202,7 +201,7 @@ class Distance(Measure):
         """
         self.point1["position"] = position
         self.point2line["position"] = position
-    
+
     def iterBasicInformation(self):
         """
         Iter the information to describe the measurement
@@ -281,7 +280,7 @@ class Distance(Measure):
 
             else:
                 self.__SignMeaningDist()
-        else : 
+        else :
             self.__SignMeaningX()
 
     def __SignMeaningX(self):
@@ -301,11 +300,11 @@ class Distance(Measure):
             if landmark1[0]==landmark2[0]:
                 direction1 = landmark1[0]
 
-            else : 
-                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
+            else :
+                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") :
                     direction1 = "No_direction"
-                elif landmark1[0]=="R" or landmark1[0]=="L" : direction1=landmark1[0] 
-                elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0] 
+                elif landmark1[0]=="R" or landmark1[0]=="L" : direction1=landmark1[0]
+                elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0]
                 else : direction1 = None
 
         if direction2 == "Mid":
@@ -318,11 +317,11 @@ class Distance(Measure):
             if landmark1[0]==landmark2[0]:
                 direction2 = landmark1[0]
 
-            else : 
-                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
+            else :
+                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") :
                     direction2 = "No_direction"
-                elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0] 
-                elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
+                elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0]
+                elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0]
                 else : direction2 = None
 
         if direction1!="Mid" and direction2!="Mid" :
@@ -342,25 +341,25 @@ class Distance(Measure):
 
         elif (direction1=="R" and direction2=="L") or (direction1=="L" and direction2=="R"):
             direction = "No_direction"
-        
+
 
         if direction == "R":
             self.lr_sign_meaning = "Medial"
         elif direction == "L":
             self.lr_sign_meaning = "Lateral"
-        elif direction == "No_direction" : 
+        elif direction == "No_direction" :
             self.lr_sign_meaning = "x"
-        else: 
+        else:
             self.lr_sign_meaning = "L"
-  
+
         if self.lr > 0:
             if direction == "R":
                 self.lr_sign_meaning = "Lateral"
             elif direction == "L":
                 self.lr_sign_meaning = "Medial"
-            elif direction == "No_direction" : 
+            elif direction == "No_direction" :
                 self.lr_sign_meaning = "x"
-            else: 
+            else:
                 self.lr_sign_meaning = "R"
 
         self.ap_sign_meaning = "P"
@@ -542,14 +541,14 @@ class Angle(Measure):
             ):
                 out = True
         return out
-    
+
     def setPosition(self,position):
         """
         position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
                   "T2":{"A":[8,3,5],"B":[9,2,5],...}}
         """
         self.line1["position"] = position
-        self.line2["position"] = position    
+        self.line2["position"] = position
 
 
     def iterBasicInformation(self):
@@ -591,7 +590,7 @@ class Angle(Measure):
                 self.__SignMeaningDentalAngle()
             elif "T1" in self.measure and "T2" in self.measure:
                 self.__SignMeaningDentalAngleHour()
-        else : 
+        else :
             self.__SignMeaningX()
 
     def __SignMeaningX(self):
@@ -612,7 +611,7 @@ class Angle(Measure):
 
         if norm1 == 0 or norm2 == 0:
             raise ZeroDivisionError(line1, line2)
-        
+
         line1 = line1 / np.linalg.norm(line1)
         line2 = line2 / np.linalg.norm(line2)
 
@@ -626,13 +625,13 @@ class Angle(Measure):
 
 
         z = line1[0]*line2[1]-line1[1]*line2[0]
-    
+
         if z<0:
             if axis==2:
                 return -degree
             return degree
-        
-        else : 
+
+        else :
             if axis==2:
                 return degree
             return -degree
@@ -662,7 +661,7 @@ class Angle(Measure):
             # result = tmp_result
 
         return result[0], result[1], result[2] # Nathan's methode for the axis 0 : return -result[1] et -result[2]
-    
+
     def __SignMeaningDentalAngleHour(self):
         self.ap_sign_meaning = "ClockWise"
         self.si_sign_meaning = "CounterC"
@@ -856,7 +855,7 @@ class Diff2Measure(Measure):
             if self.measure1 == __o[1] and self.measure2 == __o[2]:
                 out = True
         return out
-    
+
     def setPosition(self,position):
         """
         position = {"T1":{"A":[0,3,1],"B":[0,3,5],...},
@@ -864,7 +863,7 @@ class Diff2Measure(Measure):
         """
         self.measure1.setPosition(position)
         self.measure2.setPosition(position)
-    
+
     def iterBasicInformation(self):
         yield self.__getitem__('Type of measurement + time')
         yield f'{self.T1PL1}/{self.T2PL1}'
@@ -926,10 +925,10 @@ def check_skeletal(list_landmark : list, tocheck : list) -> bool:
     '''
     for landmark in list_landmark:
         if "Mid_" in landmark:
-            components = landmark.split("_")[1:] 
+            components = landmark.split("_")[1:]
             if not all(component in tocheck for component in components):
                 return False
-            
+
         elif landmark not in tocheck:
             return False
     return True
