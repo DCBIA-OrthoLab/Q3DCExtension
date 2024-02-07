@@ -319,7 +319,7 @@
                 </column>
                 <column>
                  <property name="text">
-                  <string>Keep sign</string>
+                  <string>Show directionality</string>
                  </property>
                 </column>
                </widget>
@@ -360,7 +360,7 @@
               </column>
               <column>
                <property name="text">
-                <string>Keep sign</string>
+                <string>Show directionality</string>
                </property>
               </column>
              </widget>

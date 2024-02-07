@@ -1070,7 +1070,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         checkbox_keep_sign = QCheckBox()
         dict[group].setCellWidget(num, 4, checkbox_keep_sign)
-        if "T1" in measure["Type of measurement"] and "T2" in measure["Type of measurement"] :
+        if "T1" in measure['Type of measurement + time'] and "T2" in measure['Type of measurement + time'] :
             checkbox_keep_sign.setChecked(True)
             checkbox_keep_sign.setEnabled(False)
         measure["keep_sign"] = checkbox_keep_sign
@@ -1098,7 +1098,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             list_checkbox = []
             for mea in self.list_measure:
                 if mea["group"] == group:
-                    if "T1" not in mea["Type of measurement"] or "T2" not in mea["Type of measurement"] :
+                    if "T1" not in mea['Type of measurement + time'] or "T2" not in mea['Type of measurement + time'] :
                         list_checkbox.append(mea["keep_sign"])
 
             for checkbox in list_checkbox:
