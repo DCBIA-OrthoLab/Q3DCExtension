@@ -290,8 +290,17 @@ class Distance(Measure):
 
     def __SignMeaningDist(self):
         lst_measurement = [self.point1["name"], self.point2line["name"]]
-        direction1 = lst_measurement[0][0:3]
-        direction2 = lst_measurement[1][0:3]
+        lst_measurement = [self.point1["name"], self.point2line]
+        print("lst_measurement : ",lst_measurement)
+        try :
+            direction1 = lst_measurement[0][0:3]
+            direction2 = lst_measurement[1][0:3]
+        except :
+            print('AN ERROR OCCURED')
+            print("lst_measurement : ",lst_measurement)
+            direction1 = "No_direction"
+            direction2 = "No_direction"
+
         if direction1 == "Mid":
             parts = lst_measurement[0].split("_")
             landmark1 = parts[1] if len(parts) > 1 else None
@@ -325,8 +334,15 @@ class Distance(Measure):
                 else : direction2 = None
 
         if direction1!="Mid" and direction2!="Mid" :
-            direction1 = lst_measurement[0][0]
-            direction2 = lst_measurement[1][0]
+            try :
+                direction1 = lst_measurement[0][0]
+                direction2 = lst_measurement[1][0]
+            except :
+                print('AN ERROR OCCURED AGAIN')
+                print("lst_measurement : ",lst_measurement)
+                direction1 = "No_direction"
+                direction2 = "No_direction"
+
 
         direction = None
 
