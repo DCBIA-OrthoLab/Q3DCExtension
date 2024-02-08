@@ -42,20 +42,13 @@
           <property name="bottomMargin">
            <number>10</number>
           </property>
-          <item row="1" column="2">
-           <widget class="QLineEdit" name="LineEditPathT2"/>
+          <item row="3" column="2">
+           <widget class="QLineEdit" name="LineEditImportLandmarks"/>
           </item>
           <item row="3" column="0">
            <widget class="QPushButton" name="ButtonImportLandmarks">
             <property name="text">
              <string>List Landmarks</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="ButtonPathT1">
-            <property name="text">
-             <string>Point list Time 1</string>
             </property>
            </widget>
           </item>
@@ -76,8 +69,15 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="2">
-           <widget class="QLineEdit" name="LineEditImportLandmarks"/>
+          <item row="0" column="0">
+           <widget class="QPushButton" name="ButtonPathT1">
+            <property name="text">
+             <string>Point list Time 1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLineEdit" name="LineEditPathT2"/>
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="label">
@@ -275,7 +275,7 @@
            <enum>QTabWidget::North</enum>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <property name="tabsClosable">
            <bool>false</bool>
@@ -317,6 +317,11 @@
                   <string>Point 2 / Line </string>
                  </property>
                 </column>
+                <column>
+                 <property name="text">
+                  <string>Show directionality</string>
+                 </property>
+                </column>
                </widget>
               </item>
              </layout>
@@ -351,6 +356,11 @@
               <column>
                <property name="text">
                 <string>Line 2</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Show directionality</string>
                </property>
               </column>
              </widget>
@@ -913,58 +923,10 @@
      <property name="bottomMargin">
       <number>10</number>
      </property>
-     <item row="0" column="3">
-      <widget class="QLabel" name="LabelFileName">
-       <property name="text">
-        <string>File name :</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0" colspan="3">
-      <widget class="QPushButton" name="ButtonCompute">
-       <property name="text">
-        <string>Compute</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="4" colspan="2">
-      <widget class="QLineEdit" name="LineEditComputationFile">
-       <property name="inputMask">
-        <string/>
-       </property>
-       <property name="text">
-        <string>result.xlsx</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="LineEditFolderComputation">
-       <property name="inputMask">
-        <string/>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="3" colspan="3">
-      <widget class="QLabel" name="LabelMeasurementSaved">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0" colspan="2">
       <widget class="QPushButton" name="ButtonFolderCompute">
        <property name="text">
         <string>Folder name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QLabel" name="LabelExcelFormat">
-       <property name="text">
-        <string>Excel format :</string>
        </property>
       </widget>
      </item>
@@ -982,7 +944,83 @@
        </item>
       </widget>
      </item>
+     <item row="7" column="3" colspan="3">
+      <widget class="QLabel" name="LabelMeasurementSaved">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLineEdit" name="LineEditFolderComputation">
+       <property name="inputMask">
+        <string/>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="LabelFileName">
+       <property name="text">
+        <string>File name :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLabel" name="LabelExcelFormat">
+       <property name="text">
+        <string>Excel format :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4" colspan="2">
+      <widget class="QLineEdit" name="LineEditComputationFile">
+       <property name="inputMask">
+        <string/>
+       </property>
+       <property name="text">
+        <string>result.xlsx</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="6">
+      <widget class="QLabel" name="labelNameT1">
+       <property name="text">
+        <string>Timepoint #1 :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="7">
+      <widget class="QLineEdit" name="lineEditNameT1">
+       <property name="text">
+        <string>T1</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="6">
+      <widget class="QLabel" name="labelNameT2">
+       <property name="text">
+        <string>Timepoint #2 :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="7">
+      <widget class="QLineEdit" name="lineEditNameT2">
+       <property name="text">
+        <string>T2</string>
+       </property>
+      </widget>
+     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="ButtonCompute">
+     <property name="text">
+      <string>Compute</string>
+     </property>
+    </widget>
    </item>
    <item>
     <spacer name="verticalSpacer">

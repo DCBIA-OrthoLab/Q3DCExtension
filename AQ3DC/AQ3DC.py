@@ -38,7 +38,7 @@ try:
 except:
     slicer.util.pip_install("openpyxl")
     import openpyxl
-    
+
 from Classes import (
     Angle,
     Distance,
@@ -235,7 +235,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.dict_patient_T2 = {}
         self.dict_patient_extraction = {}
         """
-    exemple of dict_patient T1 and T2 
+    exemple of dict_patient T1 and T2
 
 
     dict = {"001":{"A":[0,0,2],"B":[0,2,3],..},
@@ -243,7 +243,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         '29':{"A":[0,3,5],"B":[3,6,2],...}
           }
     The number is patient and the letter are landmark
-    
+
     The patient and landmark have to be string
     The postion of landmark have to be a list
     """
@@ -265,7 +265,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # init self.group landmark
         self.selectFileImportListLandmark(path_listlandmarks=self.resourcePath("name_landmark.xlsx"))
 
-        self.statisticVisible()
 
         # ==============================================================================================================================================================
         # Widget conect
@@ -303,6 +302,9 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             partial(self.selectAllMeasurement, "Distance")
         )
 
+        self.ui.LabelExcelFormat.setVisible(True)
+        self.ui.ComboBoxExcelFormat.setVisible(True)
+
 #==========================================================================================================================================================
 # Computation
 #==========================================================================================================================================================
@@ -337,332 +339,317 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
             # compute all measure
             patient_compute = self.logic.computeMeasurement(self.list_measure, dict_patient)
-            
+            print("*"*150)
+            print("self.list_measure : ",self.list_measure)
+            # patient_compute = self.allowSign(patient_compute,self.list_measure)
+
             print("self.ui.ComboBoxExcelFormat.currentText : ",self.ui.ComboBoxExcelFormat.currentText)
             if self.ui.ComboBoxExcelFormat.currentText == "Statistics":
                 patient_compute = self.reorganizeStat(patient_compute)
+            else :
+                patient_compute = self.renameTimepoint(patient_compute)
             # write measure
             #test windows
             self.logic.writeMeasurementExcel(patient_compute, path, file_name)
             # self.logic.WriteMeasurementExcel2(test, path, file_name)
 
+    def allowSign(self,patient_compute,list_measure):
+        for i in range(len(patient_compute["Type of measurement"])) :
+            T1 = False
+            T2 = False
+            if "T1" in patient_compute["Type of measurement"][i]:
+                T1=True
+            if "T2" in patient_compute["Type of measurement"][i]:
+                T2=True
+
+            if T1 and T2 :
+                continue
+            else :
+
+                patient_compute["R-L Meaning"][i] = "x"
+                patient_compute["A-P Meaning"][i] = "x"
+                patient_compute["S-I Meaning"][i] = "x"
+
+                patient_compute["Yaw Meaning"][i] = "x"
+                patient_compute["Pitch Meaning"][i] = "x"
+                patient_compute["Roll Meaning"][i] = "x"
+        return patient_compute
+
+    def checkKeepSign(self,list_measure,landmarks,measurement):
+        for measure in list_measure :
+            if measurement in measure["Type of measurement"]:
+                if measure["group"]=="Angle":
+                    land = measure["line1"] + " " + measure["line2"]
+
+
+
+    def renameTimepoint(self,patient_compute):
+        for i in range(len(patient_compute["Type of measurement"])) :
+            measure = patient_compute["Type of measurement"][i]
+            if measure == "Distance point line T1":
+                patient_compute["Type of measurement"][i] = f"Distance point line {self.ui.lineEditNameT1.text}"
+
+            elif measure == "Distance point line T2":
+                patient_compute["Type of measurement"][i] = f"Distance point line {self.ui.lineEditNameT2.text}"
+
+            elif measure == "Distance point line T1 T2" :
+                patient_compute["Type of measurement"][i] = f"Distance point line {self.ui.lineEditNameT1.text} {self.ui.lineEditNameT2.text}"
+
+            elif measure == "Distance between 2 points T1" :
+                patient_compute["Type of measurement"][i] = f"Distance between 2 points {self.ui.lineEditNameT1.text}"
+
+            elif measure == "Distance between 2 points T2" :
+                patient_compute["Type of measurement"][i] = f"Distance between 2 points {self.ui.lineEditNameT2.text}"
+
+            elif measure == "Distance between 2 points T1 T2":
+                patient_compute["Type of measurement"][i] = f"Distance between 2 points {self.ui.lineEditNameT1.text} {self.ui.lineEditNameT2.text}"
+
+            elif measure == "Angle between 2 lines T1":
+                patient_compute["Type of measurement"][i] = f"Angle between 2 lines {self.ui.lineEditNameT1.text}"
+
+            elif measure == "Angle between 2 lines T2":
+                patient_compute["Type of measurement"][i] = f"Angle between 2 lines {self.ui.lineEditNameT2.text}"
+
+            elif measure == "Angle between 2 lines T1 T2":
+                patient_compute["Type of measurement"][i] = f"Angle between 2 lines {self.ui.lineEditNameT1.text} {self.ui.lineEditNameT2.text}"
+
+            elif measure == "Angle line T1 and line T2":
+                patient_compute["Type of measurement"][i] = f"Angle line {self.ui.lineEditNameT1.text} and line {self.ui.lineEditNameT2.text}"
+
+        return patient_compute
+
+
+
+
+
+
+
+
+
 
     def reorganizeStat(self,patient_compute):
         dic_stats = {
                 "ID":[],
-                "Tooth/Landmarks":[],
-                "Type of measurement":[],
+                "Landmarks":[],
+                "Time":[],
                 "Arch":[],
                 "Segment":[],
-                "Group":[],
-                "BL Ang":[],
-                "MD Ang":[],
-                "Rotation":[],
+                "Transverse":[],
                 "AP":[],
                 "Vertical":[],
-                "Transverse-RL":[],
                 "3D":[],
-                "R-L Component":[],
-                "A-P Component":[],
-                "S-I Component":[],
-                "Yaw Component":[],
-                "Pitch Component":[],
-                "Roll Component":[],
+                "Yaw":[],
+                "Pitch":[],
+                "Roll":[],
+                "BL":[],
+                "MD":[],
+                "Rotation":[]
             }
-        
+
         TOOTHS = ["UR8", "UR7", "UR6", "UR5", "UR4", "UR3","UR1", "UR2","UL8", "UL7", "UL6", "UL5", "UL4", "UL3","UL1", "UL2",
                   "LR8", "LR7", "LR6", "LR5", "LR4", "LR3","LR1", "LR2","LL8", "LL7", "LL6", "LL5", "LL4", "LL3","LL1", "LL2"]
-        
+
         for i in range(len(patient_compute["Patient"])) :
 
-            #Tooth
-            type = "skeletal"
-            for t in TOOTHS : 
-                if t in patient_compute["Landmarks"][i] :
-                    type = "tooth"
 
-            if type == "tooth":
-                tooth=None
-                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
-                    tooths = patient_compute["Landmarks"][i]
-                    indice_espace = tooths.find(" ")
-                    indice_tiret = tooths.find("-")
-                    if indice_espace != -1 and indice_tiret != -1:
-                        tooth = tooths[:indice_espace-1]
-
-                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
-                    tooth = patient_compute["Landmarks"][i][:3]
-
-                
-
-                if "Mid" in tooth:
-                    save = patient_compute["Landmarks"][i]
-                    for t in TOOTHS :
-                        if t in save :
-                            tooth = t
-
-                if tooth==None or tooth=="Mid":
-                    continue 
-
-                indices_trouves=[]
-                for indice, valeur in enumerate(dic_stats["Tooth/Landmarks"]):
-                    if valeur == tooth:
-                        indices_trouves.append(indice)
-                
-                patient_id = patient_compute["Patient"][i][1:]
-                already_treated = False
-                for indice_trouve in indices_trouves:
-                    if indice_trouve < len(dic_stats["ID"]) and dic_stats["ID"][indice_trouve] == patient_id:
-                        already_treated=True
-                        break
-
-                if already_treated:
-                    continue
-                
-                dic_stats["Tooth/Landmarks"].append(tooth)
-
-                #ID
+            if patient_compute["Patient"][i][1].lower()=="p" :
                 dic_stats["ID"].append(patient_compute["Patient"][i][1:])
-                
+            elif patient_compute["Patient"][i][:3].lower() == "pat" :
+                dic_stats["ID"].append(patient_compute["Patient"][i][3:])
+            else :
+                dic_stats["ID"].append(patient_compute["Patient"][i])
 
-                dist = None
-                ang = None
-                mid = i
-                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
-                    dist = i
-                    for indice, valeur in enumerate(patient_compute["Landmarks"]):
-                        if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
-                            ang=indice
+            dic_stats["Landmarks"].append(patient_compute["Landmarks"][i])
 
-                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2":
-                    ang = i
-                    for indice, valeur in enumerate(patient_compute["Landmarks"]):
-                        if tooth in valeur and "Mid" not in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Distance between 2 points T1 T2":
-                            dist=indice
-                            
-                for indice, valeur in enumerate(patient_compute["Landmarks"]):
-                    if tooth in valeur and "Mid" in valeur and patient_id==patient_compute["Patient"][indice][1:] and patient_compute["Type of measurement"][indice]=="Angle line T1 and line T2":
-                        mid=indice
-                    
-                if ang==None:
-                    ang=i
-                if dist==None:
-                    dist=i
+            T1=False
+            T2=False
+            if "T1" in patient_compute["Type of measurement"][i]:
+                T1=True
+            if "T2" in patient_compute["Type of measurement"][i]:
+                T2=True
+
+            if T1 and T2 :
+                dic_stats["Time"].append(f"{self.ui.lineEditNameT1.text}-{self.ui.lineEditNameT2.text}")
+            elif T1 :
+                dic_stats["Time"].append(str(self.ui.lineEditNameT1.text))
+            else :
+                dic_stats["Time"].append(str(self.ui.lineEditNameT2.text))
 
 
+            type = "skeletal"
+            tooth = None
+            for t in TOOTHS :
+                if t in patient_compute["Landmarks"][i] :
+                    tooth = t
 
+            if tooth != None:
                 #Arch : upper=0, lower=1
                 if "U" in tooth :
                     dic_stats["Arch"].append(0)
-                else : 
+                else :
                     dic_stats["Arch"].append(1)
 
                 #Segment : posterior=0,anterior=1
                 if "1" in tooth or "2" in tooth:
                     dic_stats["Segment"].append(1)
-                else : 
+                else :
                     dic_stats["Segment"].append(0)
 
-                #Group : non-extraction=0, extraction=1
-                dic_stats["Group"].append(self.dict_patient_extraction[patient_compute["Patient"][i]])
 
-                
                 if dic_stats["Segment"][len(dic_stats["Segment"])-1] == 1 : # is anterior teeth
-                    #BL Ang
-                    roll = patient_compute["Roll Component"][mid]
-                    if roll!="x":
-                        roll=float(roll)
-                        if patient_compute["Roll Meaning"][mid]=="D":
-                            roll=-roll
-                    dic_stats["BL Ang"].append(str(roll))
 
-                    #MD Ang
-                    pitch = patient_compute["Pitch Component"][mid]
-                    if pitch!="x":
-                        pitch=float(pitch)
-                        if patient_compute["Pitch Meaning"][mid]=="L":
-                            pitch=-pitch
-                    dic_stats["MD Ang"].append(str(pitch))
-
-                    #AP dist 
-                    ap = patient_compute["A-P Component"][dist]
-                    if ap!="x":
+                    #AP
+                    ap = patient_compute["A-P Component"][i]
+                    if ap!="x" and ap!="":
                         ap=float(ap)
-                        if patient_compute["A-P Meaning"][dist]=="L":
-                            ap=-ap
-                    dic_stats["AP"].append(str(ap))
-
-                    #Transverse-RL 
-                    rl = patient_compute["R-L Component"][dist]
-                    if rl!="x":
-                        rl=float(rl)
-                        if patient_compute["R-L Meaning"][dist]=="D":
-                            rl=-rl
-                    dic_stats["Transverse-RL"].append(str(rl))
-
-
-                else :
-                    #MD Ang
-                    pitch = patient_compute["Pitch Component"][mid]
-                    if pitch!="x":
-                        pitch=float(pitch)
-                        if patient_compute["Pitch Meaning"][mid]=="D":
-                            pitch=-pitch
-                    dic_stats["MD Ang"].append(str(pitch))
-
-                    #BL Ang
-                    roll = patient_compute["Roll Component"][mid]
-                    if roll!="x":
-                        roll=float(roll)
-                        if patient_compute["Roll Meaning"][mid]=="L":
-                            roll=-roll
-                    dic_stats["BL Ang"].append(str(roll))
-
-                    #AP dist 
-                    ap = patient_compute["A-P Component"][dist]
-                    if ap!="x":
-                        ap=float(ap)
-                        if patient_compute["A-P Meaning"][dist]=="D":
+                        if patient_compute["A-P Meaning"][i]=="L":
                             ap=-ap
                     dic_stats["AP"].append(str(ap))
 
                     #Transverse-RL
-                    rl = patient_compute["R-L Component"][dist]
-                    if rl!="x":
+                    rl = patient_compute["R-L Component"][i]
+                    if rl!="x" and rl!="":
                         rl=float(rl)
-                        if patient_compute["R-L Meaning"][dist]=="L":
+                        if patient_compute["R-L Meaning"][i]=="D":
                             rl=-rl
-                    dic_stats["Transverse-RL"].append(str(rl))
+                    dic_stats["Transverse"].append(str(rl))
 
-                #Rotation
-                yaw = patient_compute["Yaw Component"][ang]
-                if yaw!="x":
-                    yaw=float(yaw)
-                    if patient_compute["Yaw Meaning"][ang]=="DR":
-                        yaw=-yaw
-                dic_stats["Rotation"].append(str(yaw))
+
+                    #BL
+                    pitch = patient_compute["Pitch Component"][i]
+                    if pitch!="x" and pitch!="":
+                        pitch=float(pitch)
+                        if patient_compute["Pitch Meaning"][i]=="L":
+                            pitch=-pitch
+                    dic_stats["BL"].append(str(pitch))
+
+                    #MD
+                    roll = patient_compute["Roll Component"][i]
+                    if roll!="x" and roll!="":
+                        roll=float(roll)
+                        if patient_compute["Roll Meaning"][i]=="D":
+                            roll=-roll
+                    dic_stats["MD"].append(str(roll))
+
+
+                else :
+                    #AP
+                    ap = patient_compute["A-P Component"][i]
+                    if ap!="x" and ap!="":
+                        ap=float(ap)
+                        if patient_compute["A-P Meaning"][i]=="D":
+                            ap=-ap
+                    dic_stats["AP"].append(str(ap))
+
+                    #Transverse-RL
+                    rl = patient_compute["R-L Component"][i]
+                    if rl!="x" and rl!="":
+                        rl=float(rl)
+                        if patient_compute["R-L Meaning"][i]=="B":
+                            rl=-rl
+                    dic_stats["Transverse"].append(str(rl))
+
+                    #MD
+                    pitch = patient_compute["Pitch Component"][i]
+                    if pitch!="x" and pitch!="":
+                        pitch=float(pitch)
+                        if patient_compute["Pitch Meaning"][i]=="D":
+                            pitch=-pitch
+                    dic_stats["MD"].append(str(pitch))
+
+                    #BL
+                    roll = patient_compute["Roll Component"][i]
+                    if roll!="x" and roll!="":
+                        roll=float(roll)
+                        if patient_compute["Roll Meaning"][i]=="L":
+                            roll=-roll
+                    dic_stats["BL"].append(str(roll))
 
                 #Vertical
-                si = patient_compute["S-I Component"][dist]
-                if si!="x":
+                si = patient_compute["S-I Component"][i]
+                if si!="x" and si!="":
                     si=float(si)
-                    if patient_compute["S-I Meaning"][dist]=="I":
+                    if patient_compute["S-I Meaning"][i]=="I":
                         si=-si
                 dic_stats["Vertical"].append(str(si))
 
-                #3D
-                ThreeD = patient_compute["3D Distance"][dist]
-                dic_stats["3D"].append(str(ThreeD))
+                #Rotation
+                yaw = patient_compute["Yaw Component"][i]
+                if yaw!="x" and yaw!="":
+                    yaw=float(yaw)
+                    if patient_compute["Yaw Meaning"][i]=="DR":
+                        yaw=-yaw
+                dic_stats["Rotation"].append(str(yaw))
 
-                # to put something into skeletal 
-                dic_stats["R-L Component"].append("x")
-                dic_stats["A-P Component"].append("x")
-                dic_stats["S-I Component"].append("x")
-                dic_stats["Yaw Component"].append("x")
-                dic_stats["Pitch Component"].append("x")
-                dic_stats["Roll Component"].append("x")
-                dic_stats["Type of measurement"].append("x")
-                
-
-            else : 
-                if patient_compute["Type of measurement"][i]!="Distance between 2 points T1 T2" and patient_compute["Type of measurement"][i]!="Angle line T1 and line T2":
-                    continue 
-
-                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2":
-                    parts = [part.strip() for part in patient_compute["Landmarks"][i].split("-")]
-                    landmark1 = parts[0] if len(parts) >= 1 else None
-                    landmark2 = parts[1] if len(parts) >= 2 else None
-
-
-                dic_stats["ID"].append(patient_compute["Patient"][i][3:])
-                dic_stats["Tooth/Landmarks"].append(patient_compute["Landmarks"][i])
-                dic_stats["Type of measurement"].append(patient_compute["Type of measurement"][i])
-
-
-                if patient_compute["Type of measurement"][i]=="Distance between 2 points T1 T2" :
-                    #RL
-                    direction = self.right_left_stat(landmark1,landmark2)
-                    rl = patient_compute["R-L Component"][i]
-                    rl_meaning = patient_compute["R-L Meaning"][i]
-                    if rl!="x":
-                        rl = float(rl)
-                        if rl_meaning=="L":
-                            rl=-rl
-                        elif rl_meaning=="Lateral" and direction=="L":
-                            rl=-rl
-                        elif rl_meaning=="Medial" and direction=="R":
-                            rl=-rl
-                    dic_stats["R-L Component"].append(str(rl))
-
-                    #AP
-                    ap = patient_compute["A-P Component"][i]
-                    ap_meaning = patient_compute["A-P Meaning"][i]
-                    if ap!="x":
-                        ap=float(ap)
-                        if ap_meaning=="P":
-                            ap=-ap
-                    dic_stats["A-P Component"].append(str(ap))
-
-                    #SI
-                    si = patient_compute["S-I Component"][i]
-                    si_meaning = patient_compute["S-I Meaning"][i]
-                    if si!="x":
-                        si=float(ap)
-                        if si_meaning=="S":
-                            si=-si
-                    dic_stats["S-I Component"].append(str(si))
-
-                    dic_stats["Yaw Component"].append("x")
-                    dic_stats["Pitch Component"].append("x")
-                    dic_stats["Roll Component"].append("x")
-
-                elif patient_compute["Type of measurement"][i]=="Angle line T1 and line T2" :
-                    #Yaw
-                    yaw = patient_compute["Yaw Component"][i]
-                    yaw_meaning = patient_compute["Yaw Meaning"][i]
-                    if yaw!="x":
-                        yaw=float(yaw)
-                        if yaw_meaning=="CounterC":
-                            yaw=-yaw
-                    dic_stats["Yaw Component"].append(str(yaw))
-
-                    #Pitch
-                    pitch = patient_compute["Pitch Component"][i]
-                    pitch_meaning = patient_compute["Pitch Meaning"][i]
-                    if pitch!="x":
-                        pitch=float(pitch)
-                        if pitch_meaning=="CounterC":
-                            pitch=-pitch
-                    dic_stats["Pitch Component"].append(str(pitch))
-
-                    #Roll
-                    roll = patient_compute["Roll Component"][i]
-                    roll_meaning = patient_compute["Roll Meaning"][i]
-                    if roll!="x":
-                        roll=float(roll)
-                        if roll_meaning=="CounterC":
-                            roll=-roll
-                    dic_stats["Roll Component"].append(str(roll))
-
-                    dic_stats["R-L Component"].append("x")
-                    dic_stats["A-P Component"].append("x")
-                    dic_stats["S-I Component"].append("x")
-                
                 #3D
                 ThreeD = patient_compute["3D Distance"][i]
                 dic_stats["3D"].append(str(ThreeD))
 
-                # to put something into dental
+                dic_stats["Yaw"].append(str("x"))
+                dic_stats["Pitch"].append(str("x"))
+                dic_stats["Roll"].append(str("x"))
+
+            else :
                 dic_stats["Arch"].append("x")
                 dic_stats["Segment"].append("x")
-                dic_stats["Group"].append("x")
-                dic_stats["BL Ang"].append("x")
-                dic_stats["MD Ang"].append("x")
-                dic_stats["Rotation"].append("x")
-                dic_stats["AP"].append("x")
-                dic_stats["Vertical"].append("x")
-                dic_stats["Transverse-RL"].append("x")
-                
+
+                dic_stats["BL"].append(str("x"))
+                dic_stats["MD"].append(str("x"))
+                dic_stats["Rotation"].append(str("x"))
+
+                #Transverse-RL
+                rl = patient_compute["R-L Component"][i]
+                if rl!="x" and rl!="":
+                    rl=float(rl)
+                    if patient_compute["R-L Meaning"][i]=="Medial" or patient_compute["R-L Meaning"][i]=="L":
+                        rl=-rl
+                dic_stats["Transverse"].append(str(rl))
+
+
+                #AP
+                ap = patient_compute["A-P Component"][i]
+                if ap!="x" and ap!="":
+                    ap=float(ap)
+                    if patient_compute["A-P Meaning"][i]=="P":
+                        ap=-ap
+                dic_stats["AP"].append(str(ap))
+
+                #Vertical
+                si = patient_compute["S-I Component"][i]
+                if si!="x" and si!="":
+                    si=float(si)
+                    if patient_compute["S-I Meaning"][i]=="S":
+                        si=-si
+                dic_stats["Vertical"].append(str(si))
+
+                #Yaw
+                yaw = patient_compute["Yaw Component"][i]
+                if yaw!="x" and yaw!="":
+                    yaw=float(yaw)
+                    if patient_compute["Yaw Meaning"][i]=="CounterC":
+                        yaw=-yaw
+                dic_stats["Yaw"].append(str(yaw))
+
+                #Pitch
+                pitch = patient_compute["Pitch Component"][i]
+                if pitch!="x" and pitch!="":
+                    pitch=float(pitch)
+                    if patient_compute["Pitch Meaning"][i]=="CounterC":
+                        pitch=-pitch
+                dic_stats["Pitch"].append(str(pitch))
+
+                #BL
+                roll = patient_compute["Roll Component"][i]
+                if roll!="x" and roll!="":
+                    roll=float(roll)
+                    if patient_compute["Roll Meaning"][i]=="CounterC":
+                        roll=-roll
+                dic_stats["Roll"].append(str(roll))
+
+                #3D
+                ThreeD = patient_compute["3D Distance"][i]
+                dic_stats["3D"].append(str(ThreeD))
+
 
         keys_to_delete = []
         for key, value in dic_stats.items():
@@ -675,64 +662,12 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for key in keys_to_delete:
             del dic_stats[key]
 
- 
+
         return dic_stats
-                
-
-    def right_left_stat(self,land1,land2):
-        lst_measurement = [land1, land2]
-        print("lst_measurement : ",lst_measurement)
-        direction1 = lst_measurement[0][0]
-        direction2 = lst_measurement[1][0]
-        if direction1 == "M":
-            parts = lst_measurement[0].split("_")
-            landmark1 = parts[1] if len(parts) > 1 else None
-            landmark2 = parts[2] if len(parts) > 2 else None
-
-            if landmark1[0]==landmark2[0]:
-                direction1 = landmark1[0]
-
-            else : 
-                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
-                    direction1 = "No_direction"
-                elif landmark1[0]=="R" or landmark1[0]=="L" : direction1=landmark1[0] 
-                elif landmark2[0]=="R" or landmark2[0]=="L" : direction1=landmark2[0] 
-                else : direction1 = None
-
-        if direction2 == "M":
-            parts = lst_measurement[0].split("_")
-            landmark1 = parts[1] if len(parts) > 1 else None
-            landmark2 = parts[2] if len(parts) > 2 else None
-
-            if landmark1[0]==landmark2[0]:
-                direction2 = landmark1[0]
-
-            else : 
-                if (landmark1[0]=="R" and landmark2[0]=="L") or (landmark1[0]=="L" and landmark2[0]=="R") : 
-                    direction2 = "No_direction"
-                elif landmark1[0]=="R" or landmark1[0]=="L" : direction2=landmark1[0] 
-                elif landmark2[0]=="R" or landmark2[0]=="L" : direction2=landmark2[0] 
-                else : direction2 = None
-
-        direction="No_direction"
-        if direction1 == direction2 :
-            direction = direction1
-
-        elif (direction1=="No_direction" and direction2!="No_direction") :
-            direction = direction2
-
-        elif (direction2=="No_direction" and direction1!="No_direction") :
-            direction = direction1
-
-        elif (direction1=="R" and direction2=="L") or (direction1=="L" and direction2=="R"):
-            direction = "No_direction"
-
-        return direction
 
 
 
 
-            
 
 
 
@@ -743,7 +678,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def manageDisplayImportExportMeasurementPage(self):
         """
     Manage Interface if user want export list of measurement or export
-    
+
     Call by CbImportExportMeasure
     """
         indexes = {
@@ -801,7 +736,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.addMeasurementToTabMeasurement(measure)
 
 
-    
+
 #=================================================================================================================================================
 # CheckBox Landmark
 #=================================================================================================================================================
@@ -933,7 +868,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if enabled :
             self.list_LandMarkCheck.append(landmark)
         else :
-            self.list_LandMarkCheck.remove(landmark)   
+            self.list_LandMarkCheck.remove(landmark)
         self.updateAllLandmarks()
 
     def updateAllLandmarks(self):
@@ -945,7 +880,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             Cb.addItems(enable_landmark)
 
 
-    
+
 #=========================================================================================================================================
 # Landmark
 #=========================================================================================================================================
@@ -1003,7 +938,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def addMidpoint(self):
         """
-    Add midpoint in tablandmark 
+    Add midpoint in tablandmark
     """
         P1 = self.ui.CbMidpointP1.currentText
         P2 = self.ui.CbMidpointP2.currentText
@@ -1054,7 +989,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                 self.mid_point,
             )
 
-    
+
 #===============================================================================================================
 # Measurement
 #===============================================================================================================
@@ -1074,7 +1009,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             },
             "TabAngle": {
                 False: {"Angle between 2 lines": 3},
-                True: {"Angle between 2 lines": 4, "Angle line T1 and line T2": 5},
+                True: {"Angle between 2 lines": 4, f"Angle line T1 and line T2": 5},
             },
         }
 
@@ -1099,7 +1034,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             )
         else:
             if self.ui.CheckBoxT1T2.isChecked() == True:
-                self.ui.CbListMeasurement.addItem("Angle line T1 and line T2")
+                self.ui.CbListMeasurement.addItem(f"Angle line T1 and line T2")
             self.ui.CbListMeasurement.addItem("Angle between 2 lines")
         self.manageDisplayComboboxMeasurement()
 
@@ -1125,92 +1060,25 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         a = QCheckBox()
         dict[group].setCellWidget(num, 0, a)
 
+
         #use function to iter all informations needed
         for count, value in enumerate(measure.iterBasicInformation()):
             b = QTableWidgetItem(value)
             dict[group].setItem(num, count + 1, b)
 
         # if group == "Angle":
-        #     # add checkbox to choose if user want the complementary angle
-        #     checkbox_angle_complement = QCheckBox()
-        #     dict[group].setCellWidget(num, 4, checkbox_angle_complement)
-        #     measure["complement"] = checkbox_angle_complement
+
+        checkbox_keep_sign = QCheckBox()
+        dict[group].setCellWidget(num, 4, checkbox_keep_sign)
+        if "T1" in measure['Type of measurement + time'] and "T2" in measure['Type of measurement + time'] :
+            checkbox_keep_sign.setChecked(True)
+            checkbox_keep_sign.setEnabled(False)
+        measure["keep_sign"] = checkbox_keep_sign
 
         measure["checkbox"] = a
+
         self.list_measure.append(measure)
 
-        self.statisticVisible()
-
-    def statisticVisible(self):
-        dic_tooth = ["UR1","UR2","UR3","UR4","UR5","UR6","UR7",
-                          "UL1","UL2","UL3","UL4","UL5","UL6","UL7",
-                          "LR1","LR2","LR3","LR4","LR5","LR6","LR7",
-                          "LL1","LL2","LL3","LL4","LL5","LL6","LL7"]
-        visible = True
-        if len(self.list_measure)==0:
-            visible=False
-        
-        for measure in self.list_measure:
-            # # Extraction des informations pour Line 1 et Line 2
-            if measure.measure == "Angle line T1 and line T2":
-                landmark1a = measure.line1.point1.name
-                landmark1b = measure.line1.point2.name
-                landmark2a = measure.line2.point1.name
-                landmark2b = measure.line2.point2.name
-
-                tooths = [False]*4
-                
-
-                for tooth in dic_tooth:
-                    if tooth in landmark1a:
-                        tooths[0]=True
-                    if tooth in landmark1b:
-                        tooths[1]=True
-                    if tooth in landmark2a:
-                        tooths[2]=True
-                    if tooth in landmark2b:
-                        tooths[3]=True
-                    if all(tooths):
-                        break
-
-                if not all(tooths) :
-                    visible = False
-                    break
-
-            if measure.measure=="Distance between 2 points T1 T2":
-                landmark1=measure.point1.name
-                landmark2=measure.point2line.name
-                tooths=[False]*2
-
-                for tooth in dic_tooth:
-
-                    if tooth in landmark1:
-                        tooths[0]=True
-
-                    if tooth in landmark2:
-                        tooths[1]=True
-
-                    if all(tooths):
-                        break
-
-
-                if not all(tooths) :
-                    visible = False
-                    break
-
-        visible = True
-        if visible:
-            self.ui.LabelExcelFormat.setVisible(True)
-            self.ui.ComboBoxExcelFormat.setVisible(True)
-        else :
-            self.ui.LabelExcelFormat.setVisible(False)
-            self.ui.ComboBoxExcelFormat.setVisible(False)
-
-
-        
-
-
-        
 
 
     def selectAllMeasurement(self, group, column):
@@ -1221,7 +1089,24 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
                     list_checkbox.append(mea["checkbox"])
 
             for checkbox in list_checkbox:
-                checkbox.setChecked(True)
+                if checkbox.isChecked() :
+                    checkbox.setChecked(False)
+                else :
+                    checkbox.setChecked(True)
+
+        if column == 4:
+            list_checkbox = []
+            for mea in self.list_measure:
+                if mea["group"] == group:
+                    if "T1" not in mea['Type of measurement + time'] or "T2" not in mea['Type of measurement + time'] :
+                        list_checkbox.append(mea["keep_sign"])
+
+            for checkbox in list_checkbox:
+                if checkbox.isChecked() :
+                    checkbox.setChecked(False)
+                else :
+                    checkbox.setChecked(True)
+
 
     def deleteMeasurement(self):
         """
@@ -1249,7 +1134,6 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for idremove in row_remove:
             self.list_measure.pop(idremove)
 
-        self.statisticVisible()
 
     def createMeasurement(self):
         """
@@ -1321,10 +1205,10 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for point in dict_page2combobox[page]:
             list_point.append(point.currentText)
 
-        
+
         if page == "PageDistance2Points" and self.ui.CheckBoxT1T2.isChecked():
             page = "PageDistance2PointsT1T2"
-        
+
         dict_page_to_namemeasure = dict_page2namemeasure_T1
         if self.ui.LineEditPathT2.text != '':
             dict_page_to_namemeasure = dict_page2namemeasure_T1T2
@@ -1337,16 +1221,15 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.addMeasurementToTabMeasurement(measure)
 
     """
-   ___    _     _                   
-  / _ \  | |_  | |__     ___   _ __ 
+   ___    _     _
+  / _ \  | |_  | |__     ___   _ __
  | | | | | __| | '_ \   / _ \ | '__|
- | |_| | | |_  | | | | |  __/ | |   
-  \___/   \__| |_| |_|  \___| |_|   
-                                    
+ | |_| | | |_  | | | | |  __/ | |
+  \___/   \__| |_| |_|  \___| |_|
   """
 
     def selectFolderT1Patient(self):
-        """ Open window allow user to choose folder with T1 patients' information. 
+        """ Open window allow user to choose folder with T1 patients' information.
         """
 
         surface_folder = qt.QFileDialog.getExistingDirectory(
@@ -1354,7 +1237,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         )
         if surface_folder != "":
             self.ui.LineEditPathT1.setText(surface_folder)
-            
+
             self.dict_patient_T1, self.dict_patient_extraction = self.logic.createDictPatient(surface_folder)
 
             (
@@ -1367,7 +1250,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
     def selectFolderT2Patients(self):
-        """ Open window allow user to choose folder with T1 patients' information. 
+        """ Open window allow user to choose folder with T1 patients' information.
         """
         if self.dict_patient_T1 == None:
             self.warningMessage("Missing T1 folder")
@@ -1378,7 +1261,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             )
             if surface_folder != "":
                 self.ui.LineEditPathT2.setText(surface_folder)
-                
+
                 self.dict_patient_T2,x  = self.logic.createDictPatient(surface_folder)
                 self.logic.compareT1T2(self.dict_patient_T1, self.dict_patient_T2)
 
@@ -1498,7 +1381,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         """
         From Folder path create dictionnary with position landmarks for each patient
 
-    Read each json file in the folder (recursively). 
+    Read each json file in the folder (recursively).
     CreateDictPatient can recognize multiple files belonging to the same patient, with the pattern at the beginning of the file name, it takes the pattern before the first '_' to search for another existing one.
         example:
                 file name            patient
@@ -1532,7 +1415,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         for jsonfile in sorted(glob.iglob(normpath, recursive=True)):
             if os.path.isfile(jsonfile) and ".json" in jsonfile:
                 lst_files.append(jsonfile)
-                patient = os.path.basename(jsonfile).split("_")[0]
+                patient = os.path.basename(jsonfile).split("_")[0].split('.mrk')[0]
                 if patient not in patients_lst:
                     patients_lst.append(patient)
                 if patient not in patients_dict:
@@ -1566,7 +1449,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                         print(
                             f"For this file {jsonfile} this landmark {landmark_name} are not good "
                         )
-                    
+
                 if "NE" in jsonfile or "Non_Extraction" in jsonfile or "Non Extraction" in jsonfile or "non_extraction" in jsonfile or "non extraction" in jsonfile :
                     dict_patient_extraction[patient]=0
                 else :
@@ -1596,13 +1479,14 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         # compare landmark patient T1 and T2
         dif_landmark = {}
         for patientT1, landmarks in dict_patinetT1.items():
-            if set(landmarks) != set(dict_patientT2[patientT1]):
-                dif = set(landmarks) - set(dict_patientT2[patientT1])
-                dif.union(set(dict_patientT2[patientT1]) - set(landmarks))
-                dif_landmark[patientT1] = dif 
-                print(
-                    f"T1 and T2 of this patient {patientT1} doesnt have the same landmark, landmark dif {dif}"
-                )
+            if patientT1 in dict_patientT2:
+                if set(landmarks) != set(dict_patientT2[patientT1]):
+                    dif = set(landmarks) - set(dict_patientT2[patientT1])
+                    dif.union(set(dict_patientT2[patientT1]) - set(landmarks))
+                    dif_landmark[patientT1] = dif
+                    print(
+                        f"T1 and T2 of this patient {patientT1} doesnt have the same landmark, landmark dif {dif}"
+                    )
 
         # compare the name patient T1 and T2
         dif_patient = None
@@ -1611,9 +1495,9 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
             dif.union(set(dict_patientT2.keys()) - set(dict_patinetT1.keys()))
             dif_patient = dif_landmark
             print(f"T1 and T2 doesnt have the same patient, dif patient {dif}")
-        return dif_landmark , dif_patient 
+        return dif_landmark , dif_patient
 
-    
+
     def updateGroupLandmark(self, dict_patient: dict, all_landmarks: Group_landmark) -> tuple[list,Group_landmark]:
         """
     Add in goup_landmark  midpoints and landmark not existing in group_landmark, but existing in dict_patient.
@@ -1681,7 +1565,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     '29':{"A":[0,3,5],"B":[3,6,2],...}
                   }
         out_path (str): the path folder where the midpoint will be save
-        midpoints (list[list]): list midpoint 
+        midpoints (list[list]): list midpoint
             list = [['A','UL6O'],['R2RM','LL6O']] -> Mid_A_UL6O, Mid_R2RM_LL6O
     """
 
@@ -1718,7 +1602,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         for patient, cp_lst in midpoint_dict.items():
             if os.path.exists(os.path.join(out_path,f"{patient}_Midpoint.json")) :
                 cp_lst = self.mergeJsonControlePoint(os.path.join(out_path,f"{patient}_Midpoint.json"),cp_lst)
-            
+
             self.writeJson(f"{patient}_Midpoint", cp_lst, out_path)
 
     def mergeJsonControlePoint(self, file_name : str, list_controle_point : list ):
@@ -1733,7 +1617,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
     Args:
         file_name (str): name of json file
-        list_controle_point (list): list with controle point 
+        list_controle_point (list): list with controle point
                                   a controle point has this architectue :
                                       controle_point = {
                                       "id": str(1),
@@ -1747,7 +1631,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                                       "visibility": True,
                                       "positionStatus": "defined"
                                     }
-        folder (str): write json file 
+        folder (str): write json file
     """
 
         file = {
@@ -1811,7 +1695,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         dict: Controle point
     """
         controle_point = {
-            "id": str(1), 
+            "id": str(1),
             "label": label,
             "description": "",
             "associatedNodeID": "",
@@ -1832,7 +1716,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                Type of measurement Point 1   Point 2 / Line
 0     Distance between 2 points T1       S  MID_LR3RC_LR4RC
 1     Distance between 2 points T2       S  MID_LR3RC_LR4RC
-2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC  
+2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC
 
             page Distnace point line
              Type of measurement            Point 1                       Point 2 / Line
@@ -1913,7 +1797,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                Type of measurement Point 1   Point 2 / Line
 0     Distance between 2 points T1       S  MID_LR3RC_LR4RC
 1     Distance between 2 points T2       S  MID_LR3RC_LR4RC
-2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC  
+2  Distance between 2 points T1 T2       S  MID_LR3RC_LR4RC
 
             page Distnace point line
              Type of measurement            Point 1                       Point 2 / Line
@@ -1935,7 +1819,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         path_file (str): path of the excel file
 
     Returns:
-        list: list of measure 
+        list: list of measure
     """
         reader = pd.read_excel(path_file, sheet_name=None)
         newreader = {
@@ -2196,6 +2080,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                     continue
 
                 try:
+                    print("measure : ",measure)
                     measure.computation()
                 except ZeroDivisionError as Zero:
                     print(
@@ -2205,19 +2090,19 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
                 measure.manageMeaningComponent()
 
-                if measure.isUtilMeasure():
-                    dict_patient__computation["Patient"].append(patient)
-                    dict_patient__computation["Type of measurement"].append(
-                        measure["Type of measurement + time"]
-                    )
-                    for title in list_title:
-                        dict_patient__computation[title].append(measure[title])
+                # if measure.isUtilMeasure():
+                dict_patient__computation["Patient"].append(patient)
+                dict_patient__computation["Type of measurement"].append(
+                    measure["Type of measurement + time"]
+                )
+                for title in list_title:
+                    dict_patient__computation[title].append(measure[title])
 
-                else:
-                    print(
-                        f"Dont write this measure {measure} for this patient {patient} because is useless measure"
-                    )
-                    continue
+                # else:
+                #     print(
+                #         f"Dont write this measure {measure} for this patient {patient} because is useless measure"
+                #     )
+                #     continue
 
         # if all(value=="x" for value in dict_patient__computation["Lateral or medial-Left"]):
         #     del dict_patient__computation["Lateral or medial-Left"]
@@ -2242,7 +2127,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         #     "Pitch Meaning": [],
         #     "Roll Component": [],
         #     "Roll Meaning": [],
-        # }   
+        # }
         #     add_in_name_sheet = ''
         #     if measure["Landmarks"].replace('/','-')[:3] == "Mid" :
         #         add_in_name_sheet = 'Mid'
@@ -2279,13 +2164,12 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
 
         return dict_patient__computation#, dic_with_all_measurement
-    
 
     def writeMeasurementExcel(self, dict_patient__computation : dict, path : str, name_file : str):
         """Create excel file with result of computation
 
     Args:
-        dict_patient__computation (dict): 
+        dict_patient__computation (dict):
         path (str): file's path
         name_file (str): file name
     """
@@ -2294,7 +2178,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 df = pd.DataFrame(dict_patient__computation)
 
                 df.to_excel(os.path.join(path, name_file))
-        
+
         if "ID" in dict_patient__computation:
             if len(dict_patient__computation["ID"]) > 0:
                 df = pd.DataFrame(dict_patient__computation)
@@ -2308,7 +2192,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     #     """Create excel file with result of computation
 
     # Args:
-    #     dict_patient__computation (dict): 
+    #     dict_patient__computation (dict):
     #     path (str): file's path
     #     name_file (str): file name
     # """
@@ -2320,7 +2204,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     #         df = pd.DataFrame(value)
     #         dict_sheet[key] = df
     #     with pd.ExcelWriter(os.path.join(path, name_file)) as writer :
-    #         for key , df in dict_sheet.items():            
+    #         for key , df in dict_sheet.items():
     #             df.to_excel(writer,sheet_name = key, index = False)
 
     def addMidpointToPatient(self, dict_patient: dict, landmark1: str, landmark2: str):
@@ -2328,7 +2212,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
     Add midpoint for each patient
 
     Args:
-        dict_patient (dict): dict_patient 
+        dict_patient (dict): dict_patient
                             dict = {'patient1':{'landmark1':[0,1,0],'landmark2':[0,4,4],...},
                                         .
                                         .
@@ -2337,7 +2221,7 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         landmark2 (str): landmark
 
     Returns:
-        dict: dict_patient 
+        dict: dict_patient
                   dict = {'patient1':{'landmark1':[0,1,0],'landmark2':[0,4,4],'Mid_landmark1_landmark2':[x,x,x],...},
                       .
                       .
@@ -2367,13 +2251,13 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
 
     def getEnableLandmarks(self,markups_node : list,Group_Landmark : Group_landmark):
         """
-        
+
         Args:
             markups_node (list): list label selected
-            Group_Landmark (Group_landmark): Landmark can existe 
+            Group_Landmark (Group_landmark): Landmark can existe
 
         Returns:
-            
+
         """
 
         labels = []
@@ -2411,7 +2295,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def setUp(self,path):
         """ Do whatever is needed to reset the state - typically a scene clear will be enough.
     """
-       
+
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -2442,8 +2326,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def runTest(self):
         """Run as few or as many tests as needed here.
     """
-        
-       
+
 
         tmp_folder = os.path.join(slicer.util.tempDirectory())
         print(f'tmp folder {tmp_folder}')
@@ -2454,12 +2337,12 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
 
         list_landmark_exist_groundthruth = ['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS', 'Mid_RPo_LPo', 'Mid_UR6R_UL6R', 'LLCo',
-                                    'LR1R', 'LR6R', 'Mid_UR1R_UL1R', 'UL1O', 'LL6O', 'LPCo', 'Mid_UR1O_UL1O', 'RPo', 'UL6O', 
-                                    'Pog', 'Mid_RGo_LGo', 'Mid_LMCo_LLCo', 'Mid_UR4O_UL4O', 'RMCo', 'UR1O', 'Mid_ROr_LOr', 'UL1R', 
-                                    'RCo', 'LL1R', 'LL6R', 'LPo', 'RLCo', 'UR4O', 'Mid_LR6R_LL6R', 'Mid_UR6O_UL6O', 'LR6MB', 'ANS', 
-                                    'Mid_RCo_LCo', 'B', 'Mid_RACo_RPCo', 'UL6R', 'Mid_LACo_LPCo', 'RGo', 'LGo', 'LAF', 'LCo', 'UR6O', 
-                                    'LR6O', 'LACo', 'A', 'RAF', 'Mid_LR1R_LL1R','RSig', 'LL1O', 'UL4O', 'RPF', 
-                                    'Gn', 'LR1O', 'Mid_RMCo_RLCo', 'UR6MB', 'LPF', 'LAE', 'LSig', 'UR1R', 'S', 'Mid_LR1O_LL1O', 'Mid_LR6O_LL6O', 
+                                    'LR1R', 'LR6R', 'Mid_UR1R_UL1R', 'UL1O', 'LL6O', 'LPCo', 'Mid_UR1O_UL1O', 'RPo', 'UL6O',
+                                    'Pog', 'Mid_RGo_LGo', 'Mid_LMCo_LLCo', 'Mid_UR4O_UL4O', 'RMCo', 'UR1O', 'Mid_ROr_LOr', 'UL1R',
+                                    'RCo', 'LL1R', 'LL6R', 'LPo', 'RLCo', 'UR4O', 'Mid_LR6R_LL6R', 'Mid_UR6O_UL6O', 'LR6MB', 'ANS',
+                                    'Mid_RCo_LCo', 'B', 'Mid_RACo_RPCo', 'UL6R', 'Mid_LACo_LPCo', 'RGo', 'LGo', 'LAF', 'LCo', 'UR6O',
+                                    'LR6O', 'LACo', 'A', 'RAF', 'Mid_LR1R_LL1R','RSig', 'LL1O', 'UL4O', 'RPF',
+                                    'Gn', 'LR1O', 'Mid_RMCo_RLCo', 'UR6MB', 'LPF', 'LAE', 'LSig', 'UR1R', 'S', 'Mid_LR1O_LL1O', 'Mid_LR6O_LL6O',
                                     'LL6MB', 'Me', 'UL6MB', 'UR6R', 'LMCo']
 
         self.delayDisplay(' Test Creation Dictionnary Patient')
@@ -2493,7 +2376,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
     def testCreateDictPatient(self,folder : str,landmark_exist : list) -> tuple[dict,dict]:
 
         widget = AQ3DCWidget()
-        
+
         logic = AQ3DCLogic()
         group_landmark = Group_landmark(widget.resourcePath("name_landmark.xlsx"))
         patient_T1,x = logic.createDictPatient(os.path.join(folder,'T1'))
@@ -2512,7 +2395,6 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
 
         return patient_T1, patient_T2
-    
 
     def testCreateMeasure(self) -> list[Measure]:
         logic = AQ3DCLogic()
@@ -2526,7 +2408,7 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
                             'Distance between 2 points T1 T2':['RPCo', 'LOr', 'Ba', 'N', 'RAE', 'ROr', 'RACo', 'PNS'],
                             "Distance between 2 points T1" : ['RPCo', 'LOr'],
                             "Distance between 2 points T2" : ['RPCo', 'LOr']}
-                
+
 
         list_measure = []
         for measure , landmarks in measure_to_create.items():
@@ -2565,10 +2447,10 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
         logic.exportMeasurement(os.path.join(folder,'ExportMeasure.xlsx'),list_measure)
         import_measure = logic.importMeasurement(os.path.join(folder,'ExportMeasure.xlsx'))
 
-        #compare import measure and list measure 
+        #compare import measure and list measure
         for measure in import_measure :
             assert measure in list_measure, f'measure {measure} \n \n  list_measure {list_measure}'
-        
+
         for measure in list_measure:
             assert measure in import_measure,  f'measure {measure} \n \n  import_measure {import_measure}'
 
@@ -2586,14 +2468,14 @@ class AQ3DCTest(ScriptedLoadableModuleTest):
 
             computation_midpoint_function = patient_T1['01'][f'Mid_{landmark1}_{landmark2}']
             compution_midpoint = list((np.array(patient_T1['01'][landmark1]) + np.array( patient_T1['01'][landmark2])) / 2)
-            assert computation_midpoint_function == compution_midpoint, f'function : {computation_midpoint_function}, \n manually : {compution_midpoint}' 
+            assert computation_midpoint_function == compution_midpoint, f'function : {computation_midpoint_function}, \n manually : {compution_midpoint}'
 
         logic.saveMidpoint(patient_T1,os.path.join(folder,'T1'),list_midpoint)
         logic.saveMidpoint(patient_T2,os.path.join(folder,'T2'),list_midpoint)
 
 
         patient_T1 , patient_T2 = self.testCreateDictPatient(folder,list_landmark_check)
-        
+
 
 
 

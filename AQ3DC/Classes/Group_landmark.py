@@ -10,10 +10,10 @@ class Group_landmark:
 
     exemple :
     {'Mandible': MyList(suffix=['RAF', 'LAF', 'RAE', 'LAE', 'Rco', 'Lco', 'RLCo', 'RMCo', 'LLCo', 'LMCo', 'RSig', 'LSig', 'RPRa', 'LPRa', 'RARa', 'LARa', 'RGo', 'LGo', 'RMe', 'LMe', 'PogL', 'B', 'Pog ', 'Gn', 'Me']),
-     'Maxilla': MyList(suffix=['ROr', 'LOr', 'RInfOr', 'LInfOr', 'RMZyg', 'LMZyg', 'RNC', 'LNC', 'RPF', 'LPF', 'IF', 'ANS', 'PNS', 'A']), 
-     'Cranial base/Cervical vertebra': MyList(suffix=['Ba', 'S', 'N', 'RPo', 'LPo', 'RFZyg', 'LFZyg', 'C2', 'C3', 'C4']), 
-     'Dental': MyDict(suffix=['R', 'O', 'MB', 'DB', 'OIP', 'RIP', 'MBIP', 'DBIP', 'CB', 'CL', 'CBIP', 'CLIP', 'RC'], prefix={'Lower': ['LR7', 'LR6', 'LR5', 'LR4', 'LR3', 'LR2', 'LR1', 'LL1', 'LL2', 'LL3', 'LL4', 'LL5', 'LL6', 'LL7'], 'Upper': ['UR7', 'UR6', 'UR5', 'UR4', 'UR3', 'UR2', 'UR1', 'UL1', 'UL2', 'UL3', 'UL4', 'UL5', 'UL6', 'UL7']}), 
-     'Other': MyList(suffix=['Pog']), 
+     'Maxilla': MyList(suffix=['ROr', 'LOr', 'RInfOr', 'LInfOr', 'RMZyg', 'LMZyg', 'RNC', 'LNC', 'RPF', 'LPF', 'IF', 'ANS', 'PNS', 'A']),
+     'Cranial base/Cervical vertebra': MyList(suffix=['Ba', 'S', 'N', 'RPo', 'LPo', 'RFZyg', 'LFZyg', 'C2', 'C3', 'C4']),
+     'Dental': MyDict(suffix=['R', 'O', 'MB', 'DB', 'OIP', 'RIP', 'MBIP', 'DBIP', 'CB', 'CL', 'CBIP', 'CLIP', 'RC'], prefix={'Lower': ['LR7', 'LR6', 'LR5', 'LR4', 'LR3', 'LR2', 'LR1', 'LL1', 'LL2', 'LL3', 'LL4', 'LL5', 'LL6', 'LL7'], 'Upper': ['UR7', 'UR6', 'UR5', 'UR4', 'UR3', 'UR2', 'UR1', 'UL1', 'UL2', 'UL3', 'UL4', 'UL5', 'UL6', 'UL7']}),
+     'Other': MyList(suffix=['Pog']),
      'Midpoint': MyList(suffix=['Mid_ROr_LOr', 'Mid_RCo_LCo', 'Mid_RMZyg_LMZyg', 'Mid_RGo_LGo', 'Mid_RLCo_LLCo', 'Mid_RMCo_LMCo'])}
 
 
@@ -159,7 +159,7 @@ class Group_landmark:
             tuples, tuples : return keys and value of group landmark
         """
         return self.group_landmark.items()
-    
+
     def keys(self):
         return self.group_landmark.keys()
 
@@ -196,7 +196,7 @@ class MyList:
 
     def tolist(self):
         return self.suffix
-    
+
     def __iadd__(self,__o : list):
         self.suffix += __o
 
