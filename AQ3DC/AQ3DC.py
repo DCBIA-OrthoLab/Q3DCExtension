@@ -282,6 +282,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.ButtonAddMidpoint.clicked.connect(self.addMidpoint)
         self.ui.ButtonFolderMidpoint.clicked.connect(self.selectFolderSaveMidpoint)
         self.ui.ButtonSaveMidpoint.clicked.connect(self.saveMidpoint)
+        self.ui.combineWithOriginal.clicked.connect(self.updateSaveMidpoint)
         self.ui.ButtonAddMeasure.clicked.connect(self.createMeasurement)
         self.ui.ButtonDeleteMeasurement.clicked.connect(self.deleteMeasurement)
         self.ui.CbImportExportMeasure.activated.connect(
@@ -304,6 +305,8 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         self.ui.LabelExcelFormat.setVisible(True)
         self.ui.ComboBoxExcelFormat.setVisible(True)
+        self.ui.ButtonFolderMidpoint.setEnabled(False)
+        self.ui.LineEditPathMidpoint.setEnabled(False)
 
 #==========================================================================================================================================================
 # Computation
@@ -971,24 +974,44 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def saveMidpoint(self):
         """Save Midpoint in folder T1 and T2
     """
-        out_path_T1 = os.path.join(self.ui.LineEditPathMidpoint.text, "T1")
-        out_path_T2 = os.path.join(self.ui.LineEditPathMidpoint.text, "T2")
-        if not os.path.exists(out_path_T1):
-            os.makedirs(out_path_T1)
-        self.logic.saveMidpoint(
-            self.dict_patient_T1,
-            out_path_T1,
-            self.mid_point,
-        )
-        if self.ui.LineEditPathT2.text != "":
-            if not os.path.exists(out_path_T2):
-                os.makedirs(out_path_T2)
+        if self.ui.combineWithOriginal.isChecked():
+            # Save directly in original folders
+            for patient, landmarks in self.dict_patient_T1.items():
+                originalFile = self.logic.findOriginalJson(self.ui.LineEditPathT1.text, patient)
+                if originalFile:
+                    self.logic.appendMidpointsToJson(originalFile, landmarks, self.mid_point)
+
+            if self.ui.LineEditPathT2.text != "":
+                for patient, landmarks in self.dict_patient_T2.items():
+                    originalFile = self.logic.findOriginalJson(self.ui.LineEditPathT2.text, patient)
+                    if originalFile:
+                        self.logic.appendMidpointsToJson(originalFile, landmarks, self.mid_point)
+        else:
+            out_path_T1 = os.path.join(self.ui.LineEditPathMidpoint.text, "T1")
+            out_path_T2 = os.path.join(self.ui.LineEditPathMidpoint.text, "T2")
+            if not os.path.exists(out_path_T1):
+                os.makedirs(out_path_T1)
             self.logic.saveMidpoint(
-                self.dict_patient_T2,
-                out_path_T2,
+                self.dict_patient_T1,
+                out_path_T1,
                 self.mid_point,
             )
-
+            if self.ui.LineEditPathT2.text != "":
+                if not os.path.exists(out_path_T2):
+                    os.makedirs(out_path_T2)
+                self.logic.saveMidpoint(
+                    self.dict_patient_T2,
+                    out_path_T2,
+                    self.mid_point,
+                )
+    
+    def updateSaveMidpoint(self):
+        """Update the save midpoint button
+    """
+        show = False if self.ui.combineWithOriginal.isChecked() else True
+            
+        self.ui.ButtonFolderMidpoint.setEnabled(show)
+        self.ui.LineEditPathMidpoint.setEnabled(show)
 
 #===============================================================================================================
 # Measurement
@@ -1543,11 +1566,11 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
         else :
             all_landmarks["Other"] = list_otherlandmarks
 
-        if "Midponts" in all_landmarks.keys():
-            all_landmarks["Midpoint"]+= list_midlandmarks
-        else :
-            all_landmarks["Midpoint"] = list_midlandmarks
-        all_landmarks["Midpoint"] += list_midlandmarks
+        if "Midpoint" in all_landmarks:
+            existing = set(all_landmarks["Midpoint"])
+            all_landmarks["Midpoint"] = list(existing.union(list_midlandmarks))
+        else:
+            all_landmarks["Midpoint"] = list(set(list_midlandmarks))
 
         return list_landmark, all_landmarks
 
@@ -1604,6 +1627,29 @@ class AQ3DCLogic(ScriptedLoadableModuleLogic):
                 cp_lst = self.mergeJsonControlePoint(os.path.join(out_path,f"{patient}_Midpoint.json"),cp_lst)
 
             self.writeJson(f"{patient}_Midpoint", cp_lst, out_path)
+            
+    def findOriginalJson(self, folderPath, patientId):
+        for file in glob.glob(os.path.join(folderPath, "*.json")):
+            if file.startswith(os.path.join(folderPath, patientId)):
+                return file
+        return None
+
+    def appendMidpointsToJson(self, filePath, patientLandmarks, midpoints):
+        with open(filePath, 'r') as f:
+            data = json.load(f)
+
+        controlPoints = data['markups'][0]['controlPoints']
+
+        for P1, P2 in midpoints:
+            if P1 in patientLandmarks and P2 in patientLandmarks:
+                midpointPos = self.computeMidPoint(np.array(patientLandmarks[P1]), np.array(patientLandmarks[P2]))
+                controlPoints.append(self.generateControlePoint(f"Mid_{P1}_{P2}", midpointPos))
+
+        data['markups'][0]['controlPoints'] = controlPoints
+
+        with open(filePath, 'w') as f:
+            json.dump(data, f, indent=4)
+
 
     def mergeJsonControlePoint(self, file_name : str, list_controle_point : list ):
         with open(file_name) as f :

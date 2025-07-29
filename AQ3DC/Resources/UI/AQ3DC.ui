@@ -12,8 +12,8 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_7">
    <item>
-    <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton" native="true">
-     <property name="text" stdset="0">
+    <widget class="ctkCollapsibleButton" name="inputsCollapsibleButton">
+     <property name="text">
       <string>Sample</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -101,7 +101,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_3">
            <attribute name="title">
@@ -156,25 +156,67 @@
          <number>10</number>
         </property>
         <item row="2" column="6">
+         <widget class="QPushButton" name="ButtonSaveMidpoint">
+          <property name="text">
+           <string>Save</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="LabelSaveMidpoint">
+          <property name="text">
+           <string>Save midpoint:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QPushButton" name="ButtonFolderMidpoint">
+          <property name="text">
+           <string>Folder </string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="combineWithOriginal">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>combined with original</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="7">
          <widget class="QLabel" name="LabelMidpointSaved">
           <property name="text">
            <string/>
           </property>
          </widget>
         </item>
-        <item row="1" column="5" colspan="2">
-         <widget class="QPushButton" name="ButtonAddMidpoint">
+        <item row="2" column="3" colspan="3">
+         <widget class="QLineEdit" name="LineEditPathMidpoint"/>
+        </item>
+        <item row="1" column="4">
+         <widget class="QComboBox" name="CbMidpointP2"/>
+        </item>
+        <item row="1" column="3">
+         <widget class="QLabel" name="LabelP2">
           <property name="text">
-           <string>Add</string>
+           <string>P2 :</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
-        <item row="2" column="5">
-         <widget class="QPushButton" name="ButtonSaveMidpoint">
-          <property name="text">
-           <string>Save</string>
-          </property>
-         </widget>
+        <item row="1" column="2">
+         <widget class="QComboBox" name="CbMidpointP1"/>
         </item>
         <item row="1" column="1">
          <widget class="QLabel" name="LabelP1">
@@ -196,41 +238,12 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
-         <widget class="QPushButton" name="ButtonFolderMidpoint">
+        <item row="1" column="6">
+         <widget class="QPushButton" name="ButtonAddMidpoint">
           <property name="text">
-           <string>Folder </string>
+           <string>Add</string>
           </property>
          </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QComboBox" name="CbMidpointP1"/>
-        </item>
-        <item row="1" column="4">
-         <widget class="QComboBox" name="CbMidpointP2"/>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="LabelSaveMidpoint">
-          <property name="text">
-           <string>Save midpoint:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QLabel" name="LabelP2">
-          <property name="text">
-           <string>P2 :</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2" colspan="3">
-         <widget class="QLineEdit" name="LineEditPathMidpoint"/>
         </item>
        </layout>
       </item>
@@ -238,14 +251,14 @@
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="CollapsibleButton" native="true">
+    <widget class="ctkCollapsibleButton" name="CollapsibleButton">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
        <height>16777215</height>
       </size>
      </property>
-     <property name="text" stdset="0">
+     <property name="text">
       <string>Measurement</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
