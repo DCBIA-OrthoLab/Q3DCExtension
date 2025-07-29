@@ -776,7 +776,7 @@ class Q3DCLogic(ScriptedLoadableModuleLogic):
 
     def exportTable(self, directoryExport, filenameExport, tableToExport):
         messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(' /!\ WARNING /!\ ')
+        messageBox.setWindowTitle(' /!\\ WARNING /!\\ ')
         messageBox.setIcon(messageBox.Warning)
 
         fileName = os.path.join(directoryExport.directory, filenameExport.text)

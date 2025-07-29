@@ -1243,13 +1243,13 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         for measure in out:
             self.addMeasurementToTabMeasurement(measure)
 
-    """
-   ___    _     _
-  / _ \  | |_  | |__     ___   _ __
- | | | | | __| | '_ \   / _ \ | '__|
- | |_| | | |_  | | | | |  __/ | |
-  \___/   \__| |_| |_|  \___| |_|
-  """
+# ============================================================================================================================#
+#    ___    _     _
+#   / _ \  | |_  | |__     ___   _ __
+#  | | | | | __| | '_ \   / _ \ | '__|
+#  | |_| | | |_  | | | | |  __/ | |
+#   \___/   \__| |_| |_|  \___| |_|
+# ============================================================================================================================#
 
     def selectFolderT1Patient(self):
         """ Open window allow user to choose folder with T1 patients' information.
@@ -1311,7 +1311,7 @@ class AQ3DCWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     def warningMessage(self, message):
         messageBox = ctk.ctkMessageBox()
-        messageBox.setWindowTitle(" /!\ WARNING /!\ ")
+        messageBox.setWindowTitle(" /!\\ WARNING /!\\ ")
         messageBox.setIcon(messageBox.Warning)
         messageBox.setText(message)
         messageBox.setStandardButtons(messageBox.Ok)
